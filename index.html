@@ -245,7 +245,7 @@
             </button>
 
             <div class="pt-6">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v9.0<br>Super Heuristic Multi-Bank OCR</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v9.5<br>Ultimate OCR & Print Aligner</p>
             </div>
         </div>
     </div>
@@ -400,25 +400,26 @@
             }
         }
 
-        // ALGORITMA PARSER OCR - TRANSFER BANK (SUPER AKURAT - V9)
+        // ALGORITMA PARSER OCR - TRANSFER BANK (ULTIMATE HEURISTIC - V9.5)
         function parseTransferOCR(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let combinedText = text.replace(/\n/g, ' ');
+            const combinedUpper = combinedText.toUpperCase();
 
-            // Waktu
+            // 1. WAKTU & TANGGAL
             const dateMatch = combinedText.match(/(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
             if (dateMatch) {
                 let d = dateMatch[1];
                 if (d.includes('-') && d.split('-')[0].length === 4) { 
                     const pts = d.split('-'); document.getElementById('r-tgl').innerText = `${pts[2]}-${pts[1]}-${pts[0]}`;
-                } else { document.getElementById('r-tgl').innerText = d; }
+                } else { document.getElementById('r-tgl').innerText = d.replace(/\//g, '-'); }
             } else { updateTimeOnlyDate('r-tgl'); }
 
             const timeMatch = combinedText.match(/(\d{2}:\d{2}(?::\d{2})?)/);
             if (timeMatch) document.getElementById('r-jam').innerText = timeMatch[1];
             else { updateTimeOnlyTime('r-jam'); }
 
-            // Nominal
+            // 2. NOMINAL (Cari Rp terdekat dengan Nominal/Jumlah/Transfer)
             let nominalStr = "";
             for (let i = 0; i < lines.length; i++) {
                 if (lines[i].toUpperCase().match(/(NOMINAL|JUMLAH|TRANSFER)/)) {
@@ -438,7 +439,7 @@
                 if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
             }
 
-            // Reference
+            // 3. REFERENSI
             const refMatch = combinedText.match(/(?:Referen|Ref|Order|ID|No|Transaksi)[\s\:\-]+([A-Z0-9]{8,20})/i);
             if (refMatch && !refMatch[1].match(/^0+$/)) document.getElementById('r-ref').innerText = refMatch[1];
             else {
@@ -446,79 +447,126 @@
                 if(longNum) document.getElementById('r-ref').innerText = longNum[1];
             }
 
-            // HEURISTIC ANCHOR SEARCH: Mencari blok "Tujuan"
-            let nama = "";
-            let rek = "";
-            let foundBank = "";
-            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB', 'DKI', 'PERMATA', 'DANAMON', 'BJB'];
+            // 4. DAFTAR BANK & KEYWORD
+            const bankKeywords = [
+                { id: 'BCA', keys: ['BCA', 'M-BCA', 'MBCA'] },
+                { id: 'BRI', keys: ['BRI', 'BRIMO', 'BRIVA'] },
+                { id: 'MANDIRI', keys: ['MANDIRI', 'LIVIN'] },
+                { id: 'BNI', keys: ['BNI'] },
+                { id: 'BSI', keys: ['BSI', 'SYARIAH INDONESIA'] },
+                { id: 'DANA', keys: ['DANA'] },
+                { id: 'OVO', keys: ['OVO'] },
+                { id: 'GOPAY', keys: ['GOPAY', 'GO-PAY'] },
+                { id: 'LINKAJA', keys: ['LINKAJA'] },
+                { id: 'SHOPEEPAY', keys: ['SHOPEE', 'SHOPEEPAY'] },
+                { id: 'SEABANK', keys: ['SEA', 'SEABANK'] },
+                { id: 'JAGO', keys: ['JAGO'] },
+                { id: 'NEO', keys: ['NEO', 'BNC'] },
+                { id: 'MEGA', keys: ['MEGA'] },
+                { id: 'CIMB', keys: ['CIMB', 'NIAGA'] },
+                { id: 'DKI', keys: ['DKI'] },
+                { id: 'PERMATA', keys: ['PERMATA'] },
+                { id: 'DANAMON', keys: ['DANAMON'] },
+                { id: 'BJB', keys: ['BJB'] }
+            ];
 
-            let destIndex = -1;
+            let foundBank = "";
+            for (let b of bankKeywords) {
+                if (b.keys.some(k => combinedUpper.includes(k))) { foundBank = b.id; break; }
+            }
+            if (!foundBank) foundBank = "BANK LAIN";
+            document.getElementById('r-bank').innerText = foundBank;
+
+            // 5. PENCARIAN REKENING (Termasuk sensor bintang *** spt di BRI)
+            let rek = "";
+            let rekLineIndex = -1;
+            const rekRegex = /(\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,16})/;
+            
             for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER)/)) {
-                    if (up.includes('DARI') || up.includes('PESAN') || up.includes('SUMBER')) continue; 
-                    destIndex = i;
+                let upLine = lines[i].toUpperCase();
+                // Abaikan jika baris ini berisi nominal atau informasi general lain
+                if (upLine.match(/Rp|TOTAL|BIAYA|ADMIN|SALDO|REF|ORDER|ID|TRANSAKSI|WAKTU|TANGGAL/i)) continue;
+                
+                let match = upLine.match(rekRegex);
+                if (match) {
+                    rek = match[1].replace(/[^\d\*]/g, ''); // Ambil angka dan bintang saja
+                    rekLineIndex = i;
+                    break;
+                }
+            }
+            if(!rek) {
+                 let match = combinedText.match(rekRegex);
+                 if(match) rek = match[1].replace(/[^\d\*]/g, '');
+            }
+            
+            // Format bintang agar ada spasinya (estetika nota)
+            let formattedRek = rek ? rek.replace(/\*/g, ' * ') : "0000000000";
+            document.getElementById('r-rek').innerText = formattedRek;
+
+            // 6. PENCARIAN NAMA PENERIMA (Anchor & Posisi)
+            let nama = "";
+            const ignoreWords = ['BANK', 'REKENING', 'TUJUAN', 'PENERIMA', 'DARI', 'SUMBER', 'TRANSFER', 'DETAIL', 'PESAN', 'TRANSAKSI', 'BERHASIL', 'LAINNYA', 'STRUK', 'CETAK', 'SIMPAN', 'BAGIKAN', 'OK', 'KEMBALI', 'HALAMAN', 'UTAMA', 'LIVIN', 'BRIMO', 'BCA', 'MANDIRI', 'BIAYA', 'ADMIN', 'TOTAL', 'NOMINAL', 'KIRIM', 'UANG'];
+            
+            let anchorLine = -1;
+            for(let i=0; i<lines.length; i++){
+                let upLine = lines[i].toUpperCase();
+                if(upLine.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER|NAMA TUJUAN)/)) {
+                    if(upLine.includes('PESAN') || upLine.includes('DARI') || upLine.includes('SUMBER')) continue;
+                    anchorLine = i;
+                    
+                    // Cek apabila nama sejajar dengan anchor (Misal: "Rekening Tujuan ZAINAL ILMI G")
+                    let split = upLine.split(/(?:TUJUAN|PENERIMA|KEPADA|TRANSFER)[\s\:\=]*/i);
+                    if(split.length > 1 && split[1].trim().length > 2 && !split[1].match(/\d/)) {
+                        // Ambil original casing dari lines[i]
+                        let originalSplit = lines[i].split(new RegExp("(?:TUJUAN|PENERIMA|KEPADA|TRANSFER)[\\s\\:\\=]*", "i"));
+                        nama = originalSplit[1].trim();
+                    }
                     break;
                 }
             }
 
-            if (destIndex !== -1) {
-                let candidates = [];
-                for (let i = destIndex; i <= destIndex + 5 && i < lines.length; i++) {
-                    if (lines[i].match(/Rp|Nominal|Jumlah|Total|Biaya|Admin|Jenis|Waktu|Tanggal/i)) break;
-                    candidates.push(lines[i]);
+            if(anchorLine !== -1 && !nama) {
+                // Cari di 1-3 baris di bawah anchor
+                for(let i=anchorLine+1; i<=anchorLine+3 && i<lines.length; i++) {
+                    let up = lines[i].toUpperCase();
+                    if(up.match(/BANK|REK|RP|NOMINAL|PESAN|BIAYA|ADMIN|TOTAL/)) continue;
+                    // Pastikan baris memiliki huruf
+                    if(lines[i].replace(/[^A-Za-z]/g, '').length > 3) {
+                        nama = lines[i].trim();
+                        break;
+                    }
                 }
+            }
 
-                for (let c of candidates) {
-                    let up = c.toUpperCase();
-                    
-                    let rekMatch = c.match(/(\d{3,6}[\s\-\*]+\d{2,10}|\d{8,16})/);
-                    if (rekMatch && !up.includes('RP') && !rek) {
-                        rek = rekMatch[1];
+            // Fallback (Jika anchor tidak ketemu, tebak berdasarkan posisi Rekening)
+            if (!nama && rekLineIndex !== -1) {
+                // Cek 1-2 baris di atas
+                for(let i=rekLineIndex-1; i>=Math.max(0, rekLineIndex-2); i--) {
+                    let up = lines[i].toUpperCase();
+                    if(!ignoreWords.some(w => up.includes(w)) && !up.match(/\d/) && up.length > 3) {
+                        nama = lines[i].trim();
+                        break;
                     }
-
-                    if (!foundBank) {
-                        let matchedBank = banks.find(b => up.includes(b));
-                        if (matchedBank) foundBank = matchedBank;
-                    }
-
-                    let isSystemWord = up.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER|BANK|REK|NO|PESAN)/);
-                    let isJustNumber = c.replace(/[\s\-\*]/g, '').match(/^\d+$/);
-                    
-                    if (!isSystemWord && !isJustNumber && up.length > 3) {
-                        if (up.includes('-') && banks.some(b => up.includes(b))) continue;
-                        if (up.includes('DNID')) {
-                            nama = c.replace(/.*DNID[\s\:]*/i, '').trim();
-                        } else if (!nama) {
-                            let split = c.split(/(?:Penerima|Tujuan|Kepada)[\s\:\=]+/i);
-                            if (split.length > 1 && split[1].trim().length > 0) nama = split[1].trim();
-                            else nama = c.trim();
+                }
+                // Cek 1-2 baris di bawah
+                if(!nama) {
+                    for(let i=rekLineIndex+1; i<=Math.min(lines.length-1, rekLineIndex+2); i++) {
+                        let up = lines[i].toUpperCase();
+                        if(up.includes('DNID')) { // Khusus DANA / Bank Mega
+                            nama = lines[i].replace(/.*DNID[\s\:]*/i, '').trim();
+                            break;
                         }
-                    } else if (isSystemWord) {
-                        let split = c.split(/(?:Penerima|Tujuan|Kepada)[\s\:\=]+/i);
-                        if(split.length > 1 && split[1].trim().length > 2) {
-                            nama = split[1].trim();
+                        if(!ignoreWords.some(w => up.includes(w)) && !up.match(/\d/) && up.length > 3) {
+                            nama = lines[i].trim();
+                            break;
                         }
                     }
                 }
             }
 
-            if (!rek) {
-                for (let i = 0; i < lines.length; i++) {
-                    let digitMatch = lines[i].replace(/\s/g, '').match(/(\d{8,16})/);
-                    if (digitMatch && !lines[i].toUpperCase().includes('RP')) { rek = digitMatch[1]; break; }
-                }
-            }
-            if (!foundBank) {
-                for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
-                if (!foundBank && combinedText.toUpperCase().includes('BRI')) foundBank = 'BRI';
-            }
-
-            if(!nama || nama.toUpperCase().match(/TRANSAKSI LAINNYA|BERHASIL/)) nama = "NAMA PELANGGAN";
-            
-            document.getElementById('r-bank').innerText = foundBank || "BANK LAIN";
+            if(!nama) nama = "NAMA PELANGGAN";
             document.getElementById('r-nama').innerText = nama.substring(0, 40).toUpperCase();
-            document.getElementById('r-rek').innerText = rek || "0000000000";
+
             calculateTotal();
         }
 
@@ -771,7 +819,7 @@
                 raw += FONT_NORMAL;
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                // Menggunakan fungsi format rata kanan
+                // Menggunakan fungsi format rata kanan agar lurus seperti di preview layar
                 raw += formatLineAlignRight("NOMINAL", getT('t-nom')) + "\n";
                 raw += formatLineAlignRight("ADMIN", getT('t-adm')) + "\n";
                 raw += "--------------------------------\n";
@@ -794,7 +842,7 @@
                 raw += wrapText("REK     : ", getT('r-rek'));
                 raw += wrapText("NAMA    : ", getT('r-nama'));
                 raw += "--------------------------------\n";
-                // Menggunakan fungsi format rata kanan
+                // Menggunakan fungsi format rata kanan agar lurus seperti di preview layar
                 raw += formatLineAlignRight("NOMINAL", getT('r-nom')) + "\n";
                 raw += formatLineAlignRight("ADMIN", getT('r-adm')) + "\n";
                 raw += formatLineAlignRight("TOTAL", getT('r-tot')) + "\n";
