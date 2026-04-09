@@ -28,12 +28,21 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         button:active { transform: scale(0.96); transition: 0.1s; }
+
+        /* Highlight area editable saat diklik */
+        [contenteditable="true"]:focus {
+            outline: none;
+            background-color: rgba(79, 70, 229, 0.05);
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
     </style>
 </head>
 <body class="pb-24">
 
-    <!-- KONFIGURASI API (GANTI DENGAN URL /exec ANDA) -->
+    <!-- KONFIGURASI API -->
     <script>
+        // PASTIKAN URL INI BENAR (Diakhiri dengan /exec)
         const API_URL = "MASUKKAN_URL_WEB_APP_ANDA_DI_SINI";
     </script>
 
@@ -55,9 +64,9 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shadow-lg"><span class="text-white font-bold text-xl">T</span></div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Trfbt</h1>
             </div>
-            <div class="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full border border-red-100" id="home-bt-chip">
-                <div class="w-2 h-2 bg-red-500 rounded-full" id="home-bt-dot"></div>
-                <span class="text-[9px] font-bold text-red-600 uppercase" id="home-bt-text">Offline</span>
+            <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100" id="home-bt-chip">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" id="home-bt-dot"></div>
+                <span class="text-[9px] font-bold text-green-600 uppercase" id="home-bt-text">Sistem Siap</span>
             </div>
         </div>
 
@@ -88,10 +97,11 @@
 
         <div class="flex justify-between items-center mb-4 px-1">
             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-tight">Riwayat Cetak</h3>
-            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-bold px-3 py-1.5 bg-indigo-50 rounded-lg">Segarkan</button>
+            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-bold px-3 py-1.5 bg-indigo-50 rounded-lg active:scale-90 transition-all">Segarkan</button>
         </div>
         <div id="history-list" class="space-y-3 pb-10">
-            <!-- Data dari Sheets -->
+            <!-- Data dari Sheets akan muncul di sini -->
+            <p class="text-center text-gray-400 text-[10px] mt-10">Memuat riwayat...</p>
         </div>
     </div>
 
@@ -188,7 +198,7 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700">Jl. Pahlawan (Poros L2)</div>
             </div>
             <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v5.0<br>Hosting Direct BT Engine</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v5.1<br>Auto-Format & Kalkulasi</p>
             </div>
         </div>
     </div>
@@ -228,6 +238,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             switchPage('home');
             fetchHistory();
+            
             document.getElementById('gallery-input').onchange = (e) => { 
                 if (e.target.files[0]) {
                     switchPage('preview'); 
@@ -235,7 +246,43 @@
                 }
                 e.target.value = '';
             };
+
+            // EVENT LISTENER UNTUK KALKULASI & FORMAT RUPIAH
+            const elNominal = document.getElementById('r-nom');
+            const elAdmin = document.getElementById('r-adm');
+            
+            if(elNominal) {
+                elNominal.addEventListener('input', calculateTotal);
+                elNominal.addEventListener('blur', formatRupiahOnBlur);
+            }
+            if(elAdmin) {
+                elAdmin.addEventListener('input', calculateTotal);
+                elAdmin.addEventListener('blur', formatRupiahOnBlur);
+            }
         });
+
+        // FUNGSI BANTUAN RUPIAH
+        function parseRupiahStr(text) {
+            let numStr = text.replace(/[^0-9]/g, '');
+            return numStr ? parseInt(numStr, 10) : 0;
+        }
+
+        function formatRupiahStr(num) {
+            return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function calculateTotal() {
+            let nom = parseRupiahStr(document.getElementById('r-nom').innerText);
+            let adm = parseRupiahStr(document.getElementById('r-adm').innerText);
+            let total = nom + adm;
+            document.getElementById('r-tot').innerText = formatRupiahStr(total);
+        }
+
+        function formatRupiahOnBlur(e) {
+            let val = parseRupiahStr(e.target.innerText);
+            e.target.innerText = formatRupiahStr(val);
+            calculateTotal(); // Pastikan total tetap up to date
+        }
 
         function updateTime() {
             const now = new Date();
@@ -278,7 +325,7 @@
         }
 
         /**
-         * BLUETOOTH SCAN & CONNECT
+         * BLUETOOTH SCAN & CONNECT (INTENT)
          */
         async function startBluetoothScan() {
             if (!navigator.bluetooth) { 
@@ -319,36 +366,20 @@
         }
 
         function updatePrinterUI(connected, name = "") {
-            // Update UI di halaman Printer
             const printerDot = document.getElementById('printer-dot');
             const printerStatus = document.getElementById('printer-status');
             const printerName = document.getElementById('printer-name-display');
             
-            // Update UI di Home (chip kecil)
-            const homeChip = document.getElementById('home-bt-chip');
-            const homeDot = document.getElementById('home-bt-dot');
-            const homeText = document.getElementById('home-bt-text');
-
             if (connected) {
                 printerDot.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
                 printerStatus.innerText = "Tersambung";
                 printerStatus.className = "text-xs font-bold text-green-500";
                 printerName.innerText = name;
-
-                homeChip.className = "flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100";
-                homeDot.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
-                homeText.innerText = "Printer Ready";
-                homeText.className = "text-[9px] font-bold text-green-600 uppercase";
             } else {
                 printerDot.className = "w-2 h-2 bg-red-500 rounded-full";
                 printerStatus.innerText = "Terputus";
                 printerStatus.className = "text-xs font-bold text-red-400";
                 printerName.innerText = "Printer";
-
-                homeChip.className = "flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full border border-red-100";
-                homeDot.className = "w-2 h-2 bg-red-500 rounded-full";
-                homeText.innerText = "Offline";
-                homeText.className = "text-[9px] font-bold text-red-600 uppercase";
             }
         }
 
@@ -367,12 +398,6 @@
             try {
                 const encoder = new TextEncoder();
                 const getT = (id) => document.getElementById(id).innerText;
-                
-                // Susunan Teks (ESC/POS Style Raw Text)
-                // \x1b\x40 = Reset Printer
-                // \x1b\x61\x01 = Center Align
-                // \x1b\x61\x00 = Left Align
-                // \x0A = Baris Baru
                 
                 let raw = "\x1b\x40"; // Init
                 raw += "\x1b\x61\x01"; // Center
@@ -396,10 +421,7 @@
                 raw += "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
 
-                // Kirim data ke printer via Bluetooth
                 await state.printerChar.writeValue(encoder.encode(raw));
-                
-                // Lanjut simpan ke Google Sheets
                 await saveToSheet();
 
             } catch(e) {
@@ -415,7 +437,12 @@
             };
             
             try {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                // Diperbarui agar tidak terkendala CORS preflight saat POST dari Github
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload) 
+                });
             } catch(e) {
                 console.warn("Gagal terhubung ke Google Sheets API:", e);
             }
@@ -426,6 +453,8 @@
         }
 
         async function fetchHistory() {
+            if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+            
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
