@@ -101,7 +101,8 @@
             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-tight">Riwayat Cetak</h3>
             <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-bold px-3 py-1.5 bg-indigo-50 rounded-lg active:scale-90 transition-all">Segarkan</button>
         </div>
-        <div id="history-list" class="space-y-3 pb-10">
+        <!-- AREA RIWAYAT YANG BISA DI-SCROLL MANDIRI (Maks 3 Baris) -->
+        <div id="history-list" class="space-y-3 pb-2 max-h-[245px] overflow-y-auto no-scrollbar">
             <p class="text-center text-gray-400 text-[10px] mt-10">Memuat riwayat...</p>
         </div>
     </div>
@@ -239,13 +240,12 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
             
-            <!-- TOMBOL SIMPAN PENGATURAN BARU -->
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-4">
                 SIMPAN PENGATURAN
             </button>
 
             <div class="pt-6">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.2<br>Persistent Settings Engine</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.3<br>Advanced OCR Heuristics & Layout</p>
             </div>
         </div>
     </div>
@@ -263,7 +263,7 @@
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.065 2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Setelan</span>
                 </button>
             </div>
@@ -275,7 +275,7 @@
         let wakeLock = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadSettings(); // Memuat pengaturan yang tersimpan di memori lokal (jika ada)
+            loadSettings(); 
             switchPage('home');
             fetchHistory();
             
@@ -314,7 +314,6 @@
                 if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
             });
 
-            // Sinkronisasi Nama Toko (Live Update)
             ['setting-toko', 'setting-alamat'].forEach(id => {
                 const el = document.getElementById(id);
                 el.addEventListener('blur', () => {
@@ -326,26 +325,20 @@
             });
         });
 
-        // --- SISTEM PENGATURAN TOKO (MEMORI LOKAL) ---
+        // --- SISTEM PENGATURAN TOKO ---
         function saveSettings(btn) {
             const toko = document.getElementById('setting-toko').innerText;
             const alamat = document.getElementById('setting-alamat').innerText;
-            
-            // Simpan ke local storage browser
             localStorage.setItem('app_settings', JSON.stringify({ toko, alamat }));
-
-            // Terapkan ke semua template nota
             document.getElementById('r-toko').innerText = toko;
             document.getElementById('t-toko').innerText = toko;
             document.getElementById('r-alamat').innerText = alamat;
             document.getElementById('t-alamat').innerText = alamat;
 
-            // Animasi Tombol Simpan
             const originalText = btn.innerText;
             btn.innerText = "✅ TERSIMPAN!";
             btn.classList.replace('bg-indigo-600', 'bg-green-500');
             btn.classList.replace('shadow-indigo-100', 'shadow-green-100');
-            
             setTimeout(() => {
                 btn.innerText = originalText;
                 btn.classList.replace('bg-green-500', 'bg-indigo-600');
@@ -359,31 +352,21 @@
                 try {
                     const settings = JSON.parse(saved);
                     const setV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-                    
-                    if (settings.toko) {
-                        setV('setting-toko', settings.toko);
-                        setV('r-toko', settings.toko);
-                        setV('t-toko', settings.toko);
-                    }
-                    if (settings.alamat) {
-                        setV('setting-alamat', settings.alamat);
-                        setV('r-alamat', settings.alamat);
-                        setV('t-alamat', settings.alamat);
-                    }
+                    if (settings.toko) { setV('setting-toko', settings.toko); setV('r-toko', settings.toko); setV('t-toko', settings.toko); }
+                    if (settings.alamat) { setV('setting-alamat', settings.alamat); setV('r-alamat', settings.alamat); setV('t-alamat', settings.alamat); }
                 } catch(e) { console.error("Gagal memuat pengaturan", e); }
             }
         }
 
-        // --- SISTEM WAKE LOCK (MENCEGAH LAYAR MATI) ---
+        // --- SISTEM WAKE LOCK ---
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     wakeLock.addEventListener('release', () => console.log('Penahan layar dilepas.'));
                 }
-            } catch (err) { console.error(`${err.name}, ${err.message}`); }
+            } catch (err) {}
         }
-
         function releaseWakeLock() {
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
@@ -392,7 +375,6 @@
         async function processImageOCR(file) {
             toggleLoader(true, "MEMBACA GAMBAR...");
             document.getElementById('loader-subtext').innerText = "AI sedang mengekstrak data struk...";
-            
             try {
                 const imageData = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -418,7 +400,7 @@
             }
         }
 
-        // ALGORITMA PARSER OCR - TRANSFER BANK (DIPERBARUI MENJADI SANGAT PINTAR)
+        // ALGORITMA PARSER OCR - TRANSFER BANK (SUPER AKURAT)
         function parseTransferOCR(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let combinedText = text.replace(/\n/g, ' ');
@@ -443,116 +425,99 @@
                 if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
             }
 
-            // Reference / Order ID
-            const refMatch = combinedText.match(/(?:Order ID|Ref|Referensi|No|ID|Transaksi)[\s\:\-]+([0-9A-Za-z]{8,})/i);
-            if (refMatch) document.getElementById('r-ref').innerText = refMatch[1];
+            // Reference
+            const refMatch = combinedText.match(/(?:Referen|Ref|Order|ID|No|Transaksi)[\s\:\-]+([A-Z0-9]{8,20})/i);
+            if (refMatch && !refMatch[1].match(/^0+$/)) document.getElementById('r-ref').innerText = refMatch[1];
             else {
                 const longNum = combinedText.match(/(\d{10,18})/);
                 if(longNum) document.getElementById('r-ref').innerText = longNum[1];
             }
 
-            // PENCARIAN REKENING (Jangkar Utama)
-            let rek = "0000000000";
-            let rekLineIndex = -1;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let lineStr = lines[i].replace(/\s/g, ''); // Cek digit utuh
-                let digitMatch = lineStr.match(/(\d{8,16})/);
-                if (digitMatch) {
-                    let upperOrig = lines[i].toUpperCase();
-                    // Jika baris ini bukan nominal atau hal lain, anggap ini nomor rekening tujuan
-                    if (!upperOrig.includes('RP') && !upperOrig.match(/REF|ORDER|ID|TRANSAKSI|STRUK|WAKTU|TANGGAL/)) {
-                        rek = digitMatch[1];
-                        rekLineIndex = i;
-                        break;
-                    }
-                }
-            }
-            document.getElementById('r-rek').innerText = rek;
-
-            // PENCARIAN BANK (Fokus di sekitar nomor rekening yang ditemukan)
-            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB', 'DKI', 'PERMATA', 'DANAMON', 'BJB'];
-            let foundBank = 'BANK LAIN';
-
-            if (rekLineIndex !== -1) {
-                // Area pencarian prioritas tinggi: Baris rekening, baris atasnya, dan 2 baris atasnya.
-                let searchArea = [
-                    lines[rekLineIndex].toUpperCase(),
-                    rekLineIndex > 0 ? lines[rekLineIndex-1].toUpperCase() : "",
-                    rekLineIndex > 1 ? lines[rekLineIndex-2].toUpperCase() : "",
-                    rekLineIndex < lines.length - 1 ? lines[rekLineIndex+1].toUpperCase() : ""
-                ];
-                for (let area of searchArea) {
-                    let matched = banks.find(b => area.includes(b));
-                    if (matched) { foundBank = matched; break; }
-                }
-            }
-            // Jika tidak ketemu di dekat rekening, cari di seluruh teks
-            if (foundBank === 'BANK LAIN') {
-                for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
-            }
-            document.getElementById('r-bank').innerText = foundBank;
-
-            // PENCARIAN NAMA (Algoritma Penapisan Pintar)
+            // HEURISTIC ANCHOR SEARCH: Mencari blok "Tujuan"
             let nama = "";
+            let rek = "";
+            let foundBank = "";
+            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB', 'DKI', 'PERMATA', 'DANAMON', 'BJB'];
 
-            // Heuristik A: Cari berdasarkan kata kunci "PENERIMA", "KEPADA", "TUJUAN"
+            let destIndex = -1;
             for (let i = 0; i < lines.length; i++) {
-                let upper = lines[i].toUpperCase();
-                
-                // HINDARI kata jebakan: "Pesan untuk Penerima", "Tujuan Transaksi", dll
-                if (upper.includes('PESAN') || upper.includes('TUJUAN TRANSAKSI') || upper.match(/REK|BANK/)) {
-                    continue;
-                }
-
-                if (upper.includes('PENERIMA') || upper.includes('KEPADA') || upper.includes('TUJUAN')) {
-                    // Ekstrak teks setelah titik dua (:) jika format sejajar (misal: "PENERIMA : JONI")
-                    let inlineName = upper.replace(/.*(PENERIMA|KEPADA|TUJUAN)[\s\:\=]+/i, '').trim();
-                    if (inlineName.length > 2 && !inlineName.match(/^[0-9]+$/)) {
-                        nama = lines[i].replace(/.*(PENERIMA|KEPADA|TUJUAN)[\s\:\=]+/i, '').trim();
-                        break;
-                    } 
-                    // Jika nama diletakkan di baris berikutnya (misal: Bank Mandiri)
-                    else if (lines[i+1]) {
-                        let nextLine = lines[i+1].toUpperCase();
-                        if (!nextLine.match(/BANK|REK|RP|NOMINAL|WAKTU/)) {
-                            nama = lines[i+1].trim();
-                            break;
-                        }
-                    }
+                let up = lines[i].toUpperCase();
+                // Cari jangkar informasi penerima
+                if (up.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER)/)) {
+                    if (up.includes('DARI') || up.includes('PESAN')) continue; // Skip jika itu source atau pesan
+                    destIndex = i;
+                    break;
                 }
             }
 
-            // Heuristik B: Jika tidak ada kata kunci, tebak posisi berdasarkan letak Nomor Rekening
-            if (!nama && rekLineIndex !== -1) {
-                // Cek 1 baris di atas nomor rekening
-                if (rekLineIndex > 0) {
-                    let above = lines[rekLineIndex-1].toUpperCase();
-                    if (!above.match(/BANK|REKENING|TUJUAN|PENERIMA|DARI|SUMBER|TRANSFER|DETAIL/)) {
-                        nama = lines[rekLineIndex-1].trim();
-                    }
+            if (destIndex !== -1) {
+                let candidates = [];
+                // Ambil 4 baris ke bawah setelah jangkar ditemukan
+                for (let i = destIndex; i <= destIndex + 4 && i < lines.length; i++) {
+                    if (lines[i].match(/Rp|Nominal|Jumlah|Total|Biaya|Admin|Jenis/i)) break;
+                    candidates.push(lines[i]);
                 }
-                // Cek 1 baris di bawah nomor rekening
-                if (!nama && rekLineIndex < lines.length - 1) {
-                    let below = lines[rekLineIndex+1].toUpperCase();
-                    if (!below.match(/BANK|REKENING|RP|NOMINAL|PESAN/)) {
-                        // Fix spesifik untuk DANA/Mega (DNID)
-                        if(below.includes('DNID')) {
-                            nama = lines[rekLineIndex+1].replace(/.*DNID[\s\:]*/i, '').trim();
+
+                for (let c of candidates) {
+                    let up = c.toUpperCase();
+                    
+                    // 1. Ekstrak dari baris yang sama dengan header (jika formatnya "Penerima : Joni")
+                    if (up.match(/REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER/)) {
+                        let split = c.split(/[:=]/);
+                        if (split.length > 1 && split[1].trim().length > 2) {
+                            nama = split[1].trim();
+                        }
+                        continue;
+                    }
+
+                    // 2. Cari Nama Bank
+                    if (!foundBank) {
+                        let matchedBank = banks.find(b => up.includes(b));
+                        if (matchedBank) foundBank = matchedBank;
+                    }
+
+                    // 3. Cari Rekening (Termasuk yang disensor bintang seperti BRI)
+                    if (!rek) {
+                        // Mencocokkan: 4605 **** **** 500 atau 010740021921905
+                        let rekMatch = c.match(/(\d{3,6}[\s\-\*]+\d{2,10})/);
+                        if (rekMatch) {
+                            rek = rekMatch[1];
                         } else {
-                            nama = lines[rekLineIndex+1].trim();
+                            let digitMatch = c.match(/(\d{8,16})/);
+                            if (digitMatch) rek = digitMatch[1];
+                        }
+                    }
+
+                    // 4. Cari Nama (Baris yang bukan Bank, Rekening, atau Jebakan Pesan)
+                    if (!nama && !up.match(/BANK|REK|ID|PESAN/)) {
+                        if (up.includes('DNID')) {
+                            nama = c.replace(/.*DNID[\s\:]*/i, '').trim();
+                        } else if (!c.match(/[\*\-\d]/)) { 
+                            nama = c.trim(); // Jika baris ini tidak ada angka atau bintang, kemungkinan besar itu nama
+                        } else if (c.match(/^[A-Z\s\.]+$/i)) {
+                            nama = c.trim();
                         }
                     }
                 }
             }
 
-            // Bersihkan nama dari salah baca
-            if(!nama || nama.toUpperCase().match(/TRANSAKSI|BERHASIL|LAINNYA/)) {
-                nama = "NAMA PELANGGAN";
+            // Fallback (Jika tidak ketemu lewat jangkar)
+            if (!rek) {
+                for (let i = 0; i < lines.length; i++) {
+                    let digitMatch = lines[i].replace(/\s/g, '').match(/(\d{8,16})/);
+                    if (digitMatch && !lines[i].toUpperCase().includes('RP')) {
+                        rek = digitMatch[1]; break;
+                    }
+                }
             }
-            
-            document.getElementById('r-nama').innerText = nama.substring(0, 40).toUpperCase();
-            document.getElementById('r-rek').innerText = rek;
+            if (!foundBank) {
+                for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
+                if (!foundBank && combinedText.toUpperCase().includes('BRI')) foundBank = 'BRI';
+            }
+
+            document.getElementById('r-bank').innerText = foundBank || "BANK LAIN";
+            document.getElementById('r-nama').innerText = (nama || "NAMA PELANGGAN").substring(0, 40).toUpperCase();
+            document.getElementById('r-rek').innerText = rek || "0000000000";
             calculateTotal();
         }
 
@@ -677,7 +642,6 @@
                     optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 });
 
-                // Tambahkan Listener jika koneksi terputus (karena minimize/jauh/layar mati)
                 state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
                 toggleLoader(true, "Menyambungkan...");
@@ -690,7 +654,7 @@
                 if (state.printerChar) {
                     state.isConnected = true;
                     updatePrinterUI(true, state.btDevice.name || "Printer Thermal");
-                    requestWakeLock(); // Tahan layar agar tidak mati
+                    requestWakeLock();
                     alert("Printer Berhasil Terhubung!");
                 } else { throw new Error("Layanan print tidak ditemukan."); }
             } catch (e) { 
@@ -699,13 +663,12 @@
             } finally { toggleLoader(false); }
         }
 
-        // Fungsi ketika OS Android memutus paksa Bluetooth
         function onDisconnected() {
             console.log("Bluetooth diputus oleh sistem OS.");
             state.isConnected = false;
             state.printerChar = null;
             updatePrinterUI(false);
-            releaseWakeLock(); // Lepas penahan layar
+            releaseWakeLock(); 
         }
 
         function updatePrinterUI(connected, name = "") {
@@ -758,6 +721,15 @@
             return res;
         }
 
+        // FUNGSI BANTUAN: Menambahkan spasi agar format rata kanan (Right Align) sesuai ukuran printer (Max 32 karakter)
+        function formatLineAlignRight(label, value, maxChars = 32) {
+            let leftStr = label.toString();
+            let rightStr = value.toString();
+            let spacesCount = maxChars - leftStr.length - rightStr.length;
+            if (spacesCount < 1) spacesCount = 1; // Minimal spasi
+            return leftStr + " ".repeat(spacesCount) + rightStr;
+        }
+
         /**
          * CETAK ENGINE LANGSUNG KE BLUETOOTH PRINTER
          */
@@ -798,10 +770,11 @@
                 raw += FONT_NORMAL;
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                raw += "NOMINAL :       " + getT('t-nom') + "\n";
-                raw += "ADMIN   :       " + getT('t-adm') + "\n";
+                // Menggunakan fungsi format rata kanan
+                raw += formatLineAlignRight("NOMINAL", getT('t-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getT('t-adm')) + "\n";
                 raw += "--------------------------------\n";
-                raw += "TOTAL   :       " + getT('t-tot') + "\n\n";
+                raw += formatLineAlignRight("TOTAL", getT('t-tot')) + "\n\n";
                 raw += wrapText("SN: ", getT('t-sn'));
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
@@ -820,9 +793,10 @@
                 raw += wrapText("REK     : ", getT('r-rek'));
                 raw += wrapText("NAMA    : ", getT('r-nama'));
                 raw += "--------------------------------\n";
-                raw += "NOMINAL : " + getT('r-nom') + "\n";
-                raw += "ADMIN   : " + getT('r-adm') + "\n";
-                raw += "TOTAL   : " + getT('r-tot') + "\n";
+                // Menggunakan fungsi format rata kanan
+                raw += formatLineAlignRight("NOMINAL", getT('r-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getT('r-adm')) + "\n";
+                raw += formatLineAlignRight("TOTAL", getT('r-tot')) + "\n";
                 raw += "================================\n";
                 raw += ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
@@ -856,7 +830,6 @@
             } catch(e) {
                 toggleLoader(false);
                 alert("Gagal mencetak: " + e.message);
-                // Jika gagal cetak, asumsikan koneksi terputus dari sisi hardware
                 if(state.btDevice && state.btDevice.gatt.connected === false) {
                     onDisconnected();
                 }
