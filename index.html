@@ -239,7 +239,7 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
             <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v7.2<br>Tebal & Auto-Clear Features</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v7.3<br>Smart Delete & Print Wrap Engine</p>
             </div>
         </div>
     </div>
@@ -257,7 +257,7 @@
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Setelan</span>
                 </button>
             </div>
@@ -406,16 +406,18 @@
                 if(lineUpper.includes(foundBank)) {
                     let rMatch = lines[i].match(/(\d{8,16})/);
                     if(rMatch) rek = rMatch[1];
-                    if(lines[i+1] && !lines[i+1].match(/Rp|Total|Biaya|Admin/i)) {
+                    // Skip if the next line is "Pesan" or generic numbers
+                    if(lines[i+1] && !lines[i+1].match(/Rp|Total|Biaya|Admin|Pesan/i)) {
                         nama = lines[i+1].replace(/DNID|Tujuan|Penerima|\:/gi, '').trim();
                     }
                 }
-                if(lineUpper.includes('PENERIMA') || lineUpper.includes('KEPADA')) {
+                // Ignore "Pesan Untuk Penerima" logic that caused the bug
+                if((lineUpper.includes('PENERIMA') || lineUpper.includes('KEPADA')) && !lineUpper.includes('PESAN')) {
                     nama = lines[i].replace(/.*(PENERIMA|KEPADA)[\s\:]+/i, '').trim();
                     if(!nama && lines[i+1]) nama = lines[i+1].trim();
                 }
             }
-            document.getElementById('r-nama').innerText = nama.substring(0, 25);
+            document.getElementById('r-nama').innerText = nama.substring(0, 40); // Increased string sub buffer
             document.getElementById('r-rek').innerText = rek;
             calculateTotal();
         }
@@ -617,6 +619,31 @@
             }
         }
 
+        // FUNGSI BANTUAN: Membungkus text ESC/POS agar lurus indentasinya
+        function wrapText(label, value, maxChars = 32) {
+            let indent = label.length;
+            let maxV = maxChars - indent;
+            if(!value) return label + "\n";
+            
+            let words = value.toString().split(" ");
+            let res = "";
+            let curr = label;
+            let cLen = 0;
+            
+            for(let w of words) {
+                if(cLen + w.length + (cLen > 0 ? 1 : 0) > maxV) {
+                    res += curr + "\n";
+                    curr = " ".repeat(indent) + w;
+                    cLen = w.length;
+                } else {
+                    curr += (cLen > 0 ? " " : "") + w;
+                    cLen += w.length + (cLen > 0 ? 1 : 0);
+                }
+            }
+            res += curr + "\n";
+            return res;
+        }
+
         /**
          * CETAK ENGINE LANGSUNG KE BLUETOOTH PRINTER
          */
@@ -635,26 +662,23 @@
             const INIT = ESC + "@";
             const ALIGN_CENTER = ESC + "a" + "\x01";
             const ALIGN_LEFT = ESC + "a" + "\x00";
-            
-            // COMMAND TEBAL (BOLD) GLOBAL DI SINI
             const BOLD_ON = ESC + "E" + "\x01"; 
-            
             const FONT_LARGE = GS + "!" + "\x11"; 
             const FONT_NORMAL = GS + "!" + "\x00";
 
             let raw = INIT + BOLD_ON; // BOLD AKTIF TERUS UNTUK SELURUH NOTA
 
             if (state.currentType === 'Token') {
-                raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n";
+                raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
                 raw += getT('t-alamat') + "\n\n";
                 raw += "PEMBELIAN TOKEN PLN\n";
                 raw += getT('t-tgl') + " " + getT('t-jam') + "\n";
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                raw += "METER : " + getT('t-meter') + "\n";
-                raw += "NAMA  : " + getT('t-nama').substring(0, 20) + "\n";
-                raw += "TRF/DY: " + getT('t-daya') + "\n";
-                raw += "KWH   : " + getT('t-kwh') + "\n";
+                raw += wrapText("METER : ", getT('t-meter'));
+                raw += wrapText("NAMA  : ", getT('t-nama'));
+                raw += wrapText("TRF/DY: ", getT('t-daya'));
+                raw += wrapText("KWH   : ", getT('t-kwh'));
                 raw += "--------------------------------\n";
                 raw += ALIGN_CENTER + FONT_LARGE;
                 raw += getT('t-token').replace(/\n/g, ' ') + "\n";
@@ -665,12 +689,12 @@
                 raw += "ADMIN   :       " + getT('t-adm') + "\n";
                 raw += "--------------------------------\n";
                 raw += "TOTAL   :       " + getT('t-tot') + "\n\n";
-                raw += "SN: " + getT('t-sn') + "\n\n";
-                raw += ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
+                raw += wrapText("SN: ", getT('t-sn'));
+                raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
             } else {
                 // Template Transfer
-                raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n";
+                raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
                 raw += getT('r-alamat') + "\n";
                 raw += "================================\n";
                 raw += ALIGN_LEFT + "TGL: " + getT('r-tgl') + "\n";
@@ -680,9 +704,9 @@
                 raw += getT('r-ref') + "\n";
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT + "DATA PENERIMA:\n";
-                raw += "BANK    : " + getT('r-bank') + "\n";
-                raw += "REK     : " + getT('r-rek') + "\n";
-                raw += "NAMA    : " + getT('r-nama').substring(0, 20) + "\n";
+                raw += wrapText("BANK    : ", getT('r-bank'));
+                raw += wrapText("REK     : ", getT('r-rek'));
+                raw += wrapText("NAMA    : ", getT('r-nama'));
                 raw += "--------------------------------\n";
                 raw += "NOMINAL : " + getT('r-nom') + "\n";
                 raw += "ADMIN   : " + getT('r-adm') + "\n";
@@ -748,6 +772,17 @@
             localStorage.setItem('cetak_history', JSON.stringify(history));
         }
 
+        // Fungsi Hapus Riwayat
+        function deleteHistory(id, event) {
+            event.stopPropagation(); // Mencegah klik masuk ke detail
+            if(confirm("Apakah Anda yakin ingin menghapus riwayat cetak ini?")) {
+                let history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
+                history = history.filter(h => h.id !== id);
+                localStorage.setItem('cetak_history', JSON.stringify(history));
+                fetchHistory(); // Refresh Tampilan
+            }
+        }
+
         function loadReceipt(id) {
             const history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
             const item = history.find(h => h.id === id);
@@ -790,14 +825,20 @@
                     const chipColor = item.tipe === 'Token' ? 'bg-orange-50 text-orange-500' : 'bg-indigo-50 text-indigo-500';
 
                     return `
-                    <div onclick="loadReceipt('${item.id}')" class="bg-white rounded-3xl p-5 border border-gray-100 card-shadow flex justify-between items-center cursor-pointer active:scale-95 transition-all hover:bg-gray-50">
-                        <div>
+                    <div class="bg-white rounded-3xl p-4 border border-gray-100 card-shadow flex justify-between items-center transition-all hover:bg-gray-50">
+                        <div onclick="loadReceipt('${item.id}')" class="flex-1 cursor-pointer pr-2">
                             <h4 class="font-bold text-gray-800 text-sm uppercase truncate w-32">${nama || 'NAMA PELANGGAN'}</h4>
                             <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${tgl} - ${jam}</p>
                         </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <div class="px-3 py-1 ${chipColor} rounded-lg text-[8px] font-black uppercase">${item.tipe}</div>
-                            <span class="text-[11px] font-bold text-gray-600">${tot || 'Rp 0'}</span>
+                        <div class="flex items-center gap-3">
+                            <div onclick="loadReceipt('${item.id}')" class="flex flex-col items-end gap-1 cursor-pointer">
+                                <div class="px-2 py-0.5 ${chipColor} rounded-md text-[8px] font-black uppercase">${item.tipe}</div>
+                                <span class="text-[11px] font-bold text-gray-600">${tot || 'Rp 0'}</span>
+                            </div>
+                            <div class="h-8 w-px bg-gray-100"></div>
+                            <button onclick="deleteHistory('${item.id}', event)" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white active:scale-90 transition-all shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
                         </div>
                     </div>`
                 }).join('');
