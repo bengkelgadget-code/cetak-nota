@@ -239,7 +239,7 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
             <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v7.3<br>Smart Delete & Print Wrap Engine</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.0<br>Smart Regex & BT WakeLock</p>
             </div>
         </div>
     </div>
@@ -265,7 +265,8 @@
     </div>
 
     <script>
-        const state = { currentType: 'Transfer', printerChar: null, isConnected: false };
+        const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
+        let wakeLock = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             switchPage('home');
@@ -277,47 +278,33 @@
                 e.target.value = '';
             };
 
-            // LISTENER: ENTER KEY SEBAGAI TAB DI SELURUH INPUT
+            // LISTENER: ENTER KEY SEBAGAI TAB
             document.addEventListener('keydown', (e) => {
                 if (e.target.isContentEditable && e.key === 'Enter') {
-                    e.preventDefault(); // Cegah bikin baris baru
-                    
-                    const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'))
-                        .filter(el => el.offsetParent !== null);
-                    
+                    e.preventDefault();
+                    const editables = Array.from(document.querySelectorAll('[contenteditable="true"]')).filter(el => el.offsetParent !== null);
                     const currentIndex = editables.indexOf(e.target);
                     if (currentIndex > -1 && currentIndex < editables.length - 1) {
                         editables[currentIndex + 1].focus();
-                        
                         const range = document.createRange();
                         range.selectNodeContents(editables[currentIndex + 1]);
                         const sel = window.getSelection();
                         sel.removeAllRanges();
                         sel.addRange(range);
-                    } else {
-                        e.target.blur();
-                    }
+                    } else { e.target.blur(); }
                 }
             });
 
-            // LISTENER KALKULASI TOTAL, FORMAT, & AUTO-CLEAR 0 (Transfer)
+            // LISTENER KALKULASI & FORMAT (Transfer)
             ['r-nom', 'r-adm'].forEach(id => {
                 const el = document.getElementById(id);
-                if(el) {
-                    el.addEventListener('focus', clearZeroOnFocus);
-                    el.addEventListener('input', calculateTotal);
-                    el.addEventListener('blur', formatRupiahOnBlur);
-                }
+                if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
             });
 
-            // LISTENER KALKULASI TOTAL, FORMAT, & AUTO-CLEAR 0 (Token)
+            // LISTENER KALKULASI & FORMAT (Token)
             ['t-nom', 't-adm'].forEach(id => {
                 const el = document.getElementById(id);
-                if(el) {
-                    el.addEventListener('focus', clearZeroOnFocus);
-                    el.addEventListener('input', calculateTotal);
-                    el.addEventListener('blur', formatRupiahOnBlur);
-                }
+                if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
             });
 
             // Sinkronisasi Nama Toko
@@ -331,6 +318,20 @@
                 });
             });
         });
+
+        // --- SISTEM WAKE LOCK (MENCEGAH LAYAR MATI) ---
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => console.log('Layar bisa mati sekarang.'));
+                }
+            } catch (err) { console.error(`${err.name}, ${err.message}`); }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
+        }
 
         // --- SISTEM AI VISION (OCR) ---
         async function processImageOCR(file) {
@@ -350,11 +351,8 @@
                 const text = result.data.text;
                 await worker.terminate();
 
-                if(state.currentType === 'Token') {
-                    parseTokenOCR(text);
-                } else {
-                    parseTransferOCR(text);
-                }
+                if(state.currentType === 'Token') parseTokenOCR(text);
+                else parseTransferOCR(text);
             } catch (err) {
                 console.error("OCR Error:", err);
                 alert("Gagal membaca gambar. Silakan isi form manual.");
@@ -365,11 +363,12 @@
             }
         }
 
-        // ALGORITMA PARSER - TRANSFER BANK
+        // ALGORITMA PARSER - TRANSFER BANK (DITINGKATKAN)
         function parseTransferOCR(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let combinedText = text.replace(/\n/g, ' ');
 
+            // Waktu
             const dateMatch = combinedText.match(/(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
             if (dateMatch) {
                 let d = dateMatch[1];
@@ -382,137 +381,135 @@
             if (timeMatch) document.getElementById('r-jam').innerText = timeMatch[1];
             else { updateTimeOnlyTime('r-jam'); }
 
+            // Nominal
             const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
             if (rpMatches.length > 0) {
                 let nominalStr = rpMatches[0][1].replace(/[^0-9]/g, '');
                 if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
             }
 
-            const refMatch = combinedText.match(/(?:Order ID|Ref|Referensi|No|ID)[\s\:\-]+([0-9A-Za-z]{8,})/i);
+            // Reference (Ditingkatkan untuk menangkap lebih banyak format)
+            const refMatch = combinedText.match(/(?:Order ID|Ref|Referensi|No|ID|Transaksi)[\s\:\-]+([0-9A-Za-z]{8,})/i);
             if (refMatch) document.getElementById('r-ref').innerText = refMatch[1];
             else {
                 const longNum = combinedText.match(/(\d{10,18})/);
                 if(longNum) document.getElementById('r-ref').innerText = longNum[1];
             }
 
-            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY'];
+            // Bank
+            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB'];
             let foundBank = 'BANK LAIN';
             for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
             document.getElementById('r-bank').innerText = foundBank;
 
-            let nama = "NAMA PELANGGAN"; let rek = "0000000000";
-            for(let i=0; i < lines.length; i++) {
-                let lineUpper = lines[i].toUpperCase();
-                if(lineUpper.includes(foundBank)) {
-                    let rMatch = lines[i].match(/(\d{8,16})/);
-                    if(rMatch) rek = rMatch[1];
-                    // Skip if the next line is "Pesan" or generic numbers
-                    if(lines[i+1] && !lines[i+1].match(/Rp|Total|Biaya|Admin|Pesan/i)) {
-                        nama = lines[i+1].replace(/DNID|Tujuan|Penerima|\:/gi, '').trim();
-                    }
-                }
-                // Ignore "Pesan Untuk Penerima" logic that caused the bug
-                if((lineUpper.includes('PENERIMA') || lineUpper.includes('KEPADA')) && !lineUpper.includes('PESAN')) {
-                    nama = lines[i].replace(/.*(PENERIMA|KEPADA)[\s\:]+/i, '').trim();
-                    if(!nama && lines[i+1]) nama = lines[i+1].trim();
+            // Rekening & Nama (Algoritma Baru yang Lebih Pintar)
+            let nama = ""; let rek = "";
+            const rekRegex = /(?:REK|REKENING|NO|TUJUAN)?[\s\:\-]*(\d{8,16})/;
+            
+            // Cari rekening (8-16 digit angka, bukan Rp)
+            for (let line of lines) {
+                if (line.match(rekRegex) && !line.match(/Rp/i) && !line.toUpperCase().includes('ID')) {
+                    rek = line.match(rekRegex)[1]; break;
                 }
             }
-            document.getElementById('r-nama').innerText = nama.substring(0, 40); // Increased string sub buffer
+            if(!rek) rek = "0000000000";
+
+            // Cari Nama (Filter pintar: Hindari kata 'Pesan')
+            for (let i = 0; i < lines.length; i++) {
+                let upper = lines[i].toUpperCase();
+                if (upper.includes('PESAN')) continue; // Lewati baris berisi 'Pesan'
+                
+                if (upper.includes('DNID')) {
+                    nama = upper.replace(/.*DNID[\s\:]*/i, '').trim(); break;
+                } else if (upper.match(/(?:NAMA|PENERIMA|KEPADA|TUJUAN)[\s\:\=]+([A-Z\s]+)/i)) {
+                    let m = upper.match(/(?:NAMA|PENERIMA|KEPADA|TUJUAN)[\s\:\=]+([A-Z\s]+)/i)[1].trim();
+                    if(m.length > 2) { nama = m; break; }
+                } else if (upper.includes(foundBank) && lines[i+1] && !lines[i+1].match(/\d/)) {
+                    if(!lines[i+1].toUpperCase().includes('PESAN')) {
+                        nama = lines[i+1].trim(); // Ambil baris setelah nama bank jika bukan angka/pesan
+                    }
+                }
+            }
+            if(!nama) nama = "NAMA PELANGGAN";
+
+            document.getElementById('r-nama').innerText = nama.substring(0, 40);
             document.getElementById('r-rek').innerText = rek;
             calculateTotal();
         }
 
         // ALGORITMA PARSER - TOKEN PLN
         function parseTokenOCR(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             const combinedText = text.replace(/\n/g, ' ');
             const getT = (id) => document.getElementById(id);
 
-            // Tanggal & Jam
             updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
 
-            // Nomor Meter
             const meterMatch = combinedText.match(/(\d{11,12})/);
             if (meterMatch) getT('t-meter').innerText = meterMatch[1];
 
-            // Nominal
+            let namaToken = "NAMA PELANGGAN";
+            for (let i = 0; i < lines.length; i++) {
+                let lineUpper = lines[i].toUpperCase();
+                if (lineUpper.includes('NAMA') && !lineUpper.includes('BANK')) {
+                    let cleanName = lineUpper.replace(/.*NAMA(?: PELANGGAN)?[\s\:\=]+/i, '').trim();
+                    if (cleanName && cleanName.length > 2 && !cleanName.match(/METER|TARIF|DAYA|KWH/i)) {
+                        namaToken = cleanName;
+                    } else if (lines[i+1] && !lines[i+1].match(/METER|TARIF|TRF|DAYA|R1|KWH|RP|TOTAL/i)) {
+                        namaToken = lines[i+1].trim();
+                    }
+                    break;
+                }
+            }
+            getT('t-nama').innerText = namaToken.substring(0, 35); 
+
             const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
             if (rpMatches.length > 0) getT('t-nom').innerText = formatRupiahStr(parseInt(rpMatches[0][1].replace(/[^0-9]/g, '')));
 
-            // Token
             const tokenMatch = combinedText.replace(/[\s\-]/g, '').match(/(\d{20})/);
             if (tokenMatch) {
                 const tk = tokenMatch[1];
                 getT('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
             }
 
-            // Daya
             const dayaMatch = combinedText.match(/([A-Z0-9]+\/\s*\d+[\.,]?\d*\s*VA)/i);
             if (dayaMatch) getT('t-daya').innerText = dayaMatch[1];
 
-            // kWh
             const kwhMatch = combinedText.match(/([\d\.,]+)\s*kWh/i);
             if (kwhMatch) getT('t-kwh').innerText = kwhMatch[1] + " kWh";
 
-            // Serial Number
             const snMatch = combinedText.match(/(?:SN|Ref)[\s\:\-]*([A-Z0-9]{10,35})/i);
             if (snMatch) getT('t-sn').innerText = snMatch[1];
 
             calculateTotal();
         }
 
-        // --- FUNGSI FORMAT RUPIAH & KALKULASI ---
-
-        // Fungsi menghilangkan "0" otomatis saat diklik
-        function clearZeroOnFocus(e) {
-            if (parseRupiahStr(e.target.innerText) === 0) {
-                e.target.innerText = '';
-            }
-        }
-
-        function parseRupiahStr(text) {
-            let numStr = text.replace(/[^0-9]/g, '');
-            return numStr ? parseInt(numStr, 10) : 0;
-        }
-        
-        function formatRupiahStr(num) {
-            return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-        
+        // --- FUNGSI BANTUAN ---
+        function clearZeroOnFocus(e) { if (parseRupiahStr(e.target.innerText) === 0) e.target.innerText = ''; }
+        function parseRupiahStr(text) { let numStr = text.replace(/[^0-9]/g, ''); return numStr ? parseInt(numStr, 10) : 0; }
+        function formatRupiahStr(num) { return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function calculateTotal() {
             let prefix = state.currentType === 'Token' ? 't' : 'r';
             let nomEl = document.getElementById(prefix + '-nom');
             let admEl = document.getElementById(prefix + '-adm');
             let totEl = document.getElementById(prefix + '-tot');
-            
             if(nomEl && admEl && totEl) {
-                let nom = parseRupiahStr(nomEl.innerText);
-                let adm = parseRupiahStr(admEl.innerText);
+                let nom = parseRupiahStr(nomEl.innerText); let adm = parseRupiahStr(admEl.innerText);
                 totEl.innerText = formatRupiahStr(nom + adm);
             }
         }
-        
         function formatRupiahOnBlur(e) {
-            let val = parseRupiahStr(e.target.innerText);
-            e.target.innerText = formatRupiahStr(val);
-            calculateTotal();
+            let val = parseRupiahStr(e.target.innerText); e.target.innerText = formatRupiahStr(val); calculateTotal();
         }
-
         function updateTime() {
-            if(state.currentType === 'Token') {
-                updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
-            } else {
-                updateTimeOnlyDate('r-tgl'); updateTimeOnlyTime('r-jam');
-            }
+            if(state.currentType === 'Token') { updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam'); } 
+            else { updateTimeOnlyDate('r-tgl'); updateTimeOnlyTime('r-jam'); }
         }
-
         function updateTimeOnlyDate(id) {
-            const now = new Date();
-            document.getElementById(id).innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-');
+            const now = new Date(); document.getElementById(id).innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-');
         }
-
         function updateTimeOnlyTime(id) {
-            const now = new Date();
-            document.getElementById(id).innerText = now.toLocaleTimeString('id-ID', {hour12: false});
+            const now = new Date(); document.getElementById(id).innerText = now.toLocaleTimeString('id-ID', {hour12: false});
         }
 
         // --- NAVIGASI ---
@@ -537,7 +534,6 @@
             if(pageId === 'preview') {
                 document.getElementById('template-transfer').classList.toggle('hidden', state.currentType !== 'Transfer');
                 document.getElementById('template-token').classList.toggle('hidden', state.currentType !== 'Token');
-                
                 const btnCetak = document.getElementById('btn-main-print');
                 if(state.currentType === 'Token') {
                     btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
@@ -545,33 +541,28 @@
                     btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
                 }
             }
-
             window.scrollTo(0,0);
         }
 
-        function handleMenuClick(type) { 
-            state.currentType = type; 
-            document.getElementById('gallery-input').click(); 
-        }
+        function handleMenuClick(type) { state.currentType = type; document.getElementById('gallery-input').click(); }
 
         /**
-         * BLUETOOTH SCAN & CONNECT DIRECT BROWSER
+         * BLUETOOTH SCAN & CONNECT (DENGAN AUTO-DISCONNECT SENSOR)
          */
         async function startBluetoothScan() {
-            if (!navigator.bluetooth) { 
-                alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); 
-                return; 
-            }
+            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
 
             try {
-                const device = await navigator.bluetooth.requestDevice({
+                state.btDevice = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 });
 
+                // Tambahkan Listener jika koneksi terputus (karena minimize/jauh)
+                state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
                 toggleLoader(true, "Menyambungkan...");
-                
-                const server = await device.gatt.connect();
+                const server = await state.btDevice.gatt.connect();
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristics = await service.getCharacteristics();
                 
@@ -579,19 +570,23 @@
 
                 if (state.printerChar) {
                     state.isConnected = true;
-                    updatePrinterUI(true, device.name || "Printer Thermal");
+                    updatePrinterUI(true, state.btDevice.name || "Printer Thermal");
+                    requestWakeLock(); // Tahan layar agar tidak mati
                     alert("Printer Berhasil Terhubung!");
-                } else {
-                    throw new Error("Layanan print tidak ditemukan pada perangkat ini.");
-                }
+                } else { throw new Error("Layanan print tidak ditemukan."); }
             } catch (e) { 
                 updatePrinterUI(false);
-                if(e.name !== 'NotFoundError') {
-                    alert("Koneksi Gagal: " + e.message); 
-                }
-            } finally {
-                toggleLoader(false);
-            }
+                if(e.name !== 'NotFoundError') alert("Koneksi Gagal: " + e.message); 
+            } finally { toggleLoader(false); }
+        }
+
+        // Fungsi ketika OS memutus paksa Bluetooth
+        function onDisconnected() {
+            console.log("Bluetooth diputus oleh sistem.");
+            state.isConnected = false;
+            state.printerChar = null;
+            updatePrinterUI(false);
+            releaseWakeLock(); // Lepas penahan layar
         }
 
         function updatePrinterUI(connected, name = "") {
@@ -649,7 +644,7 @@
          */
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
-                alert("Printer belum terhubung! Silakan hubungkan melalui menu Printer terlebih dahulu.");
+                alert("Printer terputus! Silakan sambungkan ulang di menu Printer.");
                 switchPage('printer');
                 return;
             }
@@ -657,7 +652,6 @@
             toggleLoader(true, "Mencetak...");
             const getT = (id) => document.getElementById(id).innerText;
             
-            // ESC/POS Commands
             const ESC = "\x1b"; const GS = "\x1d";
             const INIT = ESC + "@";
             const ALIGN_CENTER = ESC + "a" + "\x01";
@@ -666,7 +660,7 @@
             const FONT_LARGE = GS + "!" + "\x11"; 
             const FONT_NORMAL = GS + "!" + "\x00";
 
-            let raw = INIT + BOLD_ON; // BOLD AKTIF TERUS UNTUK SELURUH NOTA
+            let raw = INIT + BOLD_ON; // BOLD AKTIF
 
             if (state.currentType === 'Token') {
                 raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
@@ -693,9 +687,8 @@
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
             } else {
-                // Template Transfer
                 raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
-                raw += getT('r-alamat') + "\n";
+                raw += getT('r-alamat') + "\n\n";
                 raw += "================================\n";
                 raw += ALIGN_LEFT + "TGL: " + getT('r-tgl') + "\n";
                 raw += "JAM: " + getT('r-jam') + "\n";
@@ -744,6 +737,10 @@
             } catch(e) {
                 toggleLoader(false);
                 alert("Gagal mencetak: " + e.message);
+                // Jika gagal cetak, asumsikan koneksi terputus dari sisi hardware
+                if(state.btDevice && state.btDevice.gatt.connected === false) {
+                    onDisconnected();
+                }
             }
         }
 
@@ -753,13 +750,9 @@
             const item = {
                 id: Date.now().toString(),
                 tipe: state.currentType,
-                
-                // Data Transfer
                 r_toko: getV('r-toko'), r_alamat: getV('r-alamat'), r_tgl: getV('r-tgl'), r_jam: getV('r-jam'),
                 r_ref: getV('r-ref'), r_bank: getV('r-bank'), r_rek: getV('r-rek'), r_nama: getV('r-nama'),
                 r_nom: getV('r-nom'), r_adm: getV('r-adm'), r_tot: getV('r-tot'),
-                
-                // Data Token
                 t_toko: getV('t-toko'), t_alamat: getV('t-alamat'), t_tgl: getV('t-tgl'), t_jam: getV('t-jam'),
                 t_meter: getV('t-meter'), t_nama: getV('t-nama'), t_daya: getV('t-daya'), t_kwh: getV('t-kwh'),
                 t_token: document.getElementById('t-token') ? document.getElementById('t-token').innerHTML : '',
@@ -772,14 +765,13 @@
             localStorage.setItem('cetak_history', JSON.stringify(history));
         }
 
-        // Fungsi Hapus Riwayat
         function deleteHistory(id, event) {
-            event.stopPropagation(); // Mencegah klik masuk ke detail
+            event.stopPropagation();
             if(confirm("Apakah Anda yakin ingin menghapus riwayat cetak ini?")) {
                 let history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
                 history = history.filter(h => h.id !== id);
                 localStorage.setItem('cetak_history', JSON.stringify(history));
-                fetchHistory(); // Refresh Tampilan
+                fetchHistory(); 
             }
         }
 
@@ -842,9 +834,7 @@
                         </div>
                     </div>`
                 }).join('');
-            } catch(e) {
-                console.log("Error mengambil riwayat:", e);
-            }
+            } catch(e) { console.log("Error:", e); }
         }
 
         function toggleLoader(s, t) {
