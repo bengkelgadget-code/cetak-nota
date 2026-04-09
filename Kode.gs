@@ -1,69 +1,57 @@
 /**
- * ZettBOT - Google Sheet Apps Script Assistant
- * Project: TRFBT - Cetak Bukti Transaksi
+ * SIMPAN KODE INI DI GOOGLE APPS SCRIPT (code.gs)
+ * -----------------------------------------------
+ * 1. Klik "Deploy" > "New Deployment".
+ * 2. Pilih type: "Web App".
+ * 3. Execute as: "Me".
+ * 4. Who has access: "Anyone" (PENTING).
+ * 5. Salin URL Web App (akhirannya /exec) untuk dipasang di index.html GitHub.
  */
 
-const SHEET_NAME = 'History';
-const TIMEZONE = 'Asia/Jakarta';
-
-function doGet() {
-  return HtmlService.createTemplateFromFile('index')
-    .evaluate()
-    .setTitle('TRFBT - Cetak Bukti')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+function doGet(e) {
+  // Mengambil data riwayat untuk ditampilkan di web GitHub
+  const data = getHistory();
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-/**
- * Mendapatkan data riwayat dari Google Sheets
- */
-function getHistoryData() {
+function doPost(e) {
+  // Menerima data transaksi dari web GitHub
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName(SHEET_NAME);
+    const params = JSON.parse(e.postData.contents);
+    const result = saveToSheet(params.nama, params.tipe);
     
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_NAME);
-      sheet.appendRow(['ID', 'Nama', 'Waktu', 'Tipe']);
-    }
-    
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return [];
-    
-    // Ambil data tanpa header, balik urutan (terbaru di atas)
-    const rows = data.slice(1).reverse();
-    
-    return rows.map(row => ({
-      id: row[0],
-      nama: row[1],
-      waktu: row[2],
-      tipe: row[3]
-    }));
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: result }))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    console.error('Error getHistoryData:', error);
-    return [];
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-/**
- * Menyimpan transaksi baru ke riwayat
- */
-function saveTransaction(nama, tipe) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    const timestamp = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
-    const id = 'TRX-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    
-    // Batch processing
-    sheet.appendRow([id, nama, timestamp, tipe]);
-    
-    // Anti-Delay Synchronization
-    SpreadsheetApp.flush();
-    
-    return { success: true, message: 'Transaksi berhasil disimpan' };
-  } catch (error) {
-    console.error('Error saveTransaction:', error);
-    return { success: false, message: error.toString() };
-  }
+function saveToSheet(nama, tipe) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("History") || ss.insertSheet("History");
+  const date = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy HH:mm:ss");
+  const id = "TRX-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  
+  sheet.appendRow([id, nama, date, tipe]);
+  return { id, nama, date, tipe };
+}
+
+function getHistory() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("History");
+  if (!sheet) return [];
+  
+  const values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return [];
+  
+  // Ambil 10 data terakhir
+  return values.slice(1).reverse().slice(0, 10).map(row => ({
+    id: row[0],
+    nama: row[1],
+    waktu: row[2],
+    tipe: row[3]
+  }));
 }
