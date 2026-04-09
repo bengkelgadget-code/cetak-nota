@@ -126,7 +126,7 @@
                 
                 <!-- TEMPLATE 1: TRANSFER BANK -->
                 <div id="template-transfer" class="hidden">
-                    <div contenteditable="true" id="r-toko" class="text-[14px] mb-1 uppercase">Bengkel Gadget L2</div>
+                    <div contenteditable="true" id="r-toko" class="text-[14px] mb-1 uppercase">BENGKEL GADGET L2</div>
                     <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px]">Jl. Pahlawan (Poros L2)</div>
                     <div class="py-1"><span>==============================</span></div>
                     <div class="flex justify-between items-center text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
@@ -229,7 +229,7 @@
     <!-- PAGE 4: SETELAN -->
     <div id="page-settings" class="page-container max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden hidden">
         <h2 class="text-xl font-bold text-gray-800 mb-8">Setelan Aplikasi</h2>
-        <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-6 text-center">
+        <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4 text-center">
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Toko Utama</label>
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-toko">BENGKEL GADGET L2</div>
@@ -238,8 +238,14 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alamat</label>
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
-            <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.0<br>Smart Regex & BT WakeLock</p>
+            
+            <!-- TOMBOL SIMPAN PENGATURAN BARU -->
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-4">
+                SIMPAN PENGATURAN
+            </button>
+
+            <div class="pt-6">
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.2<br>Persistent Settings Engine</p>
             </div>
         </div>
     </div>
@@ -257,7 +263,7 @@
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.065 2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Setelan</span>
                 </button>
             </div>
@@ -269,6 +275,7 @@
         let wakeLock = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadSettings(); // Memuat pengaturan yang tersimpan di memori lokal (jika ada)
             switchPage('home');
             fetchHistory();
             
@@ -307,7 +314,7 @@
                 if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
             });
 
-            // Sinkronisasi Nama Toko
+            // Sinkronisasi Nama Toko (Live Update)
             ['setting-toko', 'setting-alamat'].forEach(id => {
                 const el = document.getElementById(id);
                 el.addEventListener('blur', () => {
@@ -319,12 +326,60 @@
             });
         });
 
+        // --- SISTEM PENGATURAN TOKO (MEMORI LOKAL) ---
+        function saveSettings(btn) {
+            const toko = document.getElementById('setting-toko').innerText;
+            const alamat = document.getElementById('setting-alamat').innerText;
+            
+            // Simpan ke local storage browser
+            localStorage.setItem('app_settings', JSON.stringify({ toko, alamat }));
+
+            // Terapkan ke semua template nota
+            document.getElementById('r-toko').innerText = toko;
+            document.getElementById('t-toko').innerText = toko;
+            document.getElementById('r-alamat').innerText = alamat;
+            document.getElementById('t-alamat').innerText = alamat;
+
+            // Animasi Tombol Simpan
+            const originalText = btn.innerText;
+            btn.innerText = "✅ TERSIMPAN!";
+            btn.classList.replace('bg-indigo-600', 'bg-green-500');
+            btn.classList.replace('shadow-indigo-100', 'shadow-green-100');
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.replace('bg-green-500', 'bg-indigo-600');
+                btn.classList.replace('shadow-green-100', 'shadow-indigo-100');
+            }, 2000);
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('app_settings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    const setV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+                    
+                    if (settings.toko) {
+                        setV('setting-toko', settings.toko);
+                        setV('r-toko', settings.toko);
+                        setV('t-toko', settings.toko);
+                    }
+                    if (settings.alamat) {
+                        setV('setting-alamat', settings.alamat);
+                        setV('r-alamat', settings.alamat);
+                        setV('t-alamat', settings.alamat);
+                    }
+                } catch(e) { console.error("Gagal memuat pengaturan", e); }
+            }
+        }
+
         // --- SISTEM WAKE LOCK (MENCEGAH LAYAR MATI) ---
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => console.log('Layar bisa mati sekarang.'));
+                    wakeLock.addEventListener('release', () => console.log('Penahan layar dilepas.'));
                 }
             } catch (err) { console.error(`${err.name}, ${err.message}`); }
         }
@@ -355,7 +410,7 @@
                 else parseTransferOCR(text);
             } catch (err) {
                 console.error("OCR Error:", err);
-                alert("Gagal membaca gambar. Silakan isi form manual.");
+                alert("Gagal membaca gambar otomatis. Silakan isi form manual.");
                 updateTime();
             } finally {
                 toggleLoader(false);
@@ -363,7 +418,7 @@
             }
         }
 
-        // ALGORITMA PARSER - TRANSFER BANK (DITINGKATKAN)
+        // ALGORITMA PARSER OCR - TRANSFER BANK (DIPERBARUI MENJADI SANGAT PINTAR)
         function parseTransferOCR(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let combinedText = text.replace(/\n/g, ' ');
@@ -388,7 +443,7 @@
                 if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
             }
 
-            // Reference (Ditingkatkan untuk menangkap lebih banyak format)
+            // Reference / Order ID
             const refMatch = combinedText.match(/(?:Order ID|Ref|Referensi|No|ID|Transaksi)[\s\:\-]+([0-9A-Za-z]{8,})/i);
             if (refMatch) document.getElementById('r-ref').innerText = refMatch[1];
             else {
@@ -396,43 +451,107 @@
                 if(longNum) document.getElementById('r-ref').innerText = longNum[1];
             }
 
-            // Bank
-            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB'];
-            let foundBank = 'BANK LAIN';
-            for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
-            document.getElementById('r-bank').innerText = foundBank;
-
-            // Rekening & Nama (Algoritma Baru yang Lebih Pintar)
-            let nama = ""; let rek = "";
-            const rekRegex = /(?:REK|REKENING|NO|TUJUAN)?[\s\:\-]*(\d{8,16})/;
+            // PENCARIAN REKENING (Jangkar Utama)
+            let rek = "0000000000";
+            let rekLineIndex = -1;
             
-            // Cari rekening (8-16 digit angka, bukan Rp)
-            for (let line of lines) {
-                if (line.match(rekRegex) && !line.match(/Rp/i) && !line.toUpperCase().includes('ID')) {
-                    rek = line.match(rekRegex)[1]; break;
-                }
-            }
-            if(!rek) rek = "0000000000";
-
-            // Cari Nama (Filter pintar: Hindari kata 'Pesan')
             for (let i = 0; i < lines.length; i++) {
-                let upper = lines[i].toUpperCase();
-                if (upper.includes('PESAN')) continue; // Lewati baris berisi 'Pesan'
-                
-                if (upper.includes('DNID')) {
-                    nama = upper.replace(/.*DNID[\s\:]*/i, '').trim(); break;
-                } else if (upper.match(/(?:NAMA|PENERIMA|KEPADA|TUJUAN)[\s\:\=]+([A-Z\s]+)/i)) {
-                    let m = upper.match(/(?:NAMA|PENERIMA|KEPADA|TUJUAN)[\s\:\=]+([A-Z\s]+)/i)[1].trim();
-                    if(m.length > 2) { nama = m; break; }
-                } else if (upper.includes(foundBank) && lines[i+1] && !lines[i+1].match(/\d/)) {
-                    if(!lines[i+1].toUpperCase().includes('PESAN')) {
-                        nama = lines[i+1].trim(); // Ambil baris setelah nama bank jika bukan angka/pesan
+                let lineStr = lines[i].replace(/\s/g, ''); // Cek digit utuh
+                let digitMatch = lineStr.match(/(\d{8,16})/);
+                if (digitMatch) {
+                    let upperOrig = lines[i].toUpperCase();
+                    // Jika baris ini bukan nominal atau hal lain, anggap ini nomor rekening tujuan
+                    if (!upperOrig.includes('RP') && !upperOrig.match(/REF|ORDER|ID|TRANSAKSI|STRUK|WAKTU|TANGGAL/)) {
+                        rek = digitMatch[1];
+                        rekLineIndex = i;
+                        break;
                     }
                 }
             }
-            if(!nama) nama = "NAMA PELANGGAN";
+            document.getElementById('r-rek').innerText = rek;
 
-            document.getElementById('r-nama').innerText = nama.substring(0, 40);
+            // PENCARIAN BANK (Fokus di sekitar nomor rekening yang ditemukan)
+            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY', 'SEABANK', 'JAGO', 'NEO', 'MEGA', 'CIMB', 'DKI', 'PERMATA', 'DANAMON', 'BJB'];
+            let foundBank = 'BANK LAIN';
+
+            if (rekLineIndex !== -1) {
+                // Area pencarian prioritas tinggi: Baris rekening, baris atasnya, dan 2 baris atasnya.
+                let searchArea = [
+                    lines[rekLineIndex].toUpperCase(),
+                    rekLineIndex > 0 ? lines[rekLineIndex-1].toUpperCase() : "",
+                    rekLineIndex > 1 ? lines[rekLineIndex-2].toUpperCase() : "",
+                    rekLineIndex < lines.length - 1 ? lines[rekLineIndex+1].toUpperCase() : ""
+                ];
+                for (let area of searchArea) {
+                    let matched = banks.find(b => area.includes(b));
+                    if (matched) { foundBank = matched; break; }
+                }
+            }
+            // Jika tidak ketemu di dekat rekening, cari di seluruh teks
+            if (foundBank === 'BANK LAIN') {
+                for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
+            }
+            document.getElementById('r-bank').innerText = foundBank;
+
+            // PENCARIAN NAMA (Algoritma Penapisan Pintar)
+            let nama = "";
+
+            // Heuristik A: Cari berdasarkan kata kunci "PENERIMA", "KEPADA", "TUJUAN"
+            for (let i = 0; i < lines.length; i++) {
+                let upper = lines[i].toUpperCase();
+                
+                // HINDARI kata jebakan: "Pesan untuk Penerima", "Tujuan Transaksi", dll
+                if (upper.includes('PESAN') || upper.includes('TUJUAN TRANSAKSI') || upper.match(/REK|BANK/)) {
+                    continue;
+                }
+
+                if (upper.includes('PENERIMA') || upper.includes('KEPADA') || upper.includes('TUJUAN')) {
+                    // Ekstrak teks setelah titik dua (:) jika format sejajar (misal: "PENERIMA : JONI")
+                    let inlineName = upper.replace(/.*(PENERIMA|KEPADA|TUJUAN)[\s\:\=]+/i, '').trim();
+                    if (inlineName.length > 2 && !inlineName.match(/^[0-9]+$/)) {
+                        nama = lines[i].replace(/.*(PENERIMA|KEPADA|TUJUAN)[\s\:\=]+/i, '').trim();
+                        break;
+                    } 
+                    // Jika nama diletakkan di baris berikutnya (misal: Bank Mandiri)
+                    else if (lines[i+1]) {
+                        let nextLine = lines[i+1].toUpperCase();
+                        if (!nextLine.match(/BANK|REK|RP|NOMINAL|WAKTU/)) {
+                            nama = lines[i+1].trim();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Heuristik B: Jika tidak ada kata kunci, tebak posisi berdasarkan letak Nomor Rekening
+            if (!nama && rekLineIndex !== -1) {
+                // Cek 1 baris di atas nomor rekening
+                if (rekLineIndex > 0) {
+                    let above = lines[rekLineIndex-1].toUpperCase();
+                    if (!above.match(/BANK|REKENING|TUJUAN|PENERIMA|DARI|SUMBER|TRANSFER|DETAIL/)) {
+                        nama = lines[rekLineIndex-1].trim();
+                    }
+                }
+                // Cek 1 baris di bawah nomor rekening
+                if (!nama && rekLineIndex < lines.length - 1) {
+                    let below = lines[rekLineIndex+1].toUpperCase();
+                    if (!below.match(/BANK|REKENING|RP|NOMINAL|PESAN/)) {
+                        // Fix spesifik untuk DANA/Mega (DNID)
+                        if(below.includes('DNID')) {
+                            nama = lines[rekLineIndex+1].replace(/.*DNID[\s\:]*/i, '').trim();
+                        } else {
+                            nama = lines[rekLineIndex+1].trim();
+                        }
+                    }
+                }
+            }
+
+            // Bersihkan nama dari salah baca
+            if(!nama || nama.toUpperCase().match(/TRANSAKSI|BERHASIL|LAINNYA/)) {
+                nama = "NAMA PELANGGAN";
+            }
+            
+            document.getElementById('r-nama').innerText = nama.substring(0, 40).toUpperCase();
             document.getElementById('r-rek').innerText = rek;
             calculateTotal();
         }
@@ -558,7 +677,7 @@
                     optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 });
 
-                // Tambahkan Listener jika koneksi terputus (karena minimize/jauh)
+                // Tambahkan Listener jika koneksi terputus (karena minimize/jauh/layar mati)
                 state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
                 toggleLoader(true, "Menyambungkan...");
@@ -580,9 +699,9 @@
             } finally { toggleLoader(false); }
         }
 
-        // Fungsi ketika OS memutus paksa Bluetooth
+        // Fungsi ketika OS Android memutus paksa Bluetooth
         function onDisconnected() {
-            console.log("Bluetooth diputus oleh sistem.");
+            console.log("Bluetooth diputus oleh sistem OS.");
             state.isConnected = false;
             state.printerChar = null;
             updatePrinterUI(false);
@@ -663,7 +782,7 @@
             let raw = INIT + BOLD_ON; // BOLD AKTIF
 
             if (state.currentType === 'Token') {
-                raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
+                raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n\n";
                 raw += getT('t-alamat') + "\n\n";
                 raw += "PEMBELIAN TOKEN PLN\n";
                 raw += getT('t-tgl') + " " + getT('t-jam') + "\n";
@@ -687,7 +806,7 @@
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
             } else {
-                raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n\n"; // Header Spasi Ditingkatkan
+                raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n\n";
                 raw += getT('r-alamat') + "\n\n";
                 raw += "================================\n";
                 raw += ALIGN_LEFT + "TGL: " + getT('r-tgl') + "\n";
