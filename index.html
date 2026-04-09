@@ -245,7 +245,7 @@
             </button>
 
             <div class="pt-6">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v8.3<br>Advanced OCR Heuristics & Layout</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v9.0<br>Super Heuristic Multi-Bank OCR</p>
             </div>
         </div>
     </div>
@@ -400,7 +400,7 @@
             }
         }
 
-        // ALGORITMA PARSER OCR - TRANSFER BANK (SUPER AKURAT)
+        // ALGORITMA PARSER OCR - TRANSFER BANK (SUPER AKURAT - V9)
         function parseTransferOCR(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let combinedText = text.replace(/\n/g, ' ');
@@ -419,9 +419,22 @@
             else { updateTimeOnlyTime('r-jam'); }
 
             // Nominal
-            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
-            if (rpMatches.length > 0) {
-                let nominalStr = rpMatches[0][1].replace(/[^0-9]/g, '');
+            let nominalStr = "";
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].toUpperCase().match(/(NOMINAL|JUMLAH|TRANSFER)/)) {
+                    let m = lines[i].match(/Rp\.?\s*([\d\.,]+)/i);
+                    if (m) { nominalStr = m[1]; break; }
+                    else if (lines[i+1] && lines[i+1].match(/Rp\.?\s*([\d\.,]+)/i)) {
+                        nominalStr = lines[i+1].match(/Rp\.?\s*([\d\.,]+)/i)[1]; break;
+                    }
+                }
+            }
+            if(!nominalStr) {
+                const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
+                if (rpMatches.length > 0) nominalStr = rpMatches[0][1];
+            }
+            if (nominalStr) {
+                nominalStr = nominalStr.replace(/[^0-9]/g, '');
                 if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
             }
 
@@ -442,9 +455,8 @@
             let destIndex = -1;
             for (let i = 0; i < lines.length; i++) {
                 let up = lines[i].toUpperCase();
-                // Cari jangkar informasi penerima
                 if (up.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER)/)) {
-                    if (up.includes('DARI') || up.includes('PESAN')) continue; // Skip jika itu source atau pesan
+                    if (up.includes('DARI') || up.includes('PESAN') || up.includes('SUMBER')) continue; 
                     destIndex = i;
                     break;
                 }
@@ -452,62 +464,49 @@
 
             if (destIndex !== -1) {
                 let candidates = [];
-                // Ambil 4 baris ke bawah setelah jangkar ditemukan
-                for (let i = destIndex; i <= destIndex + 4 && i < lines.length; i++) {
-                    if (lines[i].match(/Rp|Nominal|Jumlah|Total|Biaya|Admin|Jenis/i)) break;
+                for (let i = destIndex; i <= destIndex + 5 && i < lines.length; i++) {
+                    if (lines[i].match(/Rp|Nominal|Jumlah|Total|Biaya|Admin|Jenis|Waktu|Tanggal/i)) break;
                     candidates.push(lines[i]);
                 }
 
                 for (let c of candidates) {
                     let up = c.toUpperCase();
                     
-                    // 1. Ekstrak dari baris yang sama dengan header (jika formatnya "Penerima : Joni")
-                    if (up.match(/REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER/)) {
-                        let split = c.split(/[:=]/);
-                        if (split.length > 1 && split[1].trim().length > 2) {
-                            nama = split[1].trim();
-                        }
-                        continue;
+                    let rekMatch = c.match(/(\d{3,6}[\s\-\*]+\d{2,10}|\d{8,16})/);
+                    if (rekMatch && !up.includes('RP') && !rek) {
+                        rek = rekMatch[1];
                     }
 
-                    // 2. Cari Nama Bank
                     if (!foundBank) {
                         let matchedBank = banks.find(b => up.includes(b));
                         if (matchedBank) foundBank = matchedBank;
                     }
 
-                    // 3. Cari Rekening (Termasuk yang disensor bintang seperti BRI)
-                    if (!rek) {
-                        // Mencocokkan: 4605 **** **** 500 atau 010740021921905
-                        let rekMatch = c.match(/(\d{3,6}[\s\-\*]+\d{2,10})/);
-                        if (rekMatch) {
-                            rek = rekMatch[1];
-                        } else {
-                            let digitMatch = c.match(/(\d{8,16})/);
-                            if (digitMatch) rek = digitMatch[1];
-                        }
-                    }
-
-                    // 4. Cari Nama (Baris yang bukan Bank, Rekening, atau Jebakan Pesan)
-                    if (!nama && !up.match(/BANK|REK|ID|PESAN/)) {
+                    let isSystemWord = up.match(/(REKENING TUJUAN|PENERIMA|KEPADA|TUJUAN TRANSFER|BANK|REK|NO|PESAN)/);
+                    let isJustNumber = c.replace(/[\s\-\*]/g, '').match(/^\d+$/);
+                    
+                    if (!isSystemWord && !isJustNumber && up.length > 3) {
+                        if (up.includes('-') && banks.some(b => up.includes(b))) continue;
                         if (up.includes('DNID')) {
                             nama = c.replace(/.*DNID[\s\:]*/i, '').trim();
-                        } else if (!c.match(/[\*\-\d]/)) { 
-                            nama = c.trim(); // Jika baris ini tidak ada angka atau bintang, kemungkinan besar itu nama
-                        } else if (c.match(/^[A-Z\s\.]+$/i)) {
-                            nama = c.trim();
+                        } else if (!nama) {
+                            let split = c.split(/(?:Penerima|Tujuan|Kepada)[\s\:\=]+/i);
+                            if (split.length > 1 && split[1].trim().length > 0) nama = split[1].trim();
+                            else nama = c.trim();
+                        }
+                    } else if (isSystemWord) {
+                        let split = c.split(/(?:Penerima|Tujuan|Kepada)[\s\:\=]+/i);
+                        if(split.length > 1 && split[1].trim().length > 2) {
+                            nama = split[1].trim();
                         }
                     }
                 }
             }
 
-            // Fallback (Jika tidak ketemu lewat jangkar)
             if (!rek) {
                 for (let i = 0; i < lines.length; i++) {
                     let digitMatch = lines[i].replace(/\s/g, '').match(/(\d{8,16})/);
-                    if (digitMatch && !lines[i].toUpperCase().includes('RP')) {
-                        rek = digitMatch[1]; break;
-                    }
+                    if (digitMatch && !lines[i].toUpperCase().includes('RP')) { rek = digitMatch[1]; break; }
                 }
             }
             if (!foundBank) {
@@ -515,8 +514,10 @@
                 if (!foundBank && combinedText.toUpperCase().includes('BRI')) foundBank = 'BRI';
             }
 
+            if(!nama || nama.toUpperCase().match(/TRANSAKSI LAINNYA|BERHASIL/)) nama = "NAMA PELANGGAN";
+            
             document.getElementById('r-bank').innerText = foundBank || "BANK LAIN";
-            document.getElementById('r-nama').innerText = (nama || "NAMA PELANGGAN").substring(0, 40).toUpperCase();
+            document.getElementById('r-nama').innerText = nama.substring(0, 40).toUpperCase();
             document.getElementById('r-rek').innerText = rek || "0000000000";
             calculateTotal();
         }
