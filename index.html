@@ -6,50 +6,27 @@
     <title>Cetak Nota - AI Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8F9FE; -webkit-tap-highlight-color: transparent; }
-        
-        /* Font Nota Dipertebal */
-        .receipt-font { 
-            font-family: 'JetBrains Mono', monospace; 
-            font-weight: 700; 
-            color: #000; /* Hitam Pekat */
-            letter-spacing: -0.5px;
-        }
-        
+        .receipt-font { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #000; letter-spacing: -0.5px; }
         .gradient-bg { background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%); }
         .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
-        .loading-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(255,255,255,0.95); z-index: 10000;
-            align-items: center; justify-content: center; flex-direction: column;
-        }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
         .receipt-paper { background: white; position: relative; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }
-        .receipt-paper::before, .receipt-paper::after {
-            content: ""; position: absolute; left: 0; right: 0; height: 10px;
-            background-size: 20px 20px; background-repeat: repeat-x;
-        }
+        .receipt-paper::before, .receipt-paper::after { content: ""; position: absolute; left: 0; right: 0; height: 10px; background-size: 20px 20px; background-repeat: repeat-x; }
         .receipt-paper::before { top: -10px; background-image: radial-gradient(circle at 10px 10px, white 10px, transparent 0); }
         .receipt-paper::after { bottom: -10px; background-image: radial-gradient(circle at 10px 0, white 10px, transparent 0); }
-        
         .page-container { width: 100%; min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         button:active { transform: scale(0.96); transition: 0.1s; }
-
-        /* Highlight area editable saat diklik */
         [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; }
-        [contenteditable="true"]:focus {
-            background-color: rgba(79, 70, 229, 0.05);
-            border-bottom: 1px dashed #4F46E5;
-            border-radius: 2px;
-        }
+        [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; border-radius: 2px; }
     </style>
 </head>
 <body class="pb-24">
 
-    <!-- KONFIGURASI API -->
+    <!-- KONFIGURASI API BACKEND -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
@@ -82,7 +59,7 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100 transition-all active:scale-95">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-2">Cetak Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>sistem AI akan mengisi nota otomatis.</p>
+                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>Google Gemini AI akan mengisi nota otomatis.</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
@@ -177,7 +154,6 @@
                     <div class="uppercase mb-4 text-[10px]">TERIMA KASIH</div>
                     <div class="text-[8px] uppercase">Tid: <span contenteditable="true">A76BD1</span></div>
                 </div>
-
             </div>
         </div>
 
@@ -188,7 +164,7 @@
         </div>
     </div>
 
-    <!-- PAGE 3: KONEKSI PRINTER -->
+    <!-- PAGE 3: PRINTER -->
     <div id="page-printer" class="page-container max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden hidden">
         <div class="flex items-center gap-4 mb-6">
             <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm active:scale-90 transition-transform">
@@ -230,22 +206,32 @@
     <!-- PAGE 4: SETELAN -->
     <div id="page-settings" class="page-container max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden hidden">
         <h2 class="text-xl font-bold text-gray-800 mb-8">Setelan Aplikasi</h2>
-        <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4 text-center">
+        <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4 text-left">
             <div class="space-y-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Toko Utama</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-toko">BENGKEL GADGET L2</div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Nama Toko Utama</label>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center" contenteditable="true" id="setting-toko">BENGKEL GADGET L2</div>
             </div>
             <div class="space-y-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alamat</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Alamat</label>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
             
-            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-4">
+            <div class="border-t border-dashed border-gray-200 my-4 py-2"></div>
+            
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
+                    <span>Gemini API Key</span>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Dapatkan Gratis</a>
+                </label>
+                <input type="password" id="setting-apikey" placeholder="Isi ini jika dihosting di GitHub" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-100 transition-all border-none text-center">
+            </div>
+            
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
                 SIMPAN PENGATURAN
             </button>
 
-            <div class="pt-6">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v13.5<br>Crash-Proof Smart Regex</p>
+            <div class="pt-6 text-center">
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v15.0<br>Gemini Vision AI Engine</p>
             </div>
         </div>
     </div>
@@ -270,22 +256,34 @@
         </div>
     </div>
 
+    <!-- MAIN APP SCRIPT -->
     <script>
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
+
+        // --- DOM HELPERS ---
+        const getEl = id => document.getElementById(id);
+        const getElText = id => { const el = getEl(id); return el ? el.innerText : ''; };
+        const setElText = (id, val) => { const el = getEl(id); if (el) el.innerText = val; };
+
+        // --- LOCAL DB HELPERS ---
+        const db = {
+            get: () => JSON.parse(localStorage.getItem('cetak_history') || '[]'),
+            set: (data) => localStorage.setItem('cetak_history', JSON.stringify(data))
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings(); 
             switchPage('home');
             fetchHistory();
             
-            document.getElementById('gallery-input').onchange = async (e) => { 
+            getEl('gallery-input').onchange = async (e) => { 
                 const file = e.target.files[0];
                 if (file) await processImageOCR(file);
                 e.target.value = '';
             };
 
-            // LISTENER: ENTER KEY SEBAGAI TAB
+            // Enter as Tab
             document.addEventListener('keydown', (e) => {
                 if (e.target.isContentEditable && e.key === 'Enter') {
                     e.preventDefault();
@@ -302,38 +300,38 @@
                 }
             });
 
-            // LISTENER KALKULASI & FORMAT (Transfer)
-            ['r-nom', 'r-adm'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
+            // Kalkulasi & Format
+            ['r-nom', 'r-adm', 't-nom', 't-adm'].forEach(id => {
+                const el = getEl(id);
+                if(el) {
+                    el.addEventListener('focus', clearZeroOnFocus);
+                    el.addEventListener('input', calculateTotal);
+                    el.addEventListener('blur', formatRupiahOnBlur);
+                }
             });
 
-            // LISTENER KALKULASI & FORMAT (Token)
-            ['t-nom', 't-adm'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { el.addEventListener('focus', clearZeroOnFocus); el.addEventListener('input', calculateTotal); el.addEventListener('blur', formatRupiahOnBlur); }
-            });
-
+            // Sync Toko Settings Live
             ['setting-toko', 'setting-alamat'].forEach(id => {
-                const el = document.getElementById(id);
-                el.addEventListener('blur', () => {
-                    document.getElementById('r-toko').innerText = document.getElementById('setting-toko').innerText;
-                    document.getElementById('t-toko').innerText = document.getElementById('setting-toko').innerText;
-                    document.getElementById('r-alamat').innerText = document.getElementById('setting-alamat').innerText;
-                    document.getElementById('t-alamat').innerText = document.getElementById('setting-alamat').innerText;
+                const el = getEl(id);
+                if(el) el.addEventListener('blur', (e) => {
+                    const txt = e.target.innerText;
+                    const suffix = id.split('-')[1];
+                    setElText(`r-${suffix}`, txt);
+                    setElText(`t-${suffix}`, txt);
                 });
             });
         });
 
-        // --- SISTEM PENGATURAN TOKO ---
+        // --- SISTEM PENGATURAN ---
         function saveSettings(btn) {
-            const toko = document.getElementById('setting-toko').innerText;
-            const alamat = document.getElementById('setting-alamat').innerText;
-            localStorage.setItem('app_settings', JSON.stringify({ toko, alamat }));
-            document.getElementById('r-toko').innerText = toko;
-            document.getElementById('t-toko').innerText = toko;
-            document.getElementById('r-alamat').innerText = alamat;
-            document.getElementById('t-alamat').innerText = alamat;
+            const toko = getElText('setting-toko');
+            const alamat = getElText('setting-alamat');
+            const apikey = getEl('setting-apikey').value;
+            
+            localStorage.setItem('app_settings', JSON.stringify({ toko, alamat, apikey }));
+            
+            setElText('r-toko', toko); setElText('t-toko', toko);
+            setElText('r-alamat', alamat); setElText('t-alamat', alamat);
 
             const originalText = btn.innerText;
             btn.innerText = "✅ TERSIMPAN!";
@@ -351,49 +349,42 @@
             if (saved) {
                 try {
                     const settings = JSON.parse(saved);
-                    const setV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-                    if (settings.toko) { setV('setting-toko', settings.toko); setV('r-toko', settings.toko); setV('t-toko', settings.toko); }
-                    if (settings.alamat) { setV('setting-alamat', settings.alamat); setV('r-alamat', settings.alamat); setV('t-alamat', settings.alamat); }
+                    if (settings.toko) { setElText('setting-toko', settings.toko); setElText('r-toko', settings.toko); setElText('t-toko', settings.toko); }
+                    if (settings.alamat) { setElText('setting-alamat', settings.alamat); setElText('r-alamat', settings.alamat); setElText('t-alamat', settings.alamat); }
+                    if (settings.apikey) { getEl('setting-apikey').value = settings.apikey; }
                 } catch(e) { console.error("Gagal memuat pengaturan", e); }
             }
         }
 
         // --- SISTEM WAKE LOCK ---
         async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => console.log('Penahan layar dilepas.'));
-                }
-            } catch (err) {}
+            try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) {}
         }
         function releaseWakeLock() {
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- SISTEM AI VISION (OCR) MENCEGAH OOM MEMORY CRASH ---
+        // --- GOOGLE GEMINI VISION AI ENGINE ---
         async function processImageOCR(file) {
             toggleLoader(true, "MEMBACA GAMBAR...");
-            document.getElementById('loader-subtext').innerText = "AI sedang mengekstrak data struk...";
+            getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
             try {
-                const imageData = await new Promise((resolve, reject) => {
+                // Resize image untuk hemat kuota dan cegah memory penuh
+                const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            const MAX_DIM = 1200; 
-                            let w = img.width;
-                            let h = img.height;
+                            const MAX_DIM = 1024; 
+                            let w = img.width, h = img.height;
                             if (w > h && w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
                             else if (h > w && h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
-                            
-                            canvas.width = w; 
-                            canvas.height = h;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            // Ambil base64 mentah tanpa prefix "data:image/jpeg;base64,"
+                            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]); 
                         };
                         img.onerror = () => reject(new Error("File gambar rusak."));
                         img.src = e.target.result;
@@ -402,17 +393,102 @@
                     reader.readAsDataURL(file);
                 });
 
-                const worker = await Tesseract.createWorker('ind');
-                const result = await worker.recognize(imageData);
-                const text = result.data.text;
-                await worker.terminate();
+                // Set API Key (Mengambil dari Setelan lokal user, atau bawaan environment)
+                const apiKey = localStorage.getItem('app_settings') ? (JSON.parse(localStorage.getItem('app_settings')).apikey || "") : "";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-                if(state.currentType === 'Token') parseTokenOCR(text);
-                else parseTransferOCR(text);
+                let promptText = "";
+                let schema = {};
+
+                if (state.currentType === 'Transfer') {
+                    promptText = "Ekstrak data dari gambar struk transfer bank ini. Berikan respons dalam JSON.";
+                    schema = {
+                        type: "OBJECT",
+                        properties: {
+                            tanggal: { type: "STRING", description: "Format DD-MM-YYYY. Hari ini jika tidak ada." },
+                            waktu: { type: "STRING", description: "Format HH:mm. Saat ini jika tidak ada." },
+                            referensi: { type: "STRING", description: "Nomor referensi, struk, atau ID transaksi" },
+                            bank_tujuan: { type: "STRING", description: "Nama bank penerima/tujuan (Contoh: BCA, BRI, MANDIRI, DANA, OVO, MEGA, dll)" },
+                            rekening_tujuan: { type: "STRING", description: "Nomor rekening atau HP tujuan. Biarkan tanda bintang jika ada (contoh: 4605 **** **** 500)" },
+                            nama_penerima: { type: "STRING", description: "Nama orang/perusahaan penerima" },
+                            nominal: { type: "INTEGER", description: "Jumlah uang yang ditransfer (angka saja)" },
+                            admin: { type: "INTEGER", description: "Biaya admin atau fee (angka saja, 0 jika gratis)" },
+                            total: { type: "INTEGER", description: "Total keseluruhan (angka saja)" }
+                        },
+                        required: ["tanggal", "waktu", "referensi", "bank_tujuan", "rekening_tujuan", "nama_penerima", "nominal", "admin", "total"]
+                    };
+                } else {
+                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. Berikan respons dalam JSON.";
+                    schema = {
+                        type: "OBJECT",
+                        properties: {
+                            tanggal: { type: "STRING", description: "Format DD-MM-YYYY" },
+                            waktu: { type: "STRING", description: "Format HH:mm" },
+                            no_meter: { type: "STRING", description: "Nomor Meter / ID Pelanggan PLN" },
+                            nama: { type: "STRING", description: "Nama pelanggan PLN" },
+                            tarif_daya: { type: "STRING", description: "Tarif dan Daya (Contoh: R1M/900 VA)" },
+                            kwh: { type: "STRING", description: "Jumlah kWh (Contoh: 50.5)" },
+                            token: { type: "STRING", description: "20 digit angka stroom/token PLN" },
+                            nominal: { type: "INTEGER", description: "Nominal pembelian (angka saja)" },
+                            admin: { type: "INTEGER", description: "Biaya admin (angka saja)" },
+                            total: { type: "INTEGER", description: "Total bayar (angka saja)" },
+                            sn: { type: "STRING", description: "Nomor SN / Referensi" }
+                        },
+                        required: ["tanggal", "waktu", "no_meter", "nama", "tarif_daya", "kwh", "token", "nominal", "admin", "total", "sn"]
+                    };
+                }
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.1,
+                        responseMimeType: "application/json",
+                        responseSchema: schema
+                    }
+                };
+
+                let result;
+                let retries = 5;
+                let delays = [1000, 2000, 4000, 8000, 16000];
+                
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!response.ok) {
+                            if(response.status === 400 && apiKey === "") throw new Error("API Key Gemini belum diisi di Setelan.");
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        result = await response.json();
+                        break; 
+                    } catch (error) {
+                        if (i === retries || error.message.includes("API Key")) throw error;
+                        await new Promise(r => setTimeout(r, delays[i]));
+                    }
+                }
+
+                const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResponse) throw new Error("Respons AI kosong.");
+                
+                const jsonData = JSON.parse(textResponse);
+
+                // Memasukkan data terstruktur ke UI
+                if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
+                else populateTransferFromJSON(jsonData);
 
             } catch (err) {
-                console.error("OCR Error:", err);
-                alert("Gagal memproses AI: " + (err.message || "Memori penuh / Koneksi terputus") + ". \nSilakan isi form manual.");
+                console.error("Gemini Error:", err);
+                alert(err.message + "\n\nPastikan Anda sudah mengisi Gemini API Key di menu Setelan jika membuka web ini secara eksternal.");
                 updateTime();
             } finally {
                 toggleLoader(false);
@@ -420,249 +496,41 @@
             }
         }
 
-        // ALGORITMA PARSER OCR - TRANSFER BANK (V13.5 CRASH-PROOF ENGINE)
-        function parseTransferOCR(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-            const combinedUpper = combinedText.toUpperCase();
-            const getEl = id => document.getElementById(id);
-
-            // 1. TANGGAL & WAKTU
-            const dateMatch = combinedText.match(/(\d{2}[\s\-\/][A-Za-z]{3}[\s\-\/]\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
-            if (dateMatch) {
-                let d = dateMatch[1];
-                if (d.includes('-') && d.split('-')[0].length === 4) { 
-                    const pts = d.split('-'); getEl('r-tgl').innerText = `${pts[2]}-${pts[1]}-${pts[0]}`;
-                } else { getEl('r-tgl').innerText = d.replace(/\//g, '-'); }
-            } else { updateTimeOnlyDate('r-tgl'); }
-
-            const timeMatch = combinedText.match(/(\d{2}:\d{2}(?::\d{2})?)/);
-            if (timeMatch) getEl('r-jam').innerText = timeMatch[1];
-            else { updateTimeOnlyTime('r-jam'); }
-
-            // 2. NOMINAL, ADMIN, TOTAL
-            let moneyValues = [];
-            const moneyRegex = /(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/gi;
-            let m;
-            while ((m = moneyRegex.exec(combinedText)) !== null) {
-                if (m[1]) {
-                    let val = parseInt(m[1].replace(/\./g, ''));
-                    if (val > 0) moneyValues.push(val);
-                }
-            }
-            moneyValues = [...new Set(moneyValues)].sort((a,b) => b-a);
+        // --- MAP DATA GEMINI KE UI ---
+        function populateTransferFromJSON(data) {
+            setElText('r-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
+            setElText('r-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
+            setElText('r-ref', data.referensi || "0000000000");
+            setElText('r-bank', (data.bank_tujuan || "BANK LAIN").toUpperCase());
             
-            let nominal = 0, admin = 0, total = 0;
+            let rek = data.rekening_tujuan || "0000000000";
+            setElText('r-rek', rek.replace(/\*/g, ' * '));
+            setElText('r-nama', (data.nama_penerima || "NAMA PELANGGAN").toUpperCase());
             
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                let lineMoneyMatch = lines[i].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i);
-                let nextLineMoneyMatch = lines[i+1] ? lines[i+1].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i) : null;
-                
-                let val = 0;
-                if (lineMoneyMatch && lineMoneyMatch[1]) val = parseInt(lineMoneyMatch[1].replace(/\./g, ''));
-                else if (nextLineMoneyMatch && nextLineMoneyMatch[1]) val = parseInt(nextLineMoneyMatch[1].replace(/\./g, ''));
-
-                if (up.match(/(BIAYA|ADMIN|FEE)/) && val > 0 && val < 50000) admin = val;
-                else if (up.match(/(TOTAL)/) && val > 0) total = val;
-                else if (up.match(/(NOMINAL|JUMLAH TRANSFER|JUMLAH)/) && val > 0 && !up.match(/TOTAL/)) nominal = val;
-            }
-
-            if (total === 0 && moneyValues.length > 0) total = moneyValues[0];
-            if (nominal === 0) {
-                if (moneyValues.length >= 2) nominal = moneyValues.find(x => x < total) || total;
-                else nominal = total;
-            }
-            if (admin === 0 && total > nominal) admin = total - nominal;
-            if (total !== nominal + admin) {
-                 if (moneyValues.length > 0) {
-                     total = moneyValues[0];
-                     nominal = moneyValues.length > 1 ? moneyValues[1] : total;
-                     admin = total > nominal ? total - nominal : 0;
-                 }
-            }
-
-            getEl('r-nom').innerText = formatRupiahStr(nominal);
-            getEl('r-adm').innerText = formatRupiahStr(admin);
-            getEl('r-tot').innerText = formatRupiahStr(total);
-
-            // 3. REFERENSI
-            let ref = "";
-            for(let i=0; i<lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/(REFERENSI|REF|ORDER|ID TRANSAKSI)/)) {
-                    let matchRef = up.match(/([A-Z0-9]{8,25})/);
-                    if (matchRef && matchRef[0]) ref = matchRef[0];
-                }
-            }
-            if (!ref) {
-                let refMatch = combinedText.match(/(?:REFERENSI|REF|ORDER|ID TRANSAKSI|NO REF)[\s\:\.]*([A-Z0-9]{8,25})/i);
-                if (refMatch && refMatch[1]) ref = refMatch[1].replace(/[^A-Z0-9]/gi, '');
-            }
-            getEl('r-ref').innerText = ref || "0000000000";
-
-            // 4. BANK, REKENING, NAMA
-            let bank = "", rek = "", nama = "";
-            let destIdx = -1;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/^(TUJUAN|PENERIMA|KEPADA|REKENING TUJUAN|DATA PENERIMA)/)) {
-                    if (!up.match(/SUMBER|DARI/)) { destIdx = i; break; }
-                }
-            }
-
-            let nameCandidates = [];
-            let rekCandidates = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                let up = line.toUpperCase();
-                
-                if (up.match(/NOMINAL|BIAYA|ADMIN|TOTAL|SALDO|TRANSAKSI|WAKTU|TANGGAL|REF|ID|STRUK|CETAK|BAGIKAN|SELESAI|KEMBALI|BERHASIL|SUMBER DANA/)) continue;
-                
-                // MENGGUNAKAN CAPTURING GROUP YANG BENAR: ( ... )
-                let rMatch = line.match(/(\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,20})/);
-                
-                if (rMatch && rMatch[0] && !up.includes('RP')) {
-                    let cleanMatch = rMatch[0].replace(/[^\d\*]/g, '');
-                    let cleanRef = (ref || '').replace(/[^0-9]/g, '');
-                    
-                    // Verifikasi bahwa ini bukan no referensi
-                    if (cleanMatch !== cleanRef || cleanMatch === '') {
-                        if (line.includes('-')) {
-                            let parts = line.split('-');
-                            let p1 = parts[0].trim();
-                            let p2 = parts.slice(1).join('-').trim();
-                            
-                            if (p1.replace(/[^\d\*]/g,'').length >= 8) {
-                                rekCandidates.push({val: p1, idx: i});
-                                if (p2.replace(/[^A-Za-z]/g, '').length > 3) nameCandidates.push({val: p2, idx: i, fromSplit: true});
-                                continue;
-                            }
-                        }
-                        rekCandidates.push({val: rMatch[0], idx: i});
-                    }
-                } else {
-                    if (up.replace(/[^A-Z]/g, '').length > 3) {
-                        nameCandidates.push({val: line, idx: i});
-                    }
-                }
-            }
-
-            // Filter Rekening
-            if (rekCandidates.length > 0) {
-                let validReks = rekCandidates.filter(c => destIdx === -1 || c.idx >= destIdx);
-                rek = (validReks.length > 0 ? validReks[0].val : rekCandidates[rekCandidates.length-1].val);
-            }
-
-            // Filter Nama
-            if (nameCandidates.length > 0) {
-                const badNames = /BANK|MANDIRI|BRI|BCA|BNI|BSI|OVO|DANA|GOPAY|LINKAJA|SHOPEE|MEGA|CIMB|PERMATA|DANAMON|BJB|DKI|JAGO|NEO|SEABANK|REKENING|TUJUAN|PENERIMA|TRANSFER|PEMBAYARAN|JENIS|KETERANGAN|CATATAN|ALIAS|INFORMASI/i;
-                let validNames = nameCandidates.filter(c => !c.val.match(badNames) && c.val.replace(/[^A-Za-z]/g, '').length >= 3);
-                
-                if (destIdx !== -1) {
-                    let afterDest = validNames.filter(c => c.idx >= destIdx);
-                    if (afterDest.length > 0) {
-                        nama = afterDest[0].val;
-                        let splitName = validNames.find(c => c.fromSplit && c.idx === (rekCandidates.find(r=>r.val===rek) || {}).idx);
-                        if (splitName) nama = splitName.val;
-                    }
-                } else {
-                    if (rek) {
-                        let targetRekIdx = (rekCandidates.find(r => r.val === rek) || {}).idx || -1;
-                        if (targetRekIdx !== -1) {
-                            let closest = validNames.find(c => c.idx === targetRekIdx - 1 || c.idx === targetRekIdx + 1 || c.idx === targetRekIdx);
-                            if (closest) nama = closest.val;
-                            else nama = validNames[validNames.length-1].val;
-                        }
-                    } else {
-                        nama = validNames[0]?.val || "";
-                    }
-                }
-            }
-            
-            if (nama.toUpperCase().includes('DNID')) nama = nama.replace(/.*DNID[\s\:]*/i, '');
-            nama = (nama || '').replace(/^(TUJUAN|PENERIMA|KEPADA)[\s\:\=]+/i, '');
-            nama = (nama || '').replace(/^[^a-zA-Z0-9]+/, '');
-
-            // Deteksi Bank Kontekstual
-            const bankMap = [
-                { id: 'BCA', keys: ['BCA', 'M-BCA', 'MBCA', 'SAKUKU', 'BLU'] },
-                { id: 'BRI', keys: ['BRI', 'BRIMO', 'BRIVA', 'BANK RAKYAT INDONESIA'] },
-                { id: 'MANDIRI', keys: ['MANDIRI', 'LIVIN', 'BANK MANDIRI'] },
-                { id: 'BNI', keys: ['BNI'] },
-                { id: 'BSI', keys: ['BSI', 'SYARIAH INDONESIA'] },
-                { id: 'DANA', keys: ['DANA', 'DNID', 'ESPAY'] },
-                { id: 'OVO', keys: ['OVO', 'VISIONET'] },
-                { id: 'GOPAY', keys: ['GOPAY', 'GO-PAY', 'GOTO', 'DOMPET ANAK BANGSA'] },
-                { id: 'LINKAJA', keys: ['LINKAJA', 'FINTEK KARYA'] },
-                { id: 'SHOPEEPAY', keys: ['SHOPEE', 'SPAY', 'AIRPAY'] },
-                { id: 'SEABANK', keys: ['SEABANK'] },
-                { id: 'JAGO', keys: ['JAGO'] },
-                { id: 'NEO', keys: ['NEO', 'BNC'] },
-                { id: 'MEGA', keys: ['MEGA', 'M-SMILE'] },
-                { id: 'CIMB', keys: ['CIMB', 'OCTO'] }
-            ];
-
-            for (let b of bankMap) {
-                if (b.keys.some(k => combinedUpper.includes(k))) {
-                    bank = b.id; break;
-                }
-            }
-
-            getEl('r-bank').innerText = bank || "BANK LAIN";
-            getEl('r-rek').innerText = rek ? rek.replace(/\*/g, ' * ') : "0000000000";
-            getEl('r-nama').innerText = (nama || "NAMA PELANGGAN").substring(0, 40).toUpperCase();
+            setElText('r-nom', formatRupiahStr(data.nominal || 0));
+            setElText('r-adm', formatRupiahStr(data.admin || 0));
+            setElText('r-tot', formatRupiahStr(data.total || 0));
         }
 
-        // ALGORITMA PARSER - TOKEN PLN
-        function parseTokenOCR(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-            const getT = (id) => document.getElementById(id);
-
-            updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
-
-            const meterMatch = combinedText.match(/(\d{11,12})/);
-            if (meterMatch) getT('t-meter').innerText = meterMatch[1];
-
-            let namaToken = "NAMA PELANGGAN";
-            for (let i = 0; i < lines.length; i++) {
-                let lineUpper = lines[i].toUpperCase();
-                if (lineUpper.includes('NAMA') && !lineUpper.includes('BANK')) {
-                    let cleanName = lineUpper.replace(/.*NAMA(?: PELANGGAN)?[\s\:\=]+/i, '').trim();
-                    if (cleanName && cleanName.length > 2 && !cleanName.match(/METER|TARIF|DAYA|KWH/i)) {
-                        namaToken = cleanName;
-                    } else if (lines[i+1] && !lines[i+1].match(/METER|TARIF|TRF|DAYA|R1|KWH|RP|TOTAL/i)) {
-                        namaToken = lines[i+1].trim();
-                    }
-                    break;
-                }
+        function populateTokenFromJSON(data) {
+            setElText('t-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
+            setElText('t-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
+            setElText('t-meter', data.no_meter || "00000000000");
+            setElText('t-nama', (data.nama || "NAMA PELANGGAN").toUpperCase());
+            setElText('t-daya', (data.tarif_daya || "R1M/900 VA").toUpperCase());
+            setElText('t-kwh', (data.kwh || "0.0") + " kWh");
+            
+            let tk = (data.token || "00000000000000000000").replace(/[^0-9]/g, '');
+            if(tk.length === 20) {
+                getEl('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
+            } else {
+                getEl('t-token').innerHTML = tk || "XXXX XXXX XXXX<br>XXXX XXXX";
             }
-            getT('t-nama').innerText = namaToken.substring(0, 35); 
-
-            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
-            if (rpMatches.length > 0 && rpMatches[0][1]) {
-                getT('t-nom').innerText = formatRupiahStr(parseInt(rpMatches[0][1].replace(/[^0-9]/g, '')));
-            }
-
-            const tokenMatch = combinedText.replace(/[\s\-]/g, '').match(/(\d{20})/);
-            if (tokenMatch) {
-                const tk = tokenMatch[1];
-                getT('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
-            }
-
-            const dayaMatch = combinedText.match(/([A-Z0-9]+\/\s*\d+[\.,]?\d*\s*VA)/i);
-            if (dayaMatch) getT('t-daya').innerText = dayaMatch[1];
-
-            const kwhMatch = combinedText.match(/([\d\.,]+)\s*kWh/i);
-            if (kwhMatch) getT('t-kwh').innerText = kwhMatch[1] + " kWh";
-
-            const snMatch = combinedText.match(/(?:SN|Ref)[\s\:\-]*([A-Z0-9]{10,35})/i);
-            if (snMatch && snMatch[1]) getT('t-sn').innerText = snMatch[1];
-
-            calculateTotal();
+            
+            setElText('t-nom', formatRupiahStr(data.nominal || 0));
+            setElText('t-adm', formatRupiahStr(data.admin || 0));
+            setElText('t-tot', formatRupiahStr(data.total || 0));
+            setElText('t-sn', data.sn || "XXXXXXXXXXXXXXXXXXXXX");
         }
 
         // --- FUNGSI BANTUAN ---
@@ -671,52 +539,40 @@
         function formatRupiahStr(num) { return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function calculateTotal() {
             let prefix = state.currentType === 'Token' ? 't' : 'r';
-            let nomEl = document.getElementById(prefix + '-nom');
-            let admEl = document.getElementById(prefix + '-adm');
-            let totEl = document.getElementById(prefix + '-tot');
-            if(nomEl && admEl && totEl) {
-                let nom = parseRupiahStr(nomEl.innerText); let adm = parseRupiahStr(admEl.innerText);
-                totEl.innerText = formatRupiahStr(nom + adm);
-            }
+            let nom = parseRupiahStr(getElText(`${prefix}-nom`)); 
+            let adm = parseRupiahStr(getElText(`${prefix}-adm`));
+            setElText(`${prefix}-tot`, formatRupiahStr(nom + adm));
         }
-        function formatRupiahOnBlur(e) {
-            let val = parseRupiahStr(e.target.innerText); e.target.innerText = formatRupiahStr(val); calculateTotal();
-        }
+        function formatRupiahOnBlur(e) { e.target.innerText = formatRupiahStr(parseRupiahStr(e.target.innerText)); calculateTotal(); }
+        
         function updateTime() {
             if(state.currentType === 'Token') { updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam'); } 
             else { updateTimeOnlyDate('r-tgl'); updateTimeOnlyTime('r-jam'); }
         }
-        function updateTimeOnlyDate(id) {
-            const now = new Date(); document.getElementById(id).innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-');
-        }
-        function updateTimeOnlyTime(id) {
-            const now = new Date(); document.getElementById(id).innerText = now.toLocaleTimeString('id-ID', {hour12: false});
-        }
+        function updateTimeOnlyDate(id) { setElText(id, new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-')); }
+        function updateTimeOnlyTime(id) { setElText(id, new Date().toLocaleTimeString('id-ID', {hour12: false})); }
 
         // --- NAVIGASI ---
         function switchPage(pageId) {
-            ['home', 'preview', 'printer', 'settings'].forEach(id => document.getElementById('page-'+id).classList.add('hidden'));
-            document.getElementById('page-'+pageId).classList.remove('hidden');
-            document.getElementById('bottom-nav').style.display = (pageId === 'preview') ? 'none' : 'block';
+            ['home', 'preview', 'printer', 'settings'].forEach(id => {
+                getEl(`page-${id}`).classList.toggle('hidden', id !== pageId);
+            });
+            getEl('bottom-nav').style.display = (pageId === 'preview') ? 'none' : 'block';
 
             ['home', 'printer', 'settings'].forEach(id => {
-                const btn = document.getElementById('nav-' + id);
+                const btn = getEl(`nav-${id}`);
                 if (!btn) return;
                 const iconBox = btn.querySelector('.nav-icon-box');
-                if (id === pageId) {
-                    btn.classList.replace('text-gray-400', 'text-indigo-600');
-                    if (iconBox) iconBox.classList.add('bg-indigo-50');
-                } else {
-                    btn.classList.replace('text-indigo-600', 'text-gray-400');
-                    if (iconBox) iconBox.classList.remove('bg-indigo-50');
-                }
+                const isMatch = (id === pageId);
+                btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
+                if (iconBox) iconBox.className = `nav-icon-box p-2 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
             });
 
-            if(pageId === 'preview') {
-                document.getElementById('template-transfer').classList.toggle('hidden', state.currentType !== 'Transfer');
-                document.getElementById('template-token').classList.toggle('hidden', state.currentType !== 'Token');
-                const btnCetak = document.getElementById('btn-main-print');
-                if(state.currentType === 'Token') {
+            if (pageId === 'preview') {
+                getEl('template-transfer').classList.toggle('hidden', state.currentType !== 'Transfer');
+                getEl('template-token').classList.toggle('hidden', state.currentType !== 'Token');
+                const btnCetak = getEl('btn-main-print');
+                if (state.currentType === 'Token') {
                     btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
                 } else {
                     btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
@@ -725,10 +581,10 @@
             window.scrollTo(0,0);
         }
 
-        function handleMenuClick(type) { state.currentType = type; document.getElementById('gallery-input').click(); }
+        function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
 
         /**
-         * BLUETOOTH SCAN & CONNECT
+         * BLUETOOTH SCAN & CONNECT 
          */
         async function startBluetoothScan() {
             if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
@@ -761,36 +617,35 @@
         }
 
         function onDisconnected() {
-            console.log("Bluetooth diputus oleh sistem OS.");
+            console.log("Bluetooth diputus oleh OS.");
             state.isConnected = false;
             state.printerChar = null;
             updatePrinterUI(false);
             releaseWakeLock(); 
         }
 
-        function updatePrinterUI(connected, name = "") {
-            const printerDot = document.getElementById('printer-dot');
-            const printerStatus = document.getElementById('printer-status');
-            const printerName = document.getElementById('printer-name-display');
-            const homeChip = document.getElementById('home-bt-chip');
-            const homeDot = document.getElementById('home-bt-dot');
-            const homeText = document.getElementById('home-bt-text');
+        function updatePrinterUI(connected, name = "Printer") {
+            const statusColor = connected ? 'green' : 'red';
+            const pulse = connected ? ' animate-pulse' : '';
+            const statusText = connected ? 'Tersambung' : 'Terputus';
+            const homeTextStr = connected ? 'Printer Ready' : 'Offline';
+
+            const dot = getEl('printer-dot');
+            if (dot) dot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
             
-            if (connected) {
-                if(printerDot) printerDot.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
-                if(printerStatus) { printerStatus.innerText = "Tersambung"; printerStatus.className = "text-xs font-bold text-green-500"; }
-                if(printerName) printerName.innerText = name;
-                if(homeChip) homeChip.className = "flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100";
-                if(homeDot) homeDot.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
-                if(homeText) { homeText.innerText = "Printer Ready"; homeText.className = "text-[9px] font-bold text-green-600 uppercase"; }
-            } else {
-                if(printerDot) printerDot.className = "w-2 h-2 bg-red-500 rounded-full";
-                if(printerStatus) { printerStatus.innerText = "Terputus"; printerStatus.className = "text-xs font-bold text-red-400"; }
-                if(printerName) printerName.innerText = "Printer";
-                if(homeChip) homeChip.className = "flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full border border-red-100";
-                if(homeDot) homeDot.className = "w-2 h-2 bg-red-500 rounded-full";
-                if(homeText) { homeText.innerText = "Offline"; homeText.className = "text-[9px] font-bold text-red-600 uppercase"; }
-            }
+            const stat = getEl('printer-status');
+            if (stat) { stat.innerText = statusText; stat.className = `text-xs font-bold text-${statusColor}-500`; }
+            
+            setElText('printer-name-display', name);
+
+            const homeChip = getEl('home-bt-chip');
+            if (homeChip) homeChip.className = `flex items-center gap-2 bg-${statusColor}-50 px-3 py-1.5 rounded-full border border-${statusColor}-100`;
+
+            const homeDot = getEl('home-bt-dot');
+            if (homeDot) homeDot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
+
+            const homeText = getEl('home-bt-text');
+            if (homeText) { homeText.innerText = homeTextStr; homeText.className = `text-[9px] font-bold text-${statusColor}-600 uppercase`; }
         }
 
         // FUNGSI BANTUAN: Membungkus text ESC/POS
@@ -838,7 +693,6 @@
             }
 
             toggleLoader(true, "Mencetak...");
-            const getT = (id) => document.getElementById(id).innerText;
             
             const ESC = "\x1b"; const GS = "\x1d";
             const INIT = ESC + "@";
@@ -851,47 +705,47 @@
             let raw = INIT + BOLD_ON; 
 
             if (state.currentType === 'Token') {
-                raw += ALIGN_CENTER + FONT_LARGE + getT('t-toko') + FONT_NORMAL + "\n\n";
-                raw += getT('t-alamat') + "\n\n";
+                raw += ALIGN_CENTER + FONT_LARGE + getElText('t-toko') + FONT_NORMAL + "\n\n";
+                raw += getElText('t-alamat') + "\n\n";
                 raw += "PEMBELIAN TOKEN PLN\n";
-                raw += getT('t-tgl') + " " + getT('t-jam') + "\n";
+                raw += getElText('t-tgl') + " " + getElText('t-jam') + "\n";
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                raw += wrapText("METER : ", getT('t-meter'));
-                raw += wrapText("NAMA  : ", getT('t-nama'));
-                raw += wrapText("TRF/DY: ", getT('t-daya'));
-                raw += wrapText("KWH   : ", getT('t-kwh'));
+                raw += wrapText("METER : ", getElText('t-meter'));
+                raw += wrapText("NAMA  : ", getElText('t-nama'));
+                raw += wrapText("TRF/DY: ", getElText('t-daya'));
+                raw += wrapText("KWH   : ", getElText('t-kwh'));
                 raw += "--------------------------------\n";
                 raw += ALIGN_CENTER + FONT_LARGE;
-                raw += getT('t-token').replace(/\n/g, ' ') + "\n";
+                raw += getElText('t-token').replace(/\n/g, ' ') + "\n";
                 raw += FONT_NORMAL;
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                raw += formatLineAlignRight("NOMINAL", getT('t-nom')) + "\n";
-                raw += formatLineAlignRight("ADMIN", getT('t-adm')) + "\n";
+                raw += formatLineAlignRight("NOMINAL", getElText('t-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getElText('t-adm')) + "\n";
                 raw += "--------------------------------\n";
-                raw += formatLineAlignRight("TOTAL", getT('t-tot')) + "\n\n";
-                raw += wrapText("SN: ", getT('t-sn'));
+                raw += formatLineAlignRight("TOTAL", getElText('t-tot')) + "\n\n";
+                raw += wrapText("SN: ", getElText('t-sn'));
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
             } else {
-                raw += ALIGN_CENTER + FONT_LARGE + getT('r-toko') + FONT_NORMAL + "\n\n";
-                raw += getT('r-alamat') + "\n\n";
+                raw += ALIGN_CENTER + FONT_LARGE + getElText('r-toko') + FONT_NORMAL + "\n\n";
+                raw += getElText('r-alamat') + "\n\n";
                 raw += "================================\n";
-                raw += ALIGN_LEFT + "TGL: " + getT('r-tgl') + "\n";
-                raw += "JAM: " + getT('r-jam') + "\n";
+                raw += ALIGN_LEFT + "TGL: " + getElText('r-tgl') + "\n";
+                raw += "JAM: " + getElText('r-jam') + "\n";
                 raw += "================================\n";
                 raw += ALIGN_CENTER + "KODE REFERENSI:\n";
-                raw += getT('r-ref') + "\n";
+                raw += getElText('r-ref') + "\n";
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT + "DATA PENERIMA:\n";
-                raw += wrapText("BANK    : ", getT('r-bank'));
-                raw += wrapText("REK     : ", getT('r-rek'));
-                raw += wrapText("NAMA    : ", getT('r-nama'));
+                raw += wrapText("BANK    : ", getElText('r-bank'));
+                raw += wrapText("REK     : ", getElText('r-rek'));
+                raw += wrapText("NAMA    : ", getElText('r-nama'));
                 raw += "--------------------------------\n";
-                raw += formatLineAlignRight("NOMINAL", getT('r-nom')) + "\n";
-                raw += formatLineAlignRight("ADMIN", getT('r-adm')) + "\n";
-                raw += formatLineAlignRight("TOTAL", getT('r-tot')) + "\n";
+                raw += formatLineAlignRight("NOMINAL", getElText('r-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getElText('r-adm')) + "\n";
+                raw += formatLineAlignRight("TOTAL", getElText('r-tot')) + "\n";
                 raw += "================================\n";
                 raw += ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
@@ -910,7 +764,7 @@
 
                 saveLocalHistory();
                 
-                const namaUtama = state.currentType === 'Token' ? getT('t-nama') : getT('r-nama');
+                const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
                 if (typeof google !== 'undefined' || API_URL !== "") {
                     fetch(API_URL, { 
                         method: 'POST', 
@@ -933,52 +787,45 @@
 
         // --- SISTEM LOCAL DATABASE (HISTORY) ---
         function saveLocalHistory() {
-            const getV = (id) => document.getElementById(id) ? document.getElementById(id).innerText : '';
             const item = {
                 id: Date.now().toString(),
                 tipe: state.currentType,
-                r_toko: getV('r-toko'), r_alamat: getV('r-alamat'), r_tgl: getV('r-tgl'), r_jam: getV('r-jam'),
-                r_ref: getV('r-ref'), r_bank: getV('r-bank'), r_rek: getV('r-rek'), r_nama: getV('r-nama'),
-                r_nom: getV('r-nom'), r_adm: getV('r-adm'), r_tot: getV('r-tot'),
-                t_toko: getV('t-toko'), t_alamat: getV('t-alamat'), t_tgl: getV('t-tgl'), t_jam: getV('t-jam'),
-                t_meter: getV('t-meter'), t_nama: getV('t-nama'), t_daya: getV('t-daya'), t_kwh: getV('t-kwh'),
-                t_token: document.getElementById('t-token') ? document.getElementById('t-token').innerHTML : '',
-                t_nom: getV('t-nom'), t_adm: getV('t-adm'), t_tot: getV('t-tot'), t_sn: getV('t-sn')
+                r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'),
+                r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'),
+                r_nom: getElText('r-nom'), r_adm: getElText('r-adm'), r_tot: getElText('r-tot'),
+                t_toko: getElText('t-toko'), t_alamat: getElText('t-alamat'), t_tgl: getElText('t-tgl'), t_jam: getElText('t-jam'),
+                t_meter: getElText('t-meter'), t_nama: getElText('t-nama'), t_daya: getElText('t-daya'), t_kwh: getElText('t-kwh'),
+                t_token: getEl('t-token') ? getEl('t-token').innerHTML : '',
+                t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
             };
 
-            let history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
+            let history = db.get();
             history.unshift(item);
             if(history.length > 50) history.pop(); 
-            localStorage.setItem('cetak_history', JSON.stringify(history));
+            db.set(history);
         }
 
         function deleteHistory(id, event) {
             event.stopPropagation();
             if(confirm("Apakah Anda yakin ingin menghapus riwayat cetak ini?")) {
-                let history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
-                history = history.filter(h => h.id !== id);
-                localStorage.setItem('cetak_history', JSON.stringify(history));
+                db.set(db.get().filter(h => h.id !== id));
                 fetchHistory(); 
             }
         }
 
         function loadReceipt(id) {
-            const history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
-            const item = history.find(h => h.id === id);
-            
+            const item = db.get().find(h => h.id === id);
             if(item) {
                 state.currentType = item.tipe || 'Transfer';
-                const setV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-                
                 if (state.currentType === 'Transfer') {
-                    setV('r-toko', item.r_toko); setV('r-alamat', item.r_alamat); setV('r-tgl', item.r_tgl); setV('r-jam', item.r_jam);
-                    setV('r-ref', item.r_ref); setV('r-bank', item.r_bank); setV('r-rek', item.r_rek); setV('r-nama', item.r_nama);
-                    setV('r-nom', item.r_nom); setV('r-adm', item.r_adm); setV('r-tot', item.r_tot);
+                    setElText('r-toko', item.r_toko); setElText('r-alamat', item.r_alamat); setElText('r-tgl', item.r_tgl); setElText('r-jam', item.r_jam);
+                    setElText('r-ref', item.r_ref); setElText('r-bank', item.r_bank); setElText('r-rek', item.r_rek); setElText('r-nama', item.r_nama);
+                    setElText('r-nom', item.r_nom); setElText('r-adm', item.r_adm); setElText('r-tot', item.r_tot);
                 } else {
-                    setV('t-toko', item.t_toko); setV('t-alamat', item.t_alamat); setV('t-tgl', item.t_tgl); setV('t-jam', item.t_jam);
-                    setV('t-meter', item.t_meter); setV('t-nama', item.t_nama); setV('t-daya', item.t_daya); setV('t-kwh', item.t_kwh);
-                    if(document.getElementById('t-token')) document.getElementById('t-token').innerHTML = item.t_token;
-                    setV('t-nom', item.t_nom); setV('t-adm', item.t_adm); setV('t-tot', item.t_tot); setV('t-sn', item.t_sn);
+                    setElText('t-toko', item.t_toko); setElText('t-alamat', item.t_alamat); setElText('t-tgl', item.t_tgl); setElText('t-jam', item.t_jam);
+                    setElText('t-meter', item.t_meter); setElText('t-nama', item.t_nama); setElText('t-daya', item.t_daya); setElText('t-kwh', item.t_kwh);
+                    if(getEl('t-token')) getEl('t-token').innerHTML = item.t_token;
+                    setElText('t-nom', item.t_nom); setElText('t-adm', item.t_adm); setElText('t-tot', item.t_tot); setElText('t-sn', item.t_sn);
                 }
                 switchPage('preview');
             }
@@ -986,10 +833,9 @@
 
         function fetchHistory() {
             if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
-            
             try {
-                const history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
-                const list = document.getElementById('history-list');
+                const history = db.get();
+                const list = getEl('history-list');
                 
                 if (history.length === 0) {
                     list.innerHTML = '<p class="text-center text-gray-400 text-[10px] mt-10">Belum ada riwayat cetak di perangkat ini</p>';
@@ -1025,8 +871,8 @@
         }
 
         function toggleLoader(s, t) {
-            document.getElementById('loader-text').innerText = t;
-            document.getElementById('loader').style.display = s ? 'flex' : 'none';
+            getEl('loader-text').innerText = t;
+            getEl('loader').style.display = s ? 'flex' : 'none';
         }
     </script>
 </body>
