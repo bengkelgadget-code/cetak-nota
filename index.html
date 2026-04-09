@@ -223,7 +223,8 @@
                     <span>Gemini API Key</span>
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Dapatkan Gratis</a>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Isi ini jika dihosting di GitHub" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-100 transition-all border-none text-center">
+                <input type="password" id="setting-apikey" placeholder="Paste API Key Gemini Anda di sini" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
+                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">Wajib diisi jika Anda meng-hosting web ini di GitHub Pages. <br>(Tanpa API Key, scan gambar akan error).</p>
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
@@ -231,7 +232,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v15.1<br>Gemini Auto-Gateway Route</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v15.2<br>Smart API Gateway</p>
             </div>
         </div>
     </div>
@@ -326,7 +327,7 @@
         function saveSettings(btn) {
             const toko = getElText('setting-toko');
             const alamat = getElText('setting-alamat');
-            const apikey = getEl('setting-apikey').value;
+            const apikey = getEl('setting-apikey').value.trim(); // Tambahkan trim agar spasi hilang otomatis
             
             localStorage.setItem('app_settings', JSON.stringify({ toko, alamat, apikey }));
             
@@ -366,6 +367,16 @@
 
         // --- GOOGLE GEMINI VISION AI ENGINE ---
         async function processImageOCR(file) {
+            const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
+            const apiKey = (savedSettings.apikey || "").trim();
+
+            // PENCEGAHAN ERROR AWAL JIKA API KEY KOSONG SAAT HOSTING DI GITHUB
+            if (!apiKey && window.location.hostname.includes('github.io')) {
+                alert("⚠️ PERHATIAN: API KEY KOSONG!\n\nKarena web ini berjalan di GitHub Pages, Anda WAJIB mendapatkan API Key dari Google secara gratis agar fitur Scan Gambar bisa bekerja.\n\nSistem akan mengarahkan Anda ke menu Setelan.");
+                switchPage('settings');
+                return;
+            }
+
             toggleLoader(true, "MEMBACA GAMBAR...");
             getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
@@ -393,12 +404,9 @@
                     reader.readAsDataURL(file);
                 });
 
-                // Set API Key (Mengambil dari Setelan lokal user, atau bawaan environment)
-                const apiKey = localStorage.getItem('app_settings') ? (JSON.parse(localStorage.getItem('app_settings')).apikey || "") : "";
-                
-                // LOGIKA GATEWAY:
+                // LOGIKA GATEWAY API:
                 // Jika API Key dari user ada isinya (hosted eksternal), wajib gunakan model 1.5 Flash Publik
-                // Jika kosong (di dalam environment Canvas asli), gunakan versi Preview internal
+                // Jika kosong (hanya khusus di dalam environment Canvas asli ZettBOT), gunakan versi Preview internal
                 const modelTarget = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelTarget}:generateContent?key=${apiKey}`;
 
@@ -459,8 +467,8 @@
                 };
 
                 let result;
-                let retries = 5;
-                let delays = [1000, 2000, 4000, 8000, 16000];
+                let retries = 3;
+                let delays = [1000, 2000, 4000];
                 
                 for (let i = 0; i <= retries; i++) {
                     try {
@@ -471,20 +479,31 @@
                         });
                         
                         if (!response.ok) {
-                            if(response.status === 400 && apiKey === "") throw new Error("API Key Gemini belum diisi di Setelan.");
-                            if(response.status === 403) throw new Error("Akses Ditolak (403). Pastikan API Key yang Anda masukkan benar dan masih aktif.");
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            let errorText = "";
+                            try {
+                                const errJson = await response.json();
+                                errorText = errJson.error?.message || JSON.stringify(errJson);
+                            } catch(e) {
+                                errorText = response.statusText;
+                            }
+                            
+                            if (response.status === 400 && !apiKey) throw new Error("API Key Gemini belum diisi di Setelan.");
+                            
+                            // JIKA ERROR 403, TAMPILKAN ALASANNYA LANGSUNG DARI GOOGLE
+                            if (response.status === 403) throw new Error("Akses API Ditolak (403) oleh Server Google.\n\nPesan Error dari Google:\n" + errorText + "\n\nSolusi:\n1. Pastikan API Key di Setelan tidak memiliki spasi yang ikut tersalin.\n2. Jika masih gagal, buat ulang API Key baru di aistudio.google.com.");
+                            
+                            throw new Error(`HTTP error! status: ${response.status}\nDetail: ${errorText}`);
                         }
                         result = await response.json();
                         break; 
                     } catch (error) {
-                        if (i === retries || error.message.includes("API Key") || error.message.includes("Akses Ditolak")) throw error;
+                        if (i === retries || error.message.includes("API Key") || error.message.includes("Akses API Ditolak")) throw error;
                         await new Promise(r => setTimeout(r, delays[i]));
                     }
                 }
 
                 const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!textResponse) throw new Error("Respons AI kosong.");
+                if (!textResponse) throw new Error("Respons AI kosong. Coba ulangi kembali.");
                 
                 const jsonData = JSON.parse(textResponse);
 
@@ -494,7 +513,7 @@
 
             } catch (err) {
                 console.error("Gemini Error:", err);
-                alert(err.message + "\n\nPastikan Anda sudah mengisi Gemini API Key dengan benar di menu Setelan (Dapatkan gratis di aistudio.google.com).");
+                alert("GAGAL MEMPROSES GAMBAR\n\n" + err.message);
                 updateTime();
             } finally {
                 toggleLoader(false);
