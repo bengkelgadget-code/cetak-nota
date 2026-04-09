@@ -527,7 +527,7 @@
             let nama = "";
             let rekLineIdx = -1;
 
-            const rekRegex = /(?:\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,16})/;
+            const rekRegex = /(\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,16})/;
             
             // A. Cari Rekening (Fokus di bawah Anchor)
             let linesToSearch = startIdx > 0 ? lines.slice(startIdx) : lines;
