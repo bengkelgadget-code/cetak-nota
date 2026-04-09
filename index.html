@@ -43,7 +43,7 @@
     <!-- KONFIGURASI API -->
     <script>
         // PASTIKAN URL INI BENAR (Diakhiri dengan /exec)
-        const API_URL = "MASUKKAN_URL_WEB_APP_ANDA_DI_SINI";
+        const API_URL = https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec;
     </script>
 
     <!-- LOADING OVERLAY -->
@@ -198,7 +198,7 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700">Jl. Pahlawan (Poros L2)</div>
             </div>
             <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v5.1<br>Auto-Format & Kalkulasi</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v5.2<br>Auto-Format & Chunking Print</p>
             </div>
         </div>
     </div>
@@ -385,6 +385,7 @@
 
         /**
          * PROSES CETAK & SIMPAN
+         * Ditambahkan fitur "Chunking" untuk mengatasi nota terpotong
          */
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
@@ -421,7 +422,19 @@
                 raw += "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
 
-                await state.printerChar.writeValue(encoder.encode(raw));
+                // CHUNKING DATA: Pecah data menjadi potongan 100 byte
+                // Agar buffer memori printer bluetooth tidak kepenuhan
+                const dataToPrint = encoder.encode(raw);
+                const CHUNK_SIZE = 100; 
+
+                for (let i = 0; i < dataToPrint.length; i += CHUNK_SIZE) {
+                    const chunk = dataToPrint.slice(i, i + CHUNK_SIZE);
+                    await state.printerChar.writeValue(chunk);
+                    // Beri jeda 50ms setiap 100 karakter agar printer bisa bernapas
+                    await new Promise(resolve => setTimeout(resolve, 50)); 
+                }
+
+                // Setelah selesai mencetak, simpan ke Sheet
                 await saveToSheet();
 
             } catch(e) {
