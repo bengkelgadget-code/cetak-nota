@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRFBT - Pro Bluetooth Print</title>
+    <title>Cetak Nota - AI Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8F9FE; -webkit-tap-highlight-color: transparent; }
         .receipt-font { font-family: 'JetBrains Mono', monospace; }
@@ -13,8 +14,8 @@
         .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
         .loading-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(255,255,255,0.9); z-index: 10000;
-            align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.95); z-index: 10000;
+            align-items: center; justify-content: center; flex-direction: column;
         }
         .receipt-paper { background: white; position: relative; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }
         .receipt-paper::before, .receipt-paper::after {
@@ -30,11 +31,11 @@
         button:active { transform: scale(0.96); transition: 0.1s; }
 
         /* Highlight area editable saat diklik */
+        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; }
         [contenteditable="true"]:focus {
-            outline: none;
             background-color: rgba(79, 70, 229, 0.05);
-            border-radius: 4px;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            border-bottom: 1px dashed #4F46E5;
+            border-radius: 2px;
         }
     </style>
 </head>
@@ -42,16 +43,14 @@
 
     <!-- KONFIGURASI API -->
     <script>
-        // PASTIKAN URL INI BENAR (Diakhiri dengan /exec)
-        const API_URL = https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec;
+        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
 
     <!-- LOADING OVERLAY -->
     <div id="loader" class="loading-overlay">
-        <div class="flex flex-col items-center gap-3">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600"></div>
-            <span id="loader-text" class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Processing...</span>
-        </div>
+        <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
+        <span id="loader-text" class="text-sm font-black text-indigo-600 uppercase tracking-widest text-center px-6">Processing...</span>
+        <span id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 text-center max-w-[80%]">Sistem sedang bekerja...</span>
     </div>
 
     <!-- HIDDEN FILE INPUT -->
@@ -62,7 +61,7 @@
         <div class="flex justify-between items-center mb-8">
             <div class="flex items-center gap-2">
                 <div class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shadow-lg"><span class="text-white font-bold text-xl">T</span></div>
-                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Trfbt</h1>
+                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">CETAK NOTA</h1>
             </div>
             <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100" id="home-bt-chip">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" id="home-bt-dot"></div>
@@ -75,23 +74,18 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100 transition-all active:scale-95">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-2">Cetak Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Pilih bukti transfer dari galeri,<br>cetak langsung ke printer Bluetooth.</p>
+                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>sistem AI akan mengisi nota otomatis.</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
 
             <!-- Menu 2: Cetak Token -->
-            <button onclick="handleMenuClick('Token')" class="w-full bg-white rounded-[32px] p-6 flex items-center justify-between border border-gray-100 card-shadow transition-all active:scale-95 mt-4">
-                <div class="flex items-center gap-4">
-                    <div class="bg-orange-50 p-3 rounded-2xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800 text-sm">Cetak Token Listrik</h3>
-                        <p class="text-[10px] text-gray-400 mt-1">Upload screenshot PLN</p>
-                    </div>
+            <button onclick="handleMenuClick('Token')" class="w-full relative overflow-hidden bg-gradient-to-r from-[#FF6B00] to-[#FF9900] rounded-[32px] p-8 text-left shadow-xl shadow-orange-200 transition-all active:scale-95 mt-4">
+                <div class="z-10 relative text-white">
+                    <h2 class="text-xl font-bold mb-2">Cetak Token Listrik</h2>
+                    <p class="text-orange-50 text-xs opacity-90 leading-relaxed">Upload screenshot aplikasi PLN,<br>cetak langsung ke printer Bluetooth.</p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-20 rounded-full"></div>
             </button>
         </div>
 
@@ -100,7 +94,6 @@
             <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-bold px-3 py-1.5 bg-indigo-50 rounded-lg active:scale-90 transition-all">Segarkan</button>
         </div>
         <div id="history-list" class="space-y-3 pb-10">
-            <!-- Data dari Sheets akan muncul di sini -->
             <p class="text-center text-gray-400 text-[10px] mt-10">Memuat riwayat...</p>
         </div>
     </div>
@@ -114,34 +107,74 @@
             <h2 class="text-xl font-bold text-gray-800 tracking-tight">Pratinjau Nota</h2>
         </div>
 
+        <div class="px-5 mb-4 text-center">
+            <p class="text-[10px] text-indigo-600 bg-indigo-50 py-2 rounded-xl font-medium border border-indigo-100">
+                💡 Ketuk teks untuk edit. <b>Tekan "Enter"</b> untuk pindah ke kolom berikutnya.
+            </p>
+        </div>
+
         <div class="flex-1 overflow-y-auto px-10 py-5 bg-slate-50/50 dot-grid">
             <div class="receipt-paper p-8 text-center text-gray-800 text-[11px] receipt-font leading-relaxed max-w-xs mx-auto" id="printable-receipt">
-                <div contenteditable="true" id="r-toko" class="font-bold text-[14px] mb-1 uppercase">Bengkel Gadget L2</div>
-                <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px]">Jl. Pahlawan (Poros L2)</div>
-                <div class="py-1 text-gray-400"><span>==============================</span></div>
-                <div class="flex justify-between items-center text-left"><span>TANGGAL</span><span id="r-tgl">--/--/----</span></div>
-                <div class="flex justify-between items-center text-left mb-2"><span>WAKTU</span><span id="r-jam">--:--:--</span></div>
-                <div class="border-t border-dashed border-gray-300 py-1"></div>
-                <div class="font-bold uppercase tracking-widest mb-1 mt-1 text-[10px]">Kode Referensi</div>
-                <div contenteditable="true" id="r-ref" class="font-bold text-[12px] mb-2 uppercase">940912041527</div>
-                <div class="border-t border-dashed border-gray-300 py-1"></div>
-                <div class="font-bold uppercase mb-2 text-[10px]">Data Penerima</div>
-                <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left font-bold">Bank</span><span contenteditable="true" id="r-bank" class="w-2/3 text-right uppercase">BRI</span></div>
-                <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left font-bold">Rek</span><span contenteditable="true" id="r-rek" class="w-2/3 text-right font-bold">531501010922533</span></div>
-                <div class="flex justify-between text-left mb-3"><span class="w-1/3 uppercase text-left font-bold">Nama</span><span contenteditable="true" id="r-nama" class="w-2/3 text-right uppercase font-bold">Maslina Sesilia T.</span></div>
-                <div class="border-t border-dashed border-gray-300 py-1"></div>
-                <div class="flex justify-between font-bold text-[12px] mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 5.000.000</span></div>
-                <div class="flex justify-between mb-2"><span>ADMIN</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
-                <div class="border-t border-double border-gray-800 border-b-2 py-1 flex justify-between font-bold text-[13px]"><span>TOTAL</span><span contenteditable="true" id="r-tot">Rp 5.000.000</span></div>
-                <div class="mt-6 mb-2 font-bold uppercase tracking-widest text-[10px]">** Transaksi Berhasil **</div>
-                <div class="font-bold uppercase mb-4 text-[10px]">Terima Kasih</div>
-                <div class="text-[8px] text-gray-400 uppercase font-bold">Tid: A76BD1</div>
+                
+                <!-- TEMPLATE 1: TRANSFER BANK -->
+                <div id="template-transfer" class="hidden">
+                    <div contenteditable="true" id="r-toko" class="font-bold text-[14px] mb-1 uppercase">Bengkel Gadget L2</div>
+                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px]">Jl. Pahlawan (Poros L2)</div>
+                    <div class="py-1 text-gray-400"><span>==============================</span></div>
+                    <div class="flex justify-between items-center text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
+                    <div class="flex justify-between items-center text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--:--</span></div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="font-bold uppercase tracking-widest mb-1 mt-1 text-[10px]">Kode Referensi</div>
+                    <div contenteditable="true" id="r-ref" class="font-bold text-[12px] mb-2 uppercase">000000000000</div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="font-bold uppercase mb-2 text-[10px]">Data Penerima</div>
+                    <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left font-bold">Bank</span><span contenteditable="true" id="r-bank" class="w-2/3 text-right uppercase">UNKNOWN</span></div>
+                    <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left font-bold">Rek</span><span contenteditable="true" id="r-rek" class="w-2/3 text-right font-bold">000000000</span></div>
+                    <div class="flex justify-between text-left mb-3"><span class="w-1/3 uppercase text-left font-bold">Nama</span><span contenteditable="true" id="r-nama" class="w-2/3 text-right uppercase font-bold">NAMA PELANGGAN</span></div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="flex justify-between font-bold text-[12px] mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
+                    <div class="flex justify-between mb-2"><span>ADMIN</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
+                    <div class="border-t border-double border-gray-800 border-b-2 py-1 flex justify-between font-bold text-[13px]"><span>TOTAL</span><span contenteditable="true" id="r-tot">Rp 0</span></div>
+                    <div class="mt-6 mb-2 font-bold uppercase tracking-widest text-[10px]">** Transaksi Berhasil **</div>
+                    <div class="font-bold uppercase mb-4 text-[10px]">Terima Kasih</div>
+                    <div class="text-[8px] text-gray-400 uppercase font-bold">Tid: <span contenteditable="true">A76BD1</span></div>
+                </div>
+
+                <!-- TEMPLATE 2: TOKEN LISTRIK -->
+                <div id="template-token" class="hidden">
+                    <div contenteditable="true" id="t-toko" class="font-bold text-[14px] mb-1 uppercase">BENGKEL GADGET L2</div>
+                    <div contenteditable="true" id="t-alamat" class="uppercase text-[10px]">JL. PAHLAWAN (POROS L2)</div>
+                    <div class="mt-4 mb-2 font-bold text-[11px] uppercase tracking-wide">PEMBELIAN TOKEN PLN</div>
+                    <div class="mb-3 text-[10px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--:--</span></div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="flex justify-between text-left mb-1"><span class="uppercase font-bold w-[35%]">METER</span><span class="w-[65%]">: <span contenteditable="true" id="t-meter" class="font-bold">00000000000</span></span></div>
+                    <div class="flex justify-between text-left mb-1"><span class="uppercase font-bold w-[35%]">NAMA</span><span class="w-[65%]">: <span contenteditable="true" id="t-nama" class="font-bold uppercase">NAMA PELANGGAN</span></span></div>
+                    <div class="flex justify-between text-left mb-1"><span class="uppercase font-bold w-[35%]">TRF/DY</span><span class="w-[65%]">: <span contenteditable="true" id="t-daya" class="font-bold uppercase">R1M/900 VA</span></span></div>
+                    <div class="flex justify-between text-left mb-2"><span class="uppercase font-bold w-[35%]">KWH</span><span class="w-[65%]">: <span contenteditable="true" id="t-kwh" class="font-bold">0.0 kWh</span></span></div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    
+                    <div contenteditable="true" id="t-token" class="font-bold text-[16px] my-3 tracking-[0.15em] leading-relaxed max-w-full break-words">
+                        XXXX XXXX XXXX<br>XXXX XXXX
+                    </div>
+                    
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="flex justify-between font-bold text-[11px] mb-1"><span>NOMINAL</span><span contenteditable="true" id="t-nom">Rp 0</span></div>
+                    <div class="flex justify-between font-bold text-[11px] mb-2"><span>ADMIN</span><span contenteditable="true" id="t-adm">Rp 0</span></div>
+                    <div class="border-t border-dashed border-gray-400 py-1"></div>
+                    <div class="flex justify-between font-bold text-[13px] mb-2"><span>TOTAL</span><span contenteditable="true" id="t-tot">Rp 0</span></div>
+                    
+                    <div class="text-[8px] text-left uppercase mb-4 break-all leading-tight font-medium text-gray-500">SN: <span contenteditable="true" id="t-sn">XXXXXXXXXXXXXXXXXXXXX</span></div>
+                    <div class="mt-5 mb-2 font-bold uppercase tracking-widest text-[10px]">** TRANSAKSI BERHASIL **</div>
+                    <div class="font-bold uppercase mb-4 text-[10px]">TERIMA KASIH</div>
+                    <div class="text-[8px] text-gray-400 uppercase font-bold">Tid: <span contenteditable="true">A76BD1</span></div>
+                </div>
+
             </div>
         </div>
 
         <div class="p-6 bg-white border-t border-gray-100 rounded-t-[35px] card-shadow">
-            <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95">
-                CETAK NOTA SEKARANG
+            <button id="btn-main-print" onclick="executeHDCetak()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95">
+                🚀 CETAK NOTA SEKARANG
             </button>
         </div>
     </div>
@@ -152,36 +185,24 @@
             <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm active:scale-90 transition-transform">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <h2 class="text-xl font-bold text-gray-800">Koneksi Printer</h2>
+            <h2 class="text-xl font-bold text-gray-800">Informasi Printer</h2>
         </div>
-
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">STATUS SAAT INI</p>
-        
-        <div class="bg-white rounded-[28px] p-6 card-shadow border border-gray-50 mb-8 flex items-center gap-6">
-            <div class="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 text-center space-y-6">
+            <div class="w-20 h-20 bg-green-50 rounded-full mx-auto flex items-center justify-center text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </div>
-            <div>
-                <h3 id="printer-name-display" class="font-bold text-gray-800 text-lg">Printer</h3>
-                <div class="flex items-center gap-2">
-                    <div id="printer-dot" class="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span id="printer-status" class="text-xs font-bold text-red-400">Terputus</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-5">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">KONTROL BLUETOOTH</p>
-            <button onclick="startBluetoothScan()" class="text-indigo-600 text-[11px] font-bold flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full active:scale-95 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Cari Perangkat
-            </button>
-        </div>
-
-        <div class="p-5 bg-amber-50 rounded-2xl border border-amber-100">
-            <p class="text-[10px] text-amber-700 leading-relaxed text-center font-medium">
-                Klik tombol <b>"Cari Perangkat"</b> di atas untuk menyambungkan HP Anda dengan Printer Thermal.
+            <p class="text-sm text-gray-500 leading-relaxed font-medium px-2">
+                Aplikasi ini mendukung pencetakan **Kualitas Tinggi** menggunakan aplikasi Intent.
             </p>
+            <div class="p-6 bg-blue-50 rounded-[24px] text-left space-y-4">
+                <h4 class="font-black text-blue-900 text-[10px] uppercase tracking-widest">Wajib Dilakukan:</h4>
+                <ol class="text-[11px] text-blue-700 space-y-3 font-medium list-decimal pl-4">
+                    <li>Pasang aplikasi <b>RawBT</b> (Gratis) dari Play Store.</li>
+                    <li>Hubungkan printer ke Bluetooth HP seperti biasa.</li>
+                    <li>Di dalam RawBT, pilih printer Bluetooth Anda.</li>
+                    <li>Kembali ke sini, klik <b>CETAK NOTA SEKARANG</b>. Beres!</li>
+                </ol>
+            </div>
         </div>
     </div>
 
@@ -191,14 +212,14 @@
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-6 text-center">
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Toko Utama</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700">BENGKEL GADGET L2</div>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-toko">BENGKEL GADGET L2</div>
             </div>
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alamat</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700">Jl. Pahlawan (Poros L2)</div>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
             </div>
             <div class="pt-10">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v5.2<br>Auto-Format & Chunking Print</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v7.0<br>Dual Template & OCR Smart Flow</p>
             </div>
         </div>
     </div>
@@ -207,25 +228,16 @@
     <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[9999]">
         <div class="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-gray-100 rounded-t-[35px] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
             <div class="flex justify-around items-center px-6 py-4">
-                <!-- Nav Home -->
                 <button onclick="switchPage('home')" id="nav-home" class="flex flex-col items-center gap-1 outline-none text-indigo-600 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all bg-indigo-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                    </div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all bg-indigo-50"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Beranda</span>
                 </button>
-                <!-- Nav Printer -->
                 <button onclick="switchPage('printer')" id="nav-printer" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    </div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
                 </button>
-                <!-- Nav Settings -->
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-                    </div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Setelan</span>
                 </button>
             </div>
@@ -233,81 +245,258 @@
     </div>
 
     <script>
-        const state = { currentType: '', printerChar: null, isConnected: false };
+        const state = { currentType: 'Transfer' };
 
         document.addEventListener('DOMContentLoaded', () => {
             switchPage('home');
             fetchHistory();
             
-            document.getElementById('gallery-input').onchange = (e) => { 
-                if (e.target.files[0]) {
-                    switchPage('preview'); 
-                    updateTime(); 
-                }
+            document.getElementById('gallery-input').onchange = async (e) => { 
+                const file = e.target.files[0];
+                if (file) await processImageOCR(file);
                 e.target.value = '';
             };
 
-            // EVENT LISTENER UNTUK KALKULASI & FORMAT RUPIAH
-            const elNominal = document.getElementById('r-nom');
-            const elAdmin = document.getElementById('r-adm');
-            
-            if(elNominal) {
-                elNominal.addEventListener('input', calculateTotal);
-                elNominal.addEventListener('blur', formatRupiahOnBlur);
-            }
-            if(elAdmin) {
-                elAdmin.addEventListener('input', calculateTotal);
-                elAdmin.addEventListener('blur', formatRupiahOnBlur);
-            }
+            // LISTENER: ENTER KEY SEBAGAI TAB DI SELURUH INPUT
+            document.addEventListener('keydown', (e) => {
+                if (e.target.isContentEditable && e.key === 'Enter') {
+                    e.preventDefault(); // Cegah bikin baris baru (spasi ke bawah)
+                    
+                    // Cari semua elemen yang bisa diedit dan sedang terlihat
+                    const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'))
+                        .filter(el => el.offsetParent !== null);
+                    
+                    const currentIndex = editables.indexOf(e.target);
+                    // Pindah ke elemen berikutnya
+                    if (currentIndex > -1 && currentIndex < editables.length - 1) {
+                        editables[currentIndex + 1].focus();
+                        
+                        // Select all text in the next element for easy replacement
+                        const range = document.createRange();
+                        range.selectNodeContents(editables[currentIndex + 1]);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    } else {
+                        e.target.blur(); // Hapus kursor jika sudah di akhir
+                    }
+                }
+            });
+
+            // LISTENER KALKULASI TOTAL (Untuk Transfer)
+            ['r-nom', 'r-adm'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', calculateTotal);
+                    el.addEventListener('blur', formatRupiahOnBlur);
+                }
+            });
+
+            // LISTENER KALKULASI TOTAL (Untuk Token)
+            ['t-nom', 't-adm'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', calculateTotal);
+                    el.addEventListener('blur', formatRupiahOnBlur);
+                }
+            });
+
+            // Sinkronisasi Nama Toko
+            ['setting-toko', 'setting-alamat'].forEach(id => {
+                const el = document.getElementById(id);
+                el.addEventListener('blur', () => {
+                    document.getElementById('r-toko').innerText = document.getElementById('setting-toko').innerText;
+                    document.getElementById('t-toko').innerText = document.getElementById('setting-toko').innerText;
+                    document.getElementById('r-alamat').innerText = document.getElementById('setting-alamat').innerText;
+                    document.getElementById('t-alamat').innerText = document.getElementById('setting-alamat').innerText;
+                });
+            });
         });
 
-        // FUNGSI BANTUAN RUPIAH
+        // --- SISTEM AI VISION (OCR) ---
+        async function processImageOCR(file) {
+            toggleLoader(true, "MEMBACA GAMBAR...");
+            document.getElementById('loader-subtext').innerText = "AI sedang mengekstrak data struk...";
+            
+            try {
+                const imageData = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                const worker = await Tesseract.createWorker('ind');
+                const result = await worker.recognize(imageData);
+                const text = result.data.text;
+                await worker.terminate();
+
+                if(state.currentType === 'Token') {
+                    parseTokenOCR(text);
+                } else {
+                    parseTransferOCR(text);
+                }
+            } catch (err) {
+                console.error("OCR Error:", err);
+                alert("Gagal membaca gambar. Silakan isi form manual.");
+                updateTime();
+            } finally {
+                toggleLoader(false);
+                switchPage('preview');
+            }
+        }
+
+        // ALGORITMA PARSER - TRANSFER BANK
+        function parseTransferOCR(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            let combinedText = text.replace(/\n/g, ' ');
+
+            const dateMatch = combinedText.match(/(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
+            if (dateMatch) {
+                let d = dateMatch[1];
+                if (d.includes('-') && d.split('-')[0].length === 4) { 
+                    const pts = d.split('-'); document.getElementById('r-tgl').innerText = `${pts[2]}-${pts[1]}-${pts[0]}`;
+                } else { document.getElementById('r-tgl').innerText = d; }
+            } else { updateTimeOnlyDate('r-tgl'); }
+
+            const timeMatch = combinedText.match(/(\d{2}:\d{2}(?::\d{2})?)/);
+            if (timeMatch) document.getElementById('r-jam').innerText = timeMatch[1];
+            else { updateTimeOnlyTime('r-jam'); }
+
+            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
+            if (rpMatches.length > 0) {
+                let nominalStr = rpMatches[0][1].replace(/[^0-9]/g, '');
+                if (nominalStr) document.getElementById('r-nom').innerText = formatRupiahStr(parseInt(nominalStr));
+            }
+
+            const refMatch = combinedText.match(/(?:Order ID|Ref|Referensi|No|ID)[\s\:\-]+([0-9A-Za-z]{8,})/i);
+            if (refMatch) document.getElementById('r-ref').innerText = refMatch[1];
+            else {
+                const longNum = combinedText.match(/(\d{10,18})/);
+                if(longNum) document.getElementById('r-ref').innerText = longNum[1];
+            }
+
+            const banks = ['BCA', 'BRI', 'MANDIRI', 'BNI', 'BSI', 'DANA', 'OVO', 'GOPAY', 'LINKAJA', 'SHOPEEPAY'];
+            let foundBank = 'BANK LAIN';
+            for (let b of banks) { if (combinedText.toUpperCase().includes(b)) { foundBank = b; break; } }
+            document.getElementById('r-bank').innerText = foundBank;
+
+            let nama = "NAMA PELANGGAN"; let rek = "0000000000";
+            for(let i=0; i < lines.length; i++) {
+                let lineUpper = lines[i].toUpperCase();
+                if(lineUpper.includes(foundBank)) {
+                    let rMatch = lines[i].match(/(\d{8,16})/);
+                    if(rMatch) rek = rMatch[1];
+                    if(lines[i+1] && !lines[i+1].match(/Rp|Total|Biaya|Admin/i)) {
+                        nama = lines[i+1].replace(/DNID|Tujuan|Penerima|\:/gi, '').trim();
+                    }
+                }
+                if(lineUpper.includes('PENERIMA') || lineUpper.includes('KEPADA')) {
+                    nama = lines[i].replace(/.*(PENERIMA|KEPADA)[\s\:]+/i, '').trim();
+                    if(!nama && lines[i+1]) nama = lines[i+1].trim();
+                }
+            }
+            document.getElementById('r-nama').innerText = nama.substring(0, 25);
+            document.getElementById('r-rek').innerText = rek;
+            calculateTotal();
+        }
+
+        // ALGORITMA PARSER - TOKEN PLN
+        function parseTokenOCR(text) {
+            const combinedText = text.replace(/\n/g, ' ');
+            const getT = (id) => document.getElementById(id);
+
+            // Tanggal & Jam
+            updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
+
+            // Nomor Meter / ID Pelanggan (11 atau 12 digit)
+            const meterMatch = combinedText.match(/(\d{11,12})/);
+            if (meterMatch) getT('t-meter').innerText = meterMatch[1];
+
+            // Nominal
+            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
+            if (rpMatches.length > 0) getT('t-nom').innerText = formatRupiahStr(parseInt(rpMatches[0][1].replace(/[^0-9]/g, '')));
+
+            // Angka Token (20 digit)
+            const tokenMatch = combinedText.replace(/[\s\-]/g, '').match(/(\d{20})/);
+            if (tokenMatch) {
+                const tk = tokenMatch[1];
+                // Format: 1234 5678 9012 <br> 3456 7890
+                getT('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
+            }
+
+            // Strum / Daya (Contoh: R1M/900)
+            const dayaMatch = combinedText.match(/([A-Z0-9]+\/\s*\d+[\.,]?\d*\s*VA)/i);
+            if (dayaMatch) getT('t-daya').innerText = dayaMatch[1];
+
+            // kWh
+            const kwhMatch = combinedText.match(/([\d\.,]+)\s*kWh/i);
+            if (kwhMatch) getT('t-kwh').innerText = kwhMatch[1] + " kWh";
+
+            // Serial Number
+            const snMatch = combinedText.match(/(?:SN|Ref)[\s\:\-]*([A-Z0-9]{10,35})/i);
+            if (snMatch) getT('t-sn').innerText = snMatch[1];
+
+            calculateTotal();
+        }
+
+        // --- FUNGSI FORMAT RUPIAH & KALKULASI ---
         function parseRupiahStr(text) {
             let numStr = text.replace(/[^0-9]/g, '');
             return numStr ? parseInt(numStr, 10) : 0;
         }
-
+        
         function formatRupiahStr(num) {
             return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
-
+        
         function calculateTotal() {
-            let nom = parseRupiahStr(document.getElementById('r-nom').innerText);
-            let adm = parseRupiahStr(document.getElementById('r-adm').innerText);
-            let total = nom + adm;
-            document.getElementById('r-tot').innerText = formatRupiahStr(total);
+            let prefix = state.currentType === 'Token' ? 't' : 'r';
+            let nomEl = document.getElementById(prefix + '-nom');
+            let admEl = document.getElementById(prefix + '-adm');
+            let totEl = document.getElementById(prefix + '-tot');
+            
+            if(nomEl && admEl && totEl) {
+                let nom = parseRupiahStr(nomEl.innerText);
+                let adm = parseRupiahStr(admEl.innerText);
+                totEl.innerText = formatRupiahStr(nom + adm);
+            }
         }
-
+        
         function formatRupiahOnBlur(e) {
             let val = parseRupiahStr(e.target.innerText);
             e.target.innerText = formatRupiahStr(val);
-            calculateTotal(); // Pastikan total tetap up to date
+            calculateTotal();
         }
 
         function updateTime() {
-            const now = new Date();
-            document.getElementById('r-tgl').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-');
-            document.getElementById('r-jam').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
+            if(state.currentType === 'Token') {
+                updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
+            } else {
+                updateTimeOnlyDate('r-tgl'); updateTimeOnlyTime('r-jam');
+            }
         }
 
+        function updateTimeOnlyDate(id) {
+            const now = new Date();
+            document.getElementById(id).innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-');
+        }
+
+        function updateTimeOnlyTime(id) {
+            const now = new Date();
+            document.getElementById(id).innerText = now.toLocaleTimeString('id-ID', {hour12: false});
+        }
+
+        // --- NAVIGASI ---
         function switchPage(pageId) {
-            // Sembunyikan semua page
-            ['home', 'preview', 'printer', 'settings'].forEach(id => {
-                document.getElementById('page-'+id).classList.add('hidden');
-            });
-            // Tampilkan target page
+            ['home', 'preview', 'printer', 'settings'].forEach(id => document.getElementById('page-'+id).classList.add('hidden'));
             document.getElementById('page-'+pageId).classList.remove('hidden');
-            
-            // Sembunyikan navigasi bawah jika di halaman preview
             document.getElementById('bottom-nav').style.display = (pageId === 'preview') ? 'none' : 'block';
 
-            // Ubah gaya visual icon navigasi
-            const navIds = ['home', 'printer', 'settings'];
-            navIds.forEach(id => {
+            ['home', 'printer', 'settings'].forEach(id => {
                 const btn = document.getElementById('nav-' + id);
                 if (!btn) return;
                 const iconBox = btn.querySelector('.nav-icon-box');
-                
                 if (id === pageId) {
                     btn.classList.replace('text-gray-400', 'text-indigo-600');
                     if (iconBox) iconBox.classList.add('bg-indigo-50');
@@ -316,6 +505,21 @@
                     if (iconBox) iconBox.classList.remove('bg-indigo-50');
                 }
             });
+
+            // Setup Tampilan Template di Halaman Preview
+            if(pageId === 'preview') {
+                document.getElementById('template-transfer').classList.toggle('hidden', state.currentType !== 'Transfer');
+                document.getElementById('template-token').classList.toggle('hidden', state.currentType !== 'Token');
+                
+                // Ubah warna tombol Cetak
+                const btnCetak = document.getElementById('btn-main-print');
+                if(state.currentType === 'Token') {
+                    btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
+                } else {
+                    btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
+                }
+            }
+
             window.scrollTo(0,0);
         }
 
@@ -324,171 +528,172 @@
             document.getElementById('gallery-input').click(); 
         }
 
-        /**
-         * BLUETOOTH SCAN & CONNECT (INTENT)
-         */
-        async function startBluetoothScan() {
-            if (!navigator.bluetooth) { 
-                alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); 
-                return; 
-            }
-
-            try {
-                // Meminta akses perangkat bluetooth ke HP
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-                });
-
-                toggleLoader(true, "Menyambungkan...");
-                
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                const characteristics = await service.getCharacteristics();
-                
-                state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-
-                if (state.printerChar) {
-                    state.isConnected = true;
-                    updatePrinterUI(true, device.name || "Printer Thermal");
-                    alert("Printer Berhasil Terhubung!");
-                } else {
-                    throw new Error("Layanan print tidak ditemukan pada perangkat ini.");
-                }
-            } catch (e) { 
-                updatePrinterUI(false);
-                if(e.name !== 'NotFoundError') { // Abaikan jika user menekan 'batal'
-                    alert("Koneksi Gagal: " + e.message); 
-                }
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        function updatePrinterUI(connected, name = "") {
-            const printerDot = document.getElementById('printer-dot');
-            const printerStatus = document.getElementById('printer-status');
-            const printerName = document.getElementById('printer-name-display');
+        // --- CETAK ENGINE (INTENT RAWBT) ---
+        async function executeHDCetak() {
+            toggleLoader(true, "Menyiapkan Data...");
+            const getT = (id) => document.getElementById(id).innerText;
             
-            if (connected) {
-                printerDot.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
-                printerStatus.innerText = "Tersambung";
-                printerStatus.className = "text-xs font-bold text-green-500";
-                printerName.innerText = name;
-            } else {
-                printerDot.className = "w-2 h-2 bg-red-500 rounded-full";
-                printerStatus.innerText = "Terputus";
-                printerStatus.className = "text-xs font-bold text-red-400";
-                printerName.innerText = "Printer";
-            }
-        }
+            // ESC/POS Commands
+            const ESC = "\x1b"; const GS = "\x1d";
+            const INIT = ESC + "@";
+            const ALIGN_CENTER = ESC + "a" + "\x01";
+            const ALIGN_LEFT = ESC + "a" + "\x00";
+            const BOLD_ON = ESC + "E" + "\x01";
+            const BOLD_OFF = ESC + "E" + "\x00";
+            const FONT_LARGE = GS + "!" + "\x11"; 
+            const FONT_NORMAL = GS + "!" + "\x00";
 
-        /**
-         * PROSES CETAK & SIMPAN
-         * Ditambahkan fitur "Chunking" untuk mengatasi nota terpotong
-         */
-        async function executePrint() {
-            if (!state.isConnected || !state.printerChar) {
-                alert("Printer belum terhubung! Silakan hubungkan melalui menu Printer terlebih dahulu.");
-                switchPage('printer');
-                return;
-            }
+            let raw = INIT;
 
-            toggleLoader(true, "Mencetak...");
-
-            try {
-                const encoder = new TextEncoder();
-                const getT = (id) => document.getElementById(id).innerText;
-                
-                let raw = "\x1b\x40"; // Init
-                raw += "\x1b\x61\x01"; // Center
-                raw += getT('r-toko') + "\n";
-                raw += getT('r-alamat') + "\n";
+            if (state.currentType === 'Token') {
+                raw += ALIGN_CENTER + BOLD_ON + getT('t-toko') + BOLD_OFF + "\n";
+                raw += getT('t-alamat') + "\n\n";
+                raw += BOLD_ON + "PEMBELIAN TOKEN PLN" + BOLD_OFF + "\n";
+                raw += getT('t-tgl') + " " + getT('t-jam') + "\n";
                 raw += "--------------------------------\n";
-                raw += "\x1b\x61\x00"; // Left
-                raw += "TGL: " + getT('r-tgl') + " | JAM: " + getT('r-jam') + "\n";
-                raw += "KODE REFERENSI:\n";
-                raw += getT('r-ref') + "\n";
+                raw += ALIGN_LEFT;
+                raw += "METER : " + getT('t-meter') + "\n";
+                raw += "NAMA  : " + getT('t-nama').substring(0, 20) + "\n";
+                raw += "TRF/DY: " + getT('t-daya') + "\n";
+                raw += "KWH   : " + getT('t-kwh') + "\n";
                 raw += "--------------------------------\n";
-                raw += "BANK: " + getT('r-bank') + "\n";
-                raw += "REK : " + getT('r-rek') + "\n";
-                raw += "NAMA: " + getT('r-nama').substring(0, 20) + "\n";
+                raw += ALIGN_CENTER + FONT_LARGE + BOLD_ON;
+                raw += getT('t-token').replace(/\n/g, ' ') + "\n"; // Gabung token menjadi 1 baris di cetakan
+                raw += FONT_NORMAL + BOLD_OFF;
                 raw += "--------------------------------\n";
-                raw += "NOMINAL: " + getT('r-nom') + "\n";
-                raw += "ADMIN  : " + getT('r-adm') + "\n";
-                raw += "TOTAL  : " + getT('r-tot') + "\n";
+                raw += ALIGN_LEFT;
+                raw += "NOMINAL :       " + getT('t-nom') + "\n";
+                raw += "ADMIN   :       " + getT('t-adm') + "\n";
                 raw += "--------------------------------\n";
-                raw += "\x1b\x61\x01"; // Center
-                raw += "** TRANSAKSI BERHASIL **\n";
+                raw += BOLD_ON + "TOTAL   :       " + getT('t-tot') + BOLD_OFF + "\n\n";
+                raw += "SN: " + getT('t-sn') + "\n\n";
+                raw += ALIGN_CENTER + BOLD_ON + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
-
-                // CHUNKING DATA: Pecah data menjadi potongan 100 byte
-                // Agar buffer memori printer bluetooth tidak kepenuhan
-                const dataToPrint = encoder.encode(raw);
-                const CHUNK_SIZE = 100; 
-
-                for (let i = 0; i < dataToPrint.length; i += CHUNK_SIZE) {
-                    const chunk = dataToPrint.slice(i, i + CHUNK_SIZE);
-                    await state.printerChar.writeValue(chunk);
-                    // Beri jeda 50ms setiap 100 karakter agar printer bisa bernapas
-                    await new Promise(resolve => setTimeout(resolve, 50)); 
-                }
-
-                // Setelah selesai mencetak, simpan ke Sheet
-                await saveToSheet();
-
-            } catch(e) {
-                toggleLoader(false);
-                alert("Gagal mencetak: " + e.message);
+            } else {
+                // Template Transfer
+                raw += ALIGN_CENTER + BOLD_ON + getT('r-toko') + BOLD_OFF + "\n";
+                raw += getT('r-alamat') + "\n";
+                raw += "================================\n";
+                raw += ALIGN_LEFT + "TGL: " + getT('r-tgl') + "\n";
+                raw += "JAM: " + getT('r-jam') + "\n";
+                raw += "================================\n";
+                raw += ALIGN_CENTER + "KODE REFERENSI:\n";
+                raw += BOLD_ON + getT('r-ref') + BOLD_OFF + "\n";
+                raw += "--------------------------------\n";
+                raw += ALIGN_LEFT + "DATA PENERIMA:\n";
+                raw += "BANK    : " + getT('r-bank') + "\n";
+                raw += "REK     : " + getT('r-rek') + "\n";
+                raw += "NAMA    : " + getT('r-nama').substring(0, 20) + "\n";
+                raw += "--------------------------------\n";
+                raw += "NOMINAL : " + getT('r-nom') + "\n";
+                raw += "ADMIN   : " + getT('r-adm') + "\n";
+                raw += BOLD_ON + "TOTAL   : " + getT('r-tot') + BOLD_OFF + "\n";
+                raw += "================================\n";
+                raw += ALIGN_CENTER + BOLD_ON + "** TRANSAKSI BERHASIL **\n";
+                raw += "TERIMA KASIH\n\n\n\n\n";
             }
-        }
 
-        async function saveToSheet() {
-            const payload = { 
-                nama: document.getElementById('r-nama').innerText, 
-                tipe: state.currentType 
-            };
+            // Simpan ke local DB
+            saveLocalHistory();
             
-            try {
-                // Diperbarui agar tidak terkendala CORS preflight saat POST dari Github
-                await fetch(API_URL, { 
+            // Simpan ke Spreadsheet
+            const namaUtama = state.currentType === 'Token' ? getT('t-nama') : getT('r-nama');
+            if (typeof google !== 'undefined' || API_URL !== "") {
+                fetch(API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload) 
-                });
-            } catch(e) {
-                console.warn("Gagal terhubung ke Google Sheets API:", e);
+                    body: JSON.stringify({ nama: namaUtama, tipe: state.currentType }) 
+                }).catch(e => console.log(e));
             }
 
+            // Jalankan RawBT
+            try {
+                const b64Data = btoa(unescape(encodeURIComponent(raw)));
+                window.location.href = "intent:base64," + b64Data + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            } catch(e) {
+                alert("Memicu RawBT gagal. Pastikan aplikasi terinstal.");
+            }
+            
             toggleLoader(false);
             fetchHistory();
             switchPage('home');
         }
 
-        async function fetchHistory() {
-            if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
-            
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
+        // --- SISTEM LOCAL DATABASE (HISTORY) ---
+        function saveLocalHistory() {
+            const getV = (id) => document.getElementById(id) ? document.getElementById(id).innerText : '';
+            const item = {
+                id: Date.now().toString(),
+                tipe: state.currentType,
                 
-                const list = document.getElementById('history-list');
-                if (!data || data.length === 0) {
-                    list.innerHTML = '<p class="text-center text-gray-400 text-[10px] mt-10">Belum ada riwayat cetak</p>';
-                    return;
-                }
+                // Data Transfer
+                r_toko: getV('r-toko'), r_alamat: getV('r-alamat'), r_tgl: getV('r-tgl'), r_jam: getV('r-jam'),
+                r_ref: getV('r-ref'), r_bank: getV('r-bank'), r_rek: getV('r-rek'), r_nama: getV('r-nama'),
+                r_nom: getV('r-nom'), r_adm: getV('r-adm'), r_tot: getV('r-tot'),
+                
+                // Data Token
+                t_toko: getV('t-toko'), t_alamat: getV('t-alamat'), t_tgl: getV('t-tgl'), t_jam: getV('t-jam'),
+                t_meter: getV('t-meter'), t_nama: getV('t-nama'), t_daya: getV('t-daya'), t_kwh: getV('t-kwh'),
+                t_token: document.getElementById('t-token') ? document.getElementById('t-token').innerHTML : '',
+                t_nom: getV('t-nom'), t_adm: getV('t-adm'), t_tot: getV('t-tot'), t_sn: getV('t-sn')
+            };
 
-                list.innerHTML = data.map(item => `
-                    <div class="bg-white rounded-3xl p-5 border border-gray-100 card-shadow flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-800 text-sm uppercase">${item.nama}</h4>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${item.waktu}</p>
-                        </div>
-                        <div class="px-3 py-1 bg-indigo-50 rounded-lg text-[8px] font-black text-indigo-500 uppercase">${item.tipe}</div>
-                    </div>`).join('');
-            } catch(e) {
-                console.log("Error mengambil riwayat:", e);
+            let history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
+            history.unshift(item);
+            if(history.length > 50) history.pop(); 
+            localStorage.setItem('cetak_history', JSON.stringify(history));
+        }
+
+        function loadReceipt(id) {
+            const history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
+            const item = history.find(h => h.id === id);
+            
+            if(item) {
+                state.currentType = item.tipe || 'Transfer';
+                const setV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+                
+                if (state.currentType === 'Transfer') {
+                    setV('r-toko', item.r_toko); setV('r-alamat', item.r_alamat); setV('r-tgl', item.r_tgl); setV('r-jam', item.r_jam);
+                    setV('r-ref', item.r_ref); setV('r-bank', item.r_bank); setV('r-rek', item.r_rek); setV('r-nama', item.r_nama);
+                    setV('r-nom', item.r_nom); setV('r-adm', item.r_adm); setV('r-tot', item.r_tot);
+                } else {
+                    setV('t-toko', item.t_toko); setV('t-alamat', item.t_alamat); setV('t-tgl', item.t_tgl); setV('t-jam', item.t_jam);
+                    setV('t-meter', item.t_meter); setV('t-nama', item.t_nama); setV('t-daya', item.t_daya); setV('t-kwh', item.t_kwh);
+                    if(document.getElementById('t-token')) document.getElementById('t-token').innerHTML = item.t_token;
+                    setV('t-nom', item.t_nom); setV('t-adm', item.t_adm); setV('t-tot', item.t_tot); setV('t-sn', item.t_sn);
+                }
+                switchPage('preview');
             }
+        }
+
+        function fetchHistory() {
+            const history = JSON.parse(localStorage.getItem('cetak_history') || '[]');
+            const list = document.getElementById('history-list');
+            
+            if (history.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 text-[10px] mt-10">Belum ada riwayat cetak di perangkat ini</p>';
+                return;
+            }
+
+            list.innerHTML = history.map(item => {
+                const nama = item.tipe === 'Token' ? item.t_nama : item.r_nama;
+                const tgl = item.tipe === 'Token' ? item.t_tgl : item.r_tgl;
+                const jam = item.tipe === 'Token' ? item.t_jam : item.r_jam;
+                const tot = item.tipe === 'Token' ? item.t_tot : item.r_tot;
+                const chipColor = item.tipe === 'Token' ? 'bg-orange-50 text-orange-500' : 'bg-indigo-50 text-indigo-500';
+
+                return `
+                <div onclick="loadReceipt('${item.id}')" class="bg-white rounded-3xl p-5 border border-gray-100 card-shadow flex justify-between items-center cursor-pointer active:scale-95 transition-all hover:bg-gray-50">
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm uppercase truncate w-32">${nama || 'NAMA PELANGGAN'}</h4>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${tgl} - ${jam}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <div class="px-3 py-1 ${chipColor} rounded-lg text-[8px] font-black uppercase">${item.tipe}</div>
+                        <span class="text-[11px] font-bold text-gray-600">${tot || 'Rp 0'}</span>
+                    </div>
+                </div>`
+            }).join('');
         }
 
         function toggleLoader(s, t) {
