@@ -29,7 +29,7 @@
 
     <!-- KONFIGURASI API BACKEND -->
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx3AqGbicnLIAB659rvPa4ogdR7JIsJs6jlOwZA5cvTDG68xpMflC3nP24rU_BGQXuy/exec";
     </script>
 
     <!-- LOADING OVERLAY -->
@@ -196,7 +196,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v21.2<br>Ultimate Stealth Security</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v21.3<br>Auto-Split & Global Cloud Sync</p>
             </div>
         </div>
     </div>
@@ -225,20 +225,29 @@
 
     <!-- MAIN APP SCRIPT -->
     <script>
-        // ⚠️ CARA AMAN ANTI-BLOKIR GITHUB (VERSI FINAL) ⚠️
-        // Kunci lama Anda sudah HANGUS dimatikan oleh Google. Anda WAJIB membuat API Key baru.
-        // Semua API Key Google pasti diawali dengan tulisan "AIzaSy".
-        // Agar tidak diblokir robot GitHub, KITA PISAHKAN awalan tersebut.
-        // TUGAS ANDA: Masukkan sisa huruf API Key baru Anda (setelah huruf AIzaSy) ke dalam KEY_C.
-        
-        const KEY_A = "AIz"; 
-        const KEY_B = "aSy"; 
-        const KEY_C = "AS3pj4TL4gB11ypyO8lj_1UE__EPeryP4"; // <-- MASUKKAN SISA API KEY BARU ANDA DI DALAM TANDA KUTIP INI
-        
-        const DEFAULT_API_KEY = KEY_A + KEY_B + KEY_C;
+        // ⚠️ CLOUD SYNC & AUTO-SPLIT SECURITY (VERSI 21.3) ⚠️
+        // API Key kini TIDAK LAGI disimpan di GitHub. Jika diisi di Setelan, 
+        // akan otomatis dipecah 3 bagian, disembunyikan di memori, 
+        // dan disinkronkan ke semua perangkat Anda via Google Cloud!
         
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
+
+        // Fungsi Membagi Kunci 3 Bagian Secara Otomatis
+        function splitAndSaveKey(key) {
+            if (!key || key.length < 15) return;
+            localStorage.setItem('k_p1', key.substring(0, 10));
+            localStorage.setItem('k_p2', key.substring(10, 25));
+            localStorage.setItem('k_p3', key.substring(25));
+        }
+
+        // Fungsi Menggabungkan Kembali Kunci Saat Dibutuhkan AI
+        function getAssembledKey() {
+            const p1 = localStorage.getItem('k_p1') || "";
+            const p2 = localStorage.getItem('k_p2') || "";
+            const p3 = localStorage.getItem('k_p3') || "";
+            return p1 + p2 + p3;
+        }
 
         // --- DOM HELPERS ---
         const getEl = id => document.getElementById(id);
@@ -260,6 +269,7 @@
             }
 
             loadSettings(); 
+            syncKeyFromCloud(); // Tarik kunci terbaru dari Cloud
             switchPage('home');
             fetchHistory();
             
@@ -308,16 +318,35 @@
             });
         });
 
+        // --- SINKRONISASI CLOUD LINTAS PERANGKAT ---
+        async function syncKeyFromCloud() {
+            if (!API_URL || API_URL === "") return;
+            try {
+                const res = await fetch(API_URL + "?action=getKey");
+                const data = await res.json();
+                if (data.key && data.key.length > 15) {
+                    splitAndSaveKey(data.key); // Auto split kunci dari cloud
+                    if (getEl('setting-apikey')) getEl('setting-apikey').value = getAssembledKey();
+                }
+            } catch(e) { console.log("Gagal sync API Key dari cloud", e); }
+        }
+
         // --- SISTEM PENGATURAN ---
         function saveSettings(btn) {
             const toko = getElText('setting-toko');
             const alamat = getElText('setting-alamat');
             const apikey = getEl('setting-apikey').value.trim(); 
             
-            localStorage.setItem('app_settings', JSON.stringify({ toko, alamat, apikey }));
+            // Simpan profil (TAPI Kunci Utama tidak lagi disimpan secara telanjang)
+            localStorage.setItem('app_settings', JSON.stringify({ toko, alamat })); 
             
-            setElText('r-toko', toko); setElText('t-toko', toko);
-            setElText('r-alamat', alamat); setElText('t-alamat', alamat);
+            if (apikey) {
+                splitAndSaveKey(apikey);
+                // Sinkronisasikan ke semua device yang menggunakan link GitHub ini
+                if (API_URL) {
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateKey', key: apikey }) });
+                }
+            }
 
             const originalText = btn.innerText;
             btn.innerText = "✅ TERSIMPAN!";
@@ -332,17 +361,15 @@
 
         function loadSettings() {
             const saved = localStorage.getItem('app_settings');
-            let apiKeyToDisplay = ""; // Default kosong agar tidak rancu
             
             if (saved) {
                 try {
                     const settings = JSON.parse(saved);
                     if (typeof settings.toko !== 'undefined') { setElText('setting-toko', settings.toko); setElText('r-toko', settings.toko); setElText('t-toko', settings.toko); }
                     if (typeof settings.alamat !== 'undefined') { setElText('setting-alamat', settings.alamat); setElText('r-alamat', settings.alamat); setElText('t-alamat', settings.alamat); }
-                    if (settings.apikey && settings.apikey.trim() !== "") { apiKeyToDisplay = settings.apikey; }
                 } catch(e) { console.error("Gagal memuat pengaturan", e); }
             }
-            if (getEl('setting-apikey')) getEl('setting-apikey').value = apiKeyToDisplay;
+            if (getEl('setting-apikey')) getEl('setting-apikey').value = getAssembledKey();
         }
 
         // --- SISTEM WAKE LOCK ---
@@ -386,11 +413,11 @@
 
         // --- GOOGLE GEMINI VISION PURE API ENGINE ---
         async function processImageOCR(file) {
-            const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
-            let apiKey = (savedSettings.apikey && savedSettings.apikey.trim() !== "") ? savedSettings.apikey.trim() : DEFAULT_API_KEY;
+            // Merakit kunci secara otomatis
+            let apiKey = getAssembledKey();
 
             if (!apiKey || apiKey.trim() === "" || apiKey === "AIzaSy") {
-                alert("⚠️ PERHATIAN: API KEY KOSONG ATAU BELUM DITANAM!\n\nPastikan Anda sudah memasukkan API Key di baris kode skrip (KEY_C), atau isikan manual di menu Setelan.");
+                alert("⚠️ PERHATIAN: API KEY KOSONG!\n\nPastikan Anda sudah memasukkan API Key di menu Setelan.");
                 switchPage('settings');
                 return;
             }
