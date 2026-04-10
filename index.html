@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Auto Save V50</title>
+    <title>Cetak Nota - V51 Auto Reconnect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 50
-        if (!localStorage.getItem('ZETTBOT_V50_AUTOSAVE')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 51
+        if (!localStorage.getItem('ZETTBOT_V51_NAV')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V50_AUTOSAVE', 'true');
+            localStorage.setItem('ZETTBOT_V51_NAV', 'true');
         }
         
         // URL GAS ANDA
@@ -188,7 +188,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v50.0 - Auto Save Draft</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v51.0 - Nav & BT Fix</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -216,25 +216,81 @@
             cloudKey: "", 
             manualKey: localStorage.getItem('ZETTBOT_API_KEY_V50') || "",
             editingField: "",
-            currentReceiptId: null // Menyimpan ID nota yang sedang aktif/diedit
+            currentReceiptId: null
         };
 
         const getEl = id => document.getElementById(id);
         const getElText = id => getEl(id)?.innerText || '';
         const setElText = (id, v) => { if(getEl(id)) getEl(id).innerText = v; };
 
+        // --- MANAJEMEN NAVIGASI HARDWARE (TOMBOL KEMBALI HP) ---
+        window.addEventListener('hashchange', () => {
+            const pageId = location.hash.replace('#', '') || 'home';
+            renderPage(pageId);
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Set halaman awal berdasarkan URL hash, cegah halaman blank saat reload
+            const initialPage = location.hash.replace('#', '') || 'home';
+            renderPage(initialPage);
+
             loadSettings(); 
             syncCloud(false);
-            switchPage('home');
             fetchHistory();
             
+            // Auto Reconnect Printer (Hanya jika browser mengizinkan secara latar belakang)
+            autoConnectPrinter();
+
             getEl('gallery-input').onchange = (e) => { 
                 const file = e.target.files[0];
                 if (file) processImageOCR(file);
                 e.target.value = '';
             };
         });
+
+        // FUNGSI NAVIGASI BARU: Memanfaatkan Hash agar tombol kembali HP bekerja
+        function switchPage(pageId) {
+            location.hash = pageId;
+        }
+
+        // FUNGSI RENDER UI HALAMAN: Mengubah tampilan CSS berdasarkan Page ID
+        function renderPage(pageId) {
+            ['home', 'preview', 'settings'].forEach(id => {
+                const el = getEl(`page-${id}`);
+                if(el) el.classList.toggle('hidden', id !== pageId);
+            });
+            
+            const nav = getEl('bottom-nav');
+            if(nav) nav.style.display = (pageId === 'preview') ? 'none' : 'block';
+
+            ['home', 'settings'].forEach(id => {
+                const btn = getEl(`nav-${id}`);
+                if (!btn) return;
+                const iconBox = btn.querySelector('.nav-icon-box');
+                const isMatch = (id === pageId);
+                btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
+                if (iconBox) iconBox.className = `nav-icon-box p-3 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
+            });
+
+            if (pageId === 'preview') {
+                const tTransfer = getEl('template-transfer');
+                const tToken = getEl('template-token');
+                
+                if (tTransfer) tTransfer.classList.toggle('hidden', state.currentType !== 'Transfer');
+                if (tToken) tToken.classList.toggle('hidden', state.currentType !== 'Token');
+                
+                const btnCetak = getEl('btn-main-print');
+                if (btnCetak) {
+                    if (state.currentType === 'Token') {
+                        btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
+                    } else {
+                        btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
+                    }
+                }
+            }
+
+            window.scrollTo(0,0);
+        }
 
         // --- SISTEM MODAL (POPUP) UNTUK EDIT ANGKA ---
         function openEditModal(fieldId, title) {
@@ -635,43 +691,6 @@
             else { if(getElText('r-tgl')==='--/--/----') setElText('r-tgl', d); setElText('r-jam', t); }
         }
 
-        function switchPage(pageId) {
-            ['home', 'preview', 'settings'].forEach(id => {
-                const el = getEl(`page-${id}`);
-                if(el) el.classList.toggle('hidden', id !== pageId);
-            });
-            const nav = getEl('bottom-nav');
-            if(nav) nav.style.display = (pageId === 'preview') ? 'none' : 'block';
-
-            ['home', 'settings'].forEach(id => {
-                const btn = getEl(`nav-${id}`);
-                if (!btn) return;
-                const iconBox = btn.querySelector('.nav-icon-box');
-                const isMatch = (id === pageId);
-                btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
-                if (iconBox) iconBox.className = `nav-icon-box p-3 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
-            });
-
-            if (pageId === 'preview') {
-                const tTransfer = getEl('template-transfer');
-                const tToken = getEl('template-token');
-                
-                if (tTransfer) tTransfer.classList.toggle('hidden', state.currentType !== 'Transfer');
-                if (tToken) tToken.classList.toggle('hidden', state.currentType !== 'Token');
-                
-                const btnCetak = getEl('btn-main-print');
-                if (btnCetak) {
-                    if (state.currentType === 'Token') {
-                        btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
-                    } else {
-                        btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
-                    }
-                }
-            }
-
-            window.scrollTo(0,0);
-        }
-
         function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
 
         function toggleLoader(s, t) {
@@ -679,6 +698,37 @@
             if(txt) txt.innerText = t;
             const ldr = getEl('loader');
             if(ldr) ldr.style.display = s ? 'flex' : 'none';
+        }
+
+        // ============================================================================
+        // SISTEM BLUETOOTH AUTO-RECONNECT
+        // ============================================================================
+        async function autoConnectPrinter() {
+            // Mengecek apakah browser mendukung getDevices() (Browser modern Chrome/Edge)
+            if (navigator.bluetooth && navigator.bluetooth.getDevices) {
+                try {
+                    const devices = await navigator.bluetooth.getDevices();
+                    // Jika ada printer yang sudah pernah diizinkan, coba konek ulang!
+                    if (devices.length > 0) {
+                        state.btDevice = devices[0];
+                        state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                        
+                        const server = await state.btDevice.gatt.connect();
+                        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                        const characteristics = await service.getCharacteristics();
+                        
+                        state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+
+                        if (state.printerChar) {
+                            state.isConnected = true;
+                            updatePrinterUI(true);
+                            console.log("Printer berhasil Auto-Reconnect!");
+                        }
+                    }
+                } catch (e) {
+                    console.log("Auto-connect background ditolak (Biasanya butuh di-klik manual pertama kali):", e);
+                }
+            }
         }
 
         async function startBluetoothScan() {
@@ -816,7 +866,7 @@
                     if(getEl('t-token')) getEl('t-token').innerHTML = item.t_token;
                     setElText('t-nom', item.t_nom); setElText('t-adm', item.t_adm); setElText('t-tot', item.t_tot); setElText('t-sn', item.t_sn);
                 }
-                switchPage('preview');
+                switchPage('preview'); // Akan mentrigger navigasi dengan hash
             }
         }
 
