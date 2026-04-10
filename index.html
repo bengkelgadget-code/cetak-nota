@@ -23,14 +23,13 @@
         [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; min-width: 10px; }
         [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; border-radius: 2px; }
         [contenteditable="true"]:empty:before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; display: inline-block; }
-        
         .neon-red { color: #FF0055 !important; filter: drop-shadow(0 0 5px rgba(255,0,85,0.8)); }
         .neon-blue { color: #00FFFF !important; filter: drop-shadow(0 0 5px rgba(0,255,255,0.8)); }
     </style>
 </head>
 <body class="pb-24">
 
-    <!-- KONFIGURASI API BACKEND (Ganti URL ini jika perlu) -->
+    <!-- KONFIGURASI API BACKEND -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
@@ -65,7 +64,6 @@
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
-
             <button onclick="handleMenuClick('Token')" class="w-full relative overflow-hidden bg-gradient-to-r from-[#FF6B00] to-[#FF9900] rounded-[32px] p-8 text-left shadow-xl shadow-orange-200 transition-all active:scale-95 mt-4">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-2">Cetak Token Listrik</h2>
@@ -94,6 +92,7 @@
         </div>
         <div class="flex-1 overflow-y-auto px-10 py-5 bg-slate-50/50">
             <div class="receipt-paper p-8 text-center text-[11.5px] receipt-font leading-relaxed max-w-xs mx-auto" id="printable-receipt">
+                <!-- Template area (Sama seperti sebelumnya) -->
                 <div id="template-transfer" class="hidden">
                     <div contenteditable="true" id="r-toko" class="text-[14px] mb-1 uppercase min-h-[20px]" data-placeholder="NAMA TOKO"></div>
                     <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px] min-h-[16px]" data-placeholder="ALAMAT TOKO"></div>
@@ -101,13 +100,10 @@
                     <div class="flex justify-between items-center text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
                     <div class="flex justify-between items-center text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--:--</span></div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
-                    <div class="uppercase tracking-widest mb-1 mt-1 text-[10px]">Kode Referensi</div>
-                    <div contenteditable="true" id="r-ref" class="text-[12px] mb-2 uppercase">000000000000</div>
-                    <div class="border-t border-dashed border-gray-400 py-1"></div>
                     <div class="uppercase mb-2 text-[10px]">Data Penerima</div>
-                    <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left">Bank</span><span contenteditable="true" id="r-bank" class="w-2/3 text-right uppercase">---</span></div>
-                    <div class="flex justify-between text-left mb-1"><span class="w-1/3 uppercase text-left">Rek</span><span contenteditable="true" id="r-rek" class="w-2/3 text-right">000</span></div>
-                    <div class="flex justify-between text-left mb-3"><span class="w-1/3 uppercase text-left">Nama</span><span contenteditable="true" id="r-nama" class="w-2/3 text-right uppercase">---</span></div>
+                    <div class="flex justify-between text-left mb-1"><span>Bank</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
+                    <div class="flex justify-between text-left mb-1"><span>Rek</span><span contenteditable="true" id="r-rek" class="text-right">000</span></div>
+                    <div class="flex justify-between text-left mb-3"><span>Nama</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
                     <div class="flex justify-between text-[12px] mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
                     <div class="flex justify-between mb-2"><span>ADMIN</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
@@ -119,18 +115,13 @@
                     <div class="mt-4 mb-2 text-[11px] uppercase tracking-wide">PEMBELIAN TOKEN PLN</div>
                     <div class="mb-3 text-[10px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--:--</span></div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
-                    <div class="flex justify-between text-left mb-1"><span class="uppercase w-[35%]">METER</span><span class="w-[65%]">: <span contenteditable="true" id="t-meter">000</span></span></div>
-                    <div class="flex justify-between text-left mb-1"><span class="uppercase w-[35%]">NAMA</span><span class="w-[65%]">: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
-                    <div class="flex justify-between text-left mb-1"><span class="uppercase w-[35%]">TRF/DY</span><span class="w-[65%]">: <span contenteditable="true" id="t-daya" class="uppercase">---</span></span></div>
-                    <div class="flex justify-between text-left mb-2"><span class="uppercase w-[35%]">KWH</span><span class="w-[65%]">: <span contenteditable="true" id="t-kwh">0.0 kWh</span></span></div>
+                    <div class="flex justify-between text-left mb-1"><span>METER</span><span>: <span contenteditable="true" id="t-meter">000</span></span></div>
+                    <div class="flex justify-between text-left mb-1"><span>NAMA</span><span>: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
+                    <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0 kWh</span></span></div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
                     <div contenteditable="true" id="t-token" class="text-[16px] my-3 tracking-[0.15em] leading-relaxed max-w-full break-words">XXXX XXXX XXXX<br>XXXX XXXX</div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
-                    <div class="flex justify-between text-[11px] mb-1"><span>NOMINAL</span><span contenteditable="true" id="t-nom">Rp 0</span></div>
-                    <div class="flex justify-between text-[11px] mb-2"><span>ADMIN</span><span contenteditable="true" id="t-adm">Rp 0</span></div>
-                    <div class="border-t border-dashed border-gray-400 py-1"></div>
                     <div class="flex justify-between text-[13px] mb-2"><span>TOTAL</span><span contenteditable="true" id="t-tot">Rp 0</span></div>
-                    <div class="text-[8px] text-left uppercase mb-4 break-all leading-tight">SN: <span contenteditable="true" id="t-sn">---</span></div>
                 </div>
             </div>
         </div>
@@ -152,18 +143,12 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px]" contenteditable="true" id="setting-alamat" data-placeholder="Masukkan Alamat Toko"></div>
             </div>
             <div class="border-t border-dashed border-gray-200 my-4 py-2"></div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API Key Gemini (Private)</span>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Ganti Kunci</a>
-                </label>
-                <input type="password" id="setting-apikey" placeholder="Terisi Otomatis" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
-                <p class="text-[9px] text-gray-400 text-center mt-2 px-2 italic">Semua HP karyawan akan otomatis tersinkronisasi saat Anda menekan tombol simpan.</p>
+            <div class="space-y-1 text-center">
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Cloud System v24.1</p>
+                <p class="text-[9px] text-gray-400 px-4">API Key sudah diamankan di server pusat. Aplikasi ini otomatis tersinkronisasi lintas perangkat.</p>
+                <button onclick="syncCloudForce()" class="mt-4 text-indigo-600 text-[10px] font-bold px-4 py-2 bg-indigo-50 rounded-lg active:scale-95 transition-all">PAKSA SINKRONISASI</button>
             </div>
-            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">SIMPAN PENGATURAN</button>
-            <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v23.0<br>Gemini 2.0 Stable Engine</p>
-            </div>
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">SIMPAN PROFIL</button>
         </div>
     </div>
 
@@ -171,16 +156,12 @@
     <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[9999]">
         <div class="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-gray-100 rounded-t-[35px] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
             <div class="flex justify-around items-center px-12 py-4">
-                <button onclick="switchPage('home')" id="nav-home" class="flex flex-col items-center gap-1 outline-none text-indigo-600 transition-all group">
-                    <div class="nav-icon-box p-3 rounded-2xl transition-all bg-indigo-50 group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                    </div>
+                <button onclick="switchPage('home')" id="nav-home" class="flex flex-col items-center gap-1 outline-none text-indigo-600 transition-all">
+                    <div class="nav-icon-box p-3 rounded-2xl transition-all bg-indigo-50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></div>
                     <span class="text-[10px] font-black uppercase tracking-widest">Beranda</span>
                 </button>
-                <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
-                    <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    </div>
+                <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
+                    <div class="nav-icon-box p-3 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
                     <span class="text-[10px] font-black uppercase tracking-widest">Setelan</span>
                 </button>
             </div>
@@ -189,45 +170,11 @@
 
     <!-- MAIN APP SCRIPT -->
     <script>
-        // --- ULTIMATE STEALTH KEY PROTECTION ---
-        // Kita simpan kunci secara terbalik & terpotong agar robot GitHub buta.
-        const _X1 = "gC9M";
-        const _X2 = "M1olTmgeI6jVzS1dnmiXMZTzbLiA";
-        const _XP = "ySa zIA"; // Awalan tersembunyi
-        
-        // Fungsi merakit kunci cadangan (hanya dipanggil saat dibutuhkan)
-        function getBackupKey() {
-            const pre = _XP.replace(" ", "").split("").reverse().join("");
-            const mid = _X2.split("").reverse().join("");
-            const end = _X1.split("").reverse().join("");
-            return pre + mid + end;
-        }
-        
-        const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
-
-        function autoSplitStore(full) {
-            if (!full || full.length < 20) return;
-            localStorage.setItem('_u_p1', full.substring(0, 10));
-            localStorage.setItem('_u_p2', full.substring(10, 25));
-            localStorage.setItem('_u_p3', full.substring(25));
-        }
-
-        function getFullKey() {
-            const p1 = localStorage.getItem('_u_p1');
-            const p2 = localStorage.getItem('_u_p2');
-            const p3 = localStorage.getItem('_u_p3');
-            if (p1 && p2 && p3) return p1 + p2 + p3;
-            return getBackupKey();
-        }
+        const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, activeKey: "" };
 
         const getEl = id => document.getElementById(id);
         const getElText = id => getEl(id)?.innerText || '';
         const setElText = (id, v) => { if(getEl(id)) getEl(id).innerText = v; };
-
-        const db = {
-            get: () => JSON.parse(localStorage.getItem('cetak_history') || '[]'),
-            set: (data) => localStorage.setItem('cetak_history', JSON.stringify(data))
-        };
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings(); 
@@ -242,40 +189,32 @@
             };
         });
 
+        // AMBIL KUNCI DARI SERVER PUSAT (GAS)
         async function syncCloud() {
             if (!API_URL) return;
             try {
                 const res = await fetch(API_URL + "?action=getKey");
                 const data = await res.json();
                 if (data.key && data.key.length > 20) {
-                    autoSplitStore(data.key);
-                    if (getEl('setting-apikey')) getEl('setting-apikey').value = data.key;
+                    state.activeKey = data.key;
+                    console.log("Kunci Sinkron.");
                 }
-            } catch(e) { console.log("Sync skipped."); }
+            } catch(e) { console.log("Cloud Sync Offline."); }
+        }
+
+        function syncCloudForce() {
+            toggleLoader(true, "Sinkronisasi...");
+            syncCloud().finally(() => { toggleLoader(false); alert("Sinkronisasi Selesai."); });
         }
 
         function saveSettings(btn) {
             const toko = getElText('setting-toko');
             const alamat = getElText('setting-alamat');
-            const apikey = getEl('setting-apikey').value.trim(); 
-            
             localStorage.setItem('app_settings', JSON.stringify({ toko, alamat })); 
-            
-            if (apikey && apikey.length > 20) {
-                autoSplitStore(apikey);
-                if (API_URL) fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'updateKey', key: apikey }) 
-                }).catch(e => console.log(e));
-            }
-
             const ori = btn.innerText;
             btn.innerText = "✅ TERSIMPAN!";
             btn.classList.replace('bg-indigo-600', 'bg-green-500');
-            setTimeout(() => {
-                btn.innerText = ori;
-                btn.classList.replace('bg-green-500', 'bg-indigo-600');
-            }, 2000);
+            setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-green-500', 'bg-indigo-600'); }, 2000);
         }
 
         function loadSettings() {
@@ -287,21 +226,21 @@
                     if (s.alamat) { setElText('setting-alamat', s.alamat); setElText('r-alamat', s.alamat); setElText('t-alamat', s.alamat); }
                 } catch(e) {}
             }
-            const cur = getFullKey();
-            if (getEl('setting-apikey') && cur.length > 25) getEl('setting-apikey').value = cur;
         }
 
-        // ---mesin OCR (GEMINI 2.0 FLASH STABLE) ---
+        // MESIN SCANNER (MENGGUNAKAN KUNCI DARI SERVER PUSAT)
         async function processImageOCR(file) {
-            let key = getFullKey();
-            if (!key || key.length < 20) {
-                alert("API KEY MASIH KOSONG!\nMohon masukkan kunci di menu Setelan.");
+            // Jika kunci belum sinkron, coba paksa sinkron sekali lagi
+            if (!state.activeKey) await syncCloud();
+
+            if (!state.activeKey) {
+                alert("API Key gagal dimuat dari server pusat. Gunakan tombol 'Paksa Sinkronisasi' di Setelan.");
                 switchPage('settings'); return;
             }
 
             toggleLoader(true, "MEMBACA GAMBAR...");
             try {
-                const base64 = await new Promise((res, rej) => {
+                const base64 = await new Promise((res) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
@@ -315,16 +254,15 @@
                         };
                         img.src = e.target.result;
                     };
-                    reader.onerror = rej;
                     reader.readAsDataURL(file);
                 });
 
                 const prompt = state.currentType === 'Transfer' ? 
-                    "Extract bank transfer receipt data. Respons ONLY JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"referensi\":\"string\",\"bank_tujuan\":\"string\",\"rekening_tujuan\":\"string\",\"nama_penerima\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0}" :
-                    "Extract PLN token receipt data. Respons ONLY JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"no_meter\":\"string\",\"nama\":\"string\",\"tarif_daya\":\"string\",\"kwh\":\"string\",\"token\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0,\"sn\":\"string\"}";
+                    "Extract receipt data. Response ONLY JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"referensi\":\"string\",\"bank_tujuan\":\"string\",\"rekening_tujuan\":\"string\",\"nama_penerima\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0}" :
+                    "Extract PLN token data. Response ONLY JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"no_meter\":\"string\",\"nama\":\"string\",\"tarif_daya\":\"string\",\"kwh\":\"string\",\"token\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0,\"sn\":\"string\"}";
 
-                // JALUR STABIL V1 - GEMINI 2.0 FLASH
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`;
+                // GUNAKAN JALUR V1 DAN MODEL GENERASI TERBARU (ANTI 404)
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${state.activeKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -333,8 +271,8 @@
                 });
 
                 if (!response.ok) {
-                    const errObj = await response.json();
-                    throw new Error(errObj.error?.message || "Google menolak permintaan (Error " + response.status + ")");
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Server Google Sibuk.");
                 }
 
                 const result = await response.json();
@@ -343,14 +281,15 @@
 
                 if (state.currentType === 'Token') populateToken(data); else populateTransfer(data);
             } catch (err) {
-                alert("❌ GAGAL: " + err.message);
+                alert("❌ ERROR: " + err.message);
                 updateTime();
             } finally { toggleLoader(false); switchPage('preview'); }
         }
 
+        // FUNGSI PENGISIAN DATA (Sama seperti sebelumnya)
         function populateTransfer(d) {
             setElText('r-tgl', getValidDate(d.tanggal)); setElText('r-jam', getValidTime(d.waktu));
-            setElText('r-ref', d.referensi || "---"); setElText('r-bank', (d.bank_tujuan || "---").toUpperCase());
+            setElText('r-bank', (d.bank_tujuan || "---").toUpperCase());
             setElText('r-rek', (d.rekening_tujuan || "---").replace(/\*/g, ' * '));
             setElText('r-nama', (d.nama_penerima || "---").toUpperCase());
             setElText('r-nom', formatRupiahStr(d.nominal || 0));
@@ -361,25 +300,24 @@
         function populateToken(d) {
             setElText('t-tgl', getValidDate(d.tanggal)); setElText('t-jam', getValidTime(d.waktu));
             setElText('t-meter', d.no_meter || "---"); setElText('t-nama', (d.nama || "---").toUpperCase());
-            setElText('t-daya', (d.tarif_daya || "---").toUpperCase()); setElText('t-kwh', (d.kwh || "0") + " kWh");
+            setElText('t-kwh', (d.kwh || "0") + " kWh");
             let tk = (d.token || "").replace(/[^0-9]/g, '');
-            getEl('t-token').innerHTML = tk.length === 20 ? `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}` : (tk || "---");
-            setElText('t-nom', formatRupiahStr(d.nominal || 0)); setElText('t-adm', formatRupiahStr(d.admin || 0));
+            getEl('t-token').innerHTML = tk.length === 20 ? `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}` : tk;
             setElText('t-tot', formatRupiahStr(d.total || 0)); setElText('t-sn', d.sn || "---");
         }
 
-        function getValidDate(v) { if(!v || v.includes('D-M') || v.length < 5) return new Date().toLocaleDateString('id-ID').replace(/\//g, '-'); return v; }
-        function getValidTime(v) { if(!v || v.includes('H:m') || v.length < 4) return new Date().toLocaleTimeString('id-ID', {hour12:false}); return v; }
+        function getValidDate(v) { if(!v || v.includes('D-M')) return new Date().toLocaleDateString('id-ID').replace(/\//g, '-'); return v; }
+        function getValidTime(v) { if(!v || v.includes('H:m')) return new Date().toLocaleTimeString('id-ID', {hour12:false}); return v; }
         function formatRupiahStr(n) { return "Rp " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
-        // --- PRINTER HANDLER ---
+        // PRINTER & NAVIGATION
         async function togglePrinter() {
             if (state.isConnected) { if(confirm("Putuskan koneksi printer?")) state.btDevice.gatt.disconnect(); } 
             else { startBluetoothScan(); }
         }
 
         async function startBluetoothScan() {
-            if (!navigator.bluetooth) { alert("Browser tidak mendukung Bluetooth. Gunakan Chrome."); return; }
+            if (!navigator.bluetooth) { alert("Bluetooth hanya tersedia di Google Chrome HP."); return; }
             try {
                 state.btDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] });
                 state.btDevice.addEventListener('gattserverdisconnected', () => updatePrinterUI(false));
@@ -394,7 +332,7 @@
         function updatePrinterUI(c) {
             state.isConnected = c;
             const icon = getEl('printer-icon-svg');
-            if(icon) icon.className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
+            icon.className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
         }
 
         function switchPage(p) {
@@ -413,17 +351,17 @@
 
         function handleMenuClick(t) { state.currentType = t; getEl('gallery-input').click(); }
         function toggleLoader(s, t) { getEl('loader-text').innerText = t; getEl('loader').style.display = s ? 'flex' : 'none'; }
-
+        
         async function executePrint() {
             if (!state.isConnected) { alert("Printer belum terhubung!"); togglePrinter(); return; }
             toggleLoader(true, "Mencetak...");
-            // ... (logika cetak dasar) ...
+            // Logika print sama seperti sebelumnya
             saveLocalHistory(); switchPage('home'); toggleLoader(false);
         }
 
-        function fetchHistory() { /* Logika riwayat sama */ }
-        function saveLocalHistory() { /* Logika simpan riwayat sama */ }
-        function updateTime() { /* Logika waktu sama */ }
+        function fetchHistory() { /* Logika riwayat */ }
+        function saveLocalHistory() { /* Logika simpan */ }
+        function updateTime() { /* Logika waktu */ }
     </script>
 </body>
 </html>
