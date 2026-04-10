@@ -232,7 +232,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v17.0<br>Pure Payload API JSON Fix</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v18.0<br>Seamless Fallback Auto-Router</p>
             </div>
         </div>
     </div>
@@ -377,10 +377,11 @@
             }
 
             toggleLoader(true, "MEMBACA GAMBAR...");
+            getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
             try {
                 // Resize image untuk hemat kuota dan cegah memory penuh
-                const base64Data = await new Promise((resolve, reject) => {
+                const base64DataRaw = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
@@ -401,7 +402,18 @@
                     reader.readAsDataURL(file);
                 });
 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                const base64Data = base64DataRaw;
+                
+                // MULTI-MODEL FALLBACK ARRAY UNTUK MENCEGAH ERROR 404
+                const modelsToTry = [
+                    "v1beta/models/gemini-1.5-flash",
+                    "v1/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash-latest",
+                    "v1beta/models/gemini-1.5-pro",
+                    "v1beta/models/gemini-1.5-pro-latest",
+                    "v1beta/models/gemini-pro-vision"
+                ];
+
                 let promptText = "";
 
                 // PROMPT ENGINEERING SUPER KETAT MENGGANTIKAN RESPON-SCHEMA
@@ -416,11 +428,14 @@
                     generationConfig: { temperature: 0.1 }
                 };
 
-                let result;
-                let retries = 3;
-                let delays = [1000, 2000, 4000];
-                
-                for (let i = 0; i <= retries; i++) {
+                let result = null;
+                let lastErrorMsg = "";
+
+                // COBA SEMUA ENDPOINT/MODEL AI SECARA BERURUTAN
+                for (let i = 0; i < modelsToTry.length; i++) {
+                    const currentEndpoint = modelsToTry[i];
+                    const url = `https://generativelanguage.googleapis.com/${currentEndpoint}:generateContent?key=${apiKey}`;
+                    
                     try {
                         const response = await fetch(url, {
                             method: 'POST',
@@ -429,29 +444,37 @@
                         });
                         
                         if (!response.ok) {
-                            let errText = "Gagal menghubungi server Gemini.";
+                            let errText = "";
                             try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
+                            lastErrorMsg = errText || response.statusText;
                             
-                            if (response.status >= 400 && response.status < 500) {
-                                if (response.status === 400) throw new Error(`Format API Key Anda Salah (Error 400).\nPastikan API Key sudah dimasukkan dengan benar di menu Setelan.\n\nDetail Google: ${errText}`);
-                                if (response.status === 403) throw new Error(`Akses API Ditolak (Error 403).\nAPI Key Anda mungkin belum diaktifkan, dibatasi oleh Google, atau ada salah ketik.\n\nDetail Google: ${errText}`);
-                                if (response.status === 404) throw new Error(`Model AI tidak ditemukan (Error 404) untuk API Key Anda.\n\nDetail Google: ${errText}`);
-                                throw new Error(`Error API ${response.status}:\n${errText}`);
+                            // Jika Google memblokir akses (API Key dilarang/tidak valid)
+                            if (response.status === 403) {
+                                throw new Error(`Akses API Ditolak (Error 403).\nAPI Key salah atau belum diaktifkan.\n\nDetail: ${lastErrorMsg}`);
+                            }
+                            if (response.status === 400 && lastErrorMsg.toLowerCase().includes("api key not valid")) {
+                                throw new Error(`API Key Tidak Valid (Error 400).\nPastikan tidak ada salah ketik/spasi.\n\nDetail: ${lastErrorMsg}`);
                             }
                             
-                            throw new Error(`Server Error ${response.status}: ${errText}`);
+                            // Jika model tidak ditemukan (404) atau Error 400 (Bad Request payload) lanjutkan ke model berikutnya
+                            continue; 
                         }
                         
                         result = await response.json();
-                        break; 
+                        break; // BERHASIL! Keluar dari loop.
                         
                     } catch (error) {
-                        if (error.message.includes("(Error 400)") || error.message.includes("(Error 403)") || error.message.includes("(Error 404)")) {
+                        // Jika error fatal (403 atau API Key), lemparkan ke penangkap error luar agar muncul pop-up
+                        if (error.message.includes("Akses API Ditolak") || error.message.includes("API Key Tidak Valid")) {
                             throw error;
                         }
-                        if (i === retries) throw error;
-                        await new Promise(r => setTimeout(r, delays[i]));
+                        // Jika error jaringan biasa, simpan pesan dan lanjut coba
+                        lastErrorMsg = error.message;
                     }
+                }
+
+                if (!result) {
+                    throw new Error(`Semua versi Model AI Google gagal diakses.\nError Terakhir: ${lastErrorMsg}\n\nSolusi: Pastikan API Key baru Anda benar-benar aktif.`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
