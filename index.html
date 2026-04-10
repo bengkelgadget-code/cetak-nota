@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V46 Final Sync</title>
+    <title>Cetak Nota - Auto Pull Sync V47</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -21,7 +21,6 @@
         button:active { transform: scale(0.96); transition: 0.1s; }
         [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: all 0.2s; }
         [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; }
-        /* Style untuk elemen yang bisa di-klik modal */
         .editable-click { cursor: pointer; border-bottom: 1px dashed #ccc; transition: all 0.2s; }
         .editable-click:active { background-color: rgba(79, 70, 229, 0.1); border-bottom: 1px dashed #4F46E5; }
     </style>
@@ -29,11 +28,12 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 46
-        if (!localStorage.getItem('ZETTBOT_V46_FINAL')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 47
+        if (!localStorage.getItem('ZETTBOT_V47_SYNC')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V46_FINAL', 'true');
+            localStorage.setItem('ZETTBOT_V47_SYNC', 'true');
         }
+        
         // URL GAS ANDA
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
@@ -64,7 +64,7 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
             </div>
-            <!-- TOMBOL PRINTER (Akan berubah HIJAU NEON saat terkoneksi) -->
+            <!-- TOMBOL PRINTER -->
             <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90">
                 <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -158,7 +158,6 @@
         <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Pengaturan</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4">
             
-            <!-- DATA KONTER DI ATAS SEKARANG -->
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">DATA KONTER</label>
                 <input type="text" id="setting-toko" placeholder="Nama Konter Anda..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center transition-all">
@@ -167,16 +166,20 @@
 
             <div class="border-t border-dashed border-gray-200 my-6 py-2"></div>
             
-            <!-- API KEY DI BAWAH SEKARANG -->
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API KEY MANUAL</span>
+                    <span>API KEY GEMINI</span>
+                    <!-- TOMBOL BARU: MEMAKSA MENARIK DARI SERVER -->
+                    <button onclick="syncCloud(true)" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        Tarik dari Server
+                    </button>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Tempel Kunci API Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center transition-all">
+                <input type="password" id="setting-apikey" placeholder="Kunci ditarik otomatis dari server..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center transition-all">
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
-                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENGECEK CLOUD...</p>
+                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK CLOUD...</p>
                 </div>
             </div>
             
@@ -185,7 +188,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v46.0 - Final Sync</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v47.0 - Auto Pull Sync</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -211,7 +214,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V46') || "",
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V47') || "",
             editingField: ""
         };
 
@@ -221,7 +224,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings(); 
-            syncCloud(); 
+            syncCloud(false); // Otomatis sync saat aplikasi dibuka
             switchPage('home');
             fetchHistory();
             
@@ -237,7 +240,6 @@
             state.editingField = fieldId;
             getEl('modal-title').innerText = `EDIT: ${title.toUpperCase()}`;
             
-            // Ambil angka dari Rp 15.000 menjadi 15000
             const currentVal = parseRupiahStr(getElText(fieldId));
             const inputEl = getEl('modal-input');
             inputEl.value = currentVal || '';
@@ -246,7 +248,6 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            // Auto fokus dan blok teks agar mudah diketik ulang
             setTimeout(() => {
                 inputEl.focus();
                 inputEl.select();
@@ -261,9 +262,7 @@
 
         function saveEditModal() {
             const val = parseInt(getEl('modal-input').value, 10) || 0;
-            // Update nilai yang diklik
             setElText(state.editingField, formatRupiahStr(val));
-            // Langsung kalkulasi otomatis jumlahnya
             calculateTotal();
             closeEditModal();
         }
@@ -285,21 +284,24 @@
         }
 
 
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD DENGAN CACHE BUSTER ---
-        async function syncCloud() {
-            if (!API_URL || API_URL.includes("exec") === false) return;
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD YANG SANGAT AGRESIF ---
+        async function syncCloud(isManual = false) {
+            if (!API_URL || API_URL.includes("exec") === false) {
+                updateStatusUI("URL SERVER KOSONG", "red");
+                return;
+            }
+
+            if (isManual) toggleLoader(true, "Menarik Data Server...");
+            updateStatusUI("SINKRONISASI CLOUD...", "blue", true);
+
             try {
-                // Menambahkan 't=Date.now()' memastikan browser tidak membaca cache lama
                 const res = await fetch(API_URL + "?action=getKey&t=" + Date.now(), { redirect: "follow" });
                 const textRes = await res.text();
                 
+                // Jika response adalah HTML (Halaman Authorization Google), artinya belum di-deploy dengan benar
                 if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
-                    const debugEl = getEl('key-debug-text');
-                    if (debugEl) {
-                        debugEl.innerText = "ERROR: WAJIB DEPLOY ULANG CODE.GS!";
-                        debugEl.className = "text-[10px] text-red-600 font-mono font-black text-center tracking-widest";
-                    }
-                    console.error("Versi code.gs masih lama. Silakan Deploy -> New Version di Google Apps Script.");
+                    updateStatusUI("ERROR: WAJIB DEPLOY NEW VERSION CODE.GS!", "red");
+                    if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.\n\nBuka kembali script code.gs di PC Anda, lalu klik Deploy -> Kelola Deployment -> Edit (Ikon Pensil) -> Ubah 'Versi' menjadi 'Versi Baru' (New Version) -> Simpan.");
                     return;
                 }
 
@@ -307,36 +309,38 @@
                 if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
                     
-                    // Paksa timpa kunci lokal jika dari server berbeda (untuk HP baru)
-                    if (!state.manualKey || state.manualKey !== data.key) {
-                        state.manualKey = data.key;
-                        localStorage.setItem('ZETTBOT_API_KEY_V46', data.key);
-                        const inputKey = getEl('setting-apikey');
-                        if (inputKey) inputKey.value = data.key;
-                    }
+                    // SELALU PAKSA TIMPA MEMORI LOKAL DENGAN DATA DARI SERVER!
+                    state.manualKey = data.key;
+                    localStorage.setItem('ZETTBOT_API_KEY_V47', data.key);
+                    const inputKey = getEl('setting-apikey');
+                    if (inputKey) inputKey.value = data.key;
                     
-                    updateKeyStatusUI();
+                    updateStatusUI(`...${data.key.slice(-4)} (TERHUBUNG KE SERVER)`, "green");
+                    if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs dan siap digunakan.");
+                } else {
+                    updateStatusUI("SERVER TIDAK MEMILIKI KUNCI!", "orange");
+                    if (isManual) alert("⚠️ Server terhubung, tetapi Anda belum memasukkan API Key apa pun di dalam code.gs.");
                 }
             } catch(e) { 
                 console.log("Cloud sync error:", e); 
-                updateKeyStatusUI();
+                updateStatusUI("GAGAL TERHUBUNG KE SERVER", "red");
+                if (isManual) alert("❌ Gagal menghubungi server. Pastikan HP terkoneksi internet dan URL code.gs sudah benar.");
+            } finally {
+                if (isManual) toggleLoader(false);
             }
         }
 
-        function updateKeyStatusUI() {
-            const active = state.manualKey || state.cloudKey;
+        function updateStatusUI(text, color, isPulse = false) {
             const debugEl = getEl('key-debug-text');
             if(!debugEl) return;
+            debugEl.innerText = text;
             
-            if (active && active.length > 10) {
-                const last4 = active.slice(-4);
-                debugEl.innerText = `...${last4} (AKTIF)`;
-                // Warna hijau neon ditambahkan kembali
-                debugEl.className = "text-[12px] text-[#00E676] font-mono font-black text-center tracking-widest drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
-            } else {
-                debugEl.innerText = "KUNCI KOSONG!";
-                debugEl.className = "text-[10px] text-red-600 font-mono font-black text-center tracking-widest";
-            }
+            let colorClass = "text-red-600";
+            if (color === "green") colorClass = "text-[#00E676] drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
+            else if (color === "blue") colorClass = "text-blue-600";
+            else if (color === "orange") colorClass = "text-orange-500";
+
+            debugEl.className = `text-[10px] ${colorClass} font-mono font-black text-center tracking-widest ${isPulse ? 'animate-pulse' : ''}`;
         }
 
         function forceDeepClean() {
@@ -355,17 +359,16 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V46', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V47', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V46', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V47', mKey);
                 
                 if (API_URL && API_URL.includes("exec")) {
-                    // MODE NO-CORS: Memaksa browser mengirim data tanpa diblokir aturan keamanan lintas web
                     fetch(API_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -375,19 +378,23 @@
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V46');
+                localStorage.removeItem('ZETTBOT_API_KEY_V47');
             }
 
             const ori = btn.innerText;
             btn.innerText = "DISIMPAN!";
             btn.classList.replace('bg-indigo-600', 'bg-[#00E676]');
-            updateKeyStatusUI();
+            
+            // Update status UI
+            const active = state.manualKey || state.cloudKey;
+            if (active) updateStatusUI(`...${active.slice(-4)} (TERSIPAN LOKAL)`, "green");
+            else updateStatusUI("KUNCI KOSONG!", "red");
             
             setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-[#00E676]', 'bg-indigo-600'); }, 1500);
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V46');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V47');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
