@@ -94,6 +94,8 @@
         </div>
         <div class="flex-1 overflow-y-auto px-10 py-5 bg-slate-100/50">
             <div class="receipt-paper p-8 text-center text-[11px] receipt-font leading-relaxed max-w-xs mx-auto" id="printable-receipt">
+                
+                <!-- TEMPLATE BUKTI TRANSFER -->
                 <div id="template-transfer" class="hidden">
                     <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KEDAI</div>
                     <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KEDAI</div>
@@ -102,6 +104,7 @@
                     <div class="flex justify-between text-left mb-2"><span>MASA</span><span contenteditable="true" id="r-jam">--:--</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>BANK</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
+                    <div class="flex justify-between text-left mb-1"><span>NO. REK</span><span contenteditable="true" id="r-rek" class="text-right">---</span></div>
                     <div class="flex justify-between text-left mb-3"><span>NAMA</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
@@ -109,6 +112,8 @@
                     <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>JUMLAH</span><span contenteditable="true" id="r-tot">Rp 0</span></div>
                     <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berjaya **</div>
                 </div>
+
+                <!-- TEMPLATE TOKEN PLN -->
                 <div id="template-token" class="hidden">
                     <div contenteditable="true" id="t-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KEDAI</div>
                     <div contenteditable="true" id="t-alamat" class="uppercase text-[9px]">ALAMAT KEDAI</div>
@@ -117,6 +122,7 @@
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>ID PEL</span><span>: <span contenteditable="true" id="t-meter">---</span></span></div>
                     <div class="flex justify-between text-left mb-1"><span>NAMA</span><span>: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
+                    <div class="flex justify-between text-left mb-1"><span>TARIF</span><span>: <span contenteditable="true" id="t-daya" class="uppercase">---</span></span></div>
                     <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div contenteditable="true" id="t-token" class="text-[15px] my-4 tracking-[0.12em] font-black uppercase leading-tight">XXXX XXXX XXXX XXXX</div>
@@ -125,10 +131,11 @@
                     <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN: <span contenteditable="true" id="t-sn">---</span></div>
                     <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berjaya **</div>
                 </div>
+
             </div>
         </div>
         <div class="p-6 bg-white border-t border-gray-100 rounded-t-[35px] shadow-2xl">
-            <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-5 rounded-2xl active:scale-95 transition-all">Sahkan & Cetak</button>
+            <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl active:scale-95 transition-all">Sahkan & Cetak</button>
         </div>
     </div>
 
@@ -514,6 +521,25 @@
                 btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
                 if (iconBox) iconBox.className = `nav-icon-box p-2 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
             });
+
+            // FIX TAMPILAN NOTA PUTIH (MEMUNCULKAN TEMPLATE YANG SEMBUNYI)
+            if (pageId === 'preview') {
+                const tTransfer = getEl('template-transfer');
+                const tToken = getEl('template-token');
+                
+                if (tTransfer) tTransfer.classList.toggle('hidden', state.currentType !== 'Transfer');
+                if (tToken) tToken.classList.toggle('hidden', state.currentType !== 'Token');
+                
+                const btnCetak = getEl('btn-main-print');
+                if (btnCetak) {
+                    if (state.currentType === 'Token') {
+                        btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
+                    } else {
+                        btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
+                    }
+                }
+            }
+
             window.scrollTo(0,0);
         }
 
