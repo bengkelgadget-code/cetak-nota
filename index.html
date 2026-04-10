@@ -20,8 +20,9 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         button:active { transform: scale(0.96); transition: 0.1s; }
-        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; }
+        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; min-width: 10px; }
         [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; border-radius: 2px; }
+        [contenteditable="true"]:empty:before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; display: inline-block; }
     </style>
 </head>
 <body class="pb-24">
@@ -104,8 +105,8 @@
                 
                 <!-- TEMPLATE 1: TRANSFER BANK -->
                 <div id="template-transfer" class="hidden">
-                    <div contenteditable="true" id="r-toko" class="text-[14px] mb-1 uppercase">BENGKEL GADGET L2</div>
-                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px]">Jl. Pahlawan (Poros L2)</div>
+                    <div contenteditable="true" id="r-toko" class="text-[14px] mb-1 uppercase min-h-[20px]" data-placeholder="NAMA TOKO"></div>
+                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[10px] min-h-[16px]" data-placeholder="ALAMAT TOKO"></div>
                     <div class="py-1"><span>==============================</span></div>
                     <div class="flex justify-between items-center text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
                     <div class="flex justify-between items-center text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--:--</span></div>
@@ -128,8 +129,8 @@
 
                 <!-- TEMPLATE 2: TOKEN LISTRIK -->
                 <div id="template-token" class="hidden">
-                    <div contenteditable="true" id="t-toko" class="text-[14px] mb-1 uppercase">BENGKEL GADGET L2</div>
-                    <div contenteditable="true" id="t-alamat" class="uppercase text-[10px]">JL. PAHLAWAN (POROS L2)</div>
+                    <div contenteditable="true" id="t-toko" class="text-[14px] mb-1 uppercase min-h-[20px]" data-placeholder="NAMA TOKO"></div>
+                    <div contenteditable="true" id="t-alamat" class="uppercase text-[10px] min-h-[16px]" data-placeholder="ALAMAT TOKO"></div>
                     <div class="mt-4 mb-2 text-[11px] uppercase tracking-wide">PEMBELIAN TOKEN PLN</div>
                     <div class="mb-3 text-[10px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--:--</span></div>
                     <div class="border-t border-dashed border-gray-400 py-1"></div>
@@ -210,11 +211,11 @@
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4 text-left">
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Nama Toko Utama</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center" contenteditable="true" id="setting-toko">BENGKEL GADGET L2</div>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px]" contenteditable="true" id="setting-toko" data-placeholder="Masukkan Nama Toko"></div>
             </div>
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Alamat</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center" contenteditable="true" id="setting-alamat">Jl. Pahlawan (Poros L2)</div>
+                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px]" contenteditable="true" id="setting-alamat" data-placeholder="Masukkan Alamat Toko"></div>
             </div>
             
             <div class="border-t border-dashed border-gray-200 my-4 py-2"></div>
@@ -225,6 +226,7 @@
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Dapatkan Gratis</a>
                 </label>
                 <input type="password" id="setting-apikey" placeholder="Masukkan API Key Google Anda" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
+                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">API Key sudah tertanam otomatis di dalam sistem. Anda bisa mengubahnya jika limit sudah habis.</p>
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
@@ -232,7 +234,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v19.1<br>High Demand Rescue & Date Fix</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">@Bengkel Gadget v1.0<br>Smart Config (Blank Default)</p>
             </div>
         </div>
     </div>
@@ -259,6 +261,7 @@
 
     <!-- MAIN APP SCRIPT -->
     <script>
+        const DEFAULT_API_KEY = "AIzaSyBbYXNT8OYm-RKbI_TIQa0SoS7o2odocdw";
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
 
@@ -347,14 +350,17 @@
 
         function loadSettings() {
             const saved = localStorage.getItem('app_settings');
+            let currentApiKey = DEFAULT_API_KEY;
+            
             if (saved) {
                 try {
                     const settings = JSON.parse(saved);
-                    if (settings.toko) { setElText('setting-toko', settings.toko); setElText('r-toko', settings.toko); setElText('t-toko', settings.toko); }
-                    if (settings.alamat) { setElText('setting-alamat', settings.alamat); setElText('r-alamat', settings.alamat); setElText('t-alamat', settings.alamat); }
-                    if (settings.apikey) { getEl('setting-apikey').value = settings.apikey; }
+                    if (typeof settings.toko !== 'undefined') { setElText('setting-toko', settings.toko); setElText('r-toko', settings.toko); setElText('t-toko', settings.toko); }
+                    if (typeof settings.alamat !== 'undefined') { setElText('setting-alamat', settings.alamat); setElText('r-alamat', settings.alamat); setElText('t-alamat', settings.alamat); }
+                    if (settings.apikey && settings.apikey.trim() !== "") { currentApiKey = settings.apikey; }
                 } catch(e) { console.error("Gagal memuat pengaturan", e); }
             }
+            if (getEl('setting-apikey')) getEl('setting-apikey').value = currentApiKey;
         }
 
         // --- SISTEM WAKE LOCK ---
@@ -365,9 +371,9 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- KOREKSI TANGGAL & WAKTU (JIKA AI GAGAL / KOSONG) ---
+        // --- KOREKSI TANGGAL & WAKTU (JIKA AI GAGAL / KOSONG / NGEYEL) ---
         function getValidDate(val) {
-            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-') {
+            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-' || val.includes('DD-MM')) {
                 const today = new Date();
                 const dd = String(today.getDate()).padStart(2, '0');
                 const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -378,7 +384,7 @@
         }
 
         function getValidTime(val) {
-            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-') {
+            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-' || val.includes('HH:mm')) {
                 const today = new Date();
                 const hh = String(today.getHours()).padStart(2, '0');
                 const mn = String(today.getMinutes()).padStart(2, '0');
@@ -391,7 +397,8 @@
         // --- GOOGLE GEMINI VISION PURE API ENGINE ---
         async function processImageOCR(file) {
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
-            const apiKey = (savedSettings.apikey || "").trim();
+            let apiKey = (savedSettings.apikey || DEFAULT_API_KEY).trim();
+            if (apiKey === "") apiKey = DEFAULT_API_KEY;
 
             if (!apiKey) {
                 alert("⚠️ PERHATIAN: API KEY KOSONG!\n\nAnda WAJIB mendapatkan API Key dari Google secara gratis agar fitur Scan Gambar bisa bekerja.\n\nSistem akan mengarahkan Anda ke menu Setelan.");
@@ -446,7 +453,12 @@
                 
                 try {
                     const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-                    const listRes = await fetch(listUrl);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 detik max detect
+                    
+                    const listRes = await fetch(listUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
                     if (listRes.ok) {
                         const listData = await listRes.json();
                         if (listData.models && listData.models.length > 0) {
@@ -469,7 +481,7 @@
                     }
                 } catch(e) {
                     if(e.message.includes("Ditolak") || e.message.includes("Tidak Valid")) throw e;
-                    console.log("Auto-detect gagal, menggunakan default.", e);
+                    console.log("Auto-detect lambat/gagal, menggunakan model default.");
                 }
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
@@ -477,79 +489,82 @@
                 let success = false;
                 let lastErrorMsg = "";
 
-                // Eksekusi model dengan sistem antre/backoff (Anti Error 503)
+                // Eksekusi model dengan Timeout & Backoff (Anti Error 503 / Nge-hang)
                 for (let model of modelsToTry) {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     
-                    let retries = 3;
-                    let delays = [1500, 3000, 5000]; // Waktu antre (1.5 detik, 3 detik, 5 detik)
+                    let retries = 2; // Coba 3 kali per model
+                    let delays = [2000, 4000]; // Waktu antre
 
                     for(let i = 0; i <= retries; i++) {
                         try {
                             if (i > 0) {
-                                getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang (${i}/${retries})...`;
+                                getEl('loader-subtext').innerText = `Server sangat sibuk (503). Mencoba lagi (${i}/${retries})...`;
                             }
+
+                            // Paksa putus jika Google lemot lebih dari 15 detik (Timeout)
+                            const fetchController = new AbortController();
+                            const fetchTimeout = setTimeout(() => fetchController.abort(), 15000);
 
                             const response = await fetch(url, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
+                                body: JSON.stringify(payload),
+                                signal: fetchController.signal
                             });
+                            
+                            clearTimeout(fetchTimeout);
                             
                             if (!response.ok) {
                                 let errText = "";
                                 try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
                                 lastErrorMsg = errText || response.statusText;
                                 
-                                // Jika Error Validasi API Key (Fatal)
                                 if (response.status === 400 && lastErrorMsg.toLowerCase().includes("not valid")) {
                                     throw new Error("FATAL_KEY");
                                 }
                                 if (response.status === 403) {
                                     throw new Error("FATAL_FORBIDDEN");
                                 }
-                                // Jika Error Model Tidak Ditemukan (Ganti Model)
                                 if (response.status === 404 || response.status === 400) {
-                                    break; // Berhenti retry, paksa pindah ke iterasi model berikutnya
+                                    break; // Model tidak ada / ditolak, paksa pindah ke model berikutnya
                                 }
                                 
-                                // JIKA ERROR 503 (SERVER OVERLOAD) ATAU 429 (RATE LIMIT), ANTRE & ULANGI!
+                                // JIKA ERROR 503 ATAU RATE LIMIT, LEMPAR KE CATCH AGAR DI-RETRY
                                 throw new Error(`RETRY_NETWORK: ${response.status} - ${lastErrorMsg}`);
                             }
                             
                             result = await response.json();
                             success = true;
-                            break; // Berhasil! Keluar dari loop retry
+                            break; 
                             
                         } catch(error) {
                             if (error.message === "FATAL_KEY") throw new Error(`API Key Tidak Valid (Error 400).\nPastikan tidak ada salah ketik/spasi.`);
                             if (error.message === "FATAL_FORBIDDEN") throw new Error(`Akses API Ditolak (Error 403).\nAPI Key Anda mungkin dibatasi.`);
                             
-                            // Jika ini error jaringan/503 dan masih ada sisa nyawa, maka tunggu lalu ulangi
-                            if (error.message.startsWith("RETRY_NETWORK")) {
+                            // Jika timeout (AbortError) atau server 503, kita antre/tunggu
+                            if (error.message.startsWith("RETRY_NETWORK") || error.name === 'AbortError' || error.name === 'TypeError') {
                                 if (i < retries) {
                                     await new Promise(r => setTimeout(r, delays[i]));
                                     continue;
                                 }
                             }
                             
-                            // Jika mentok retries, catat error terakhir dan pindah ke model lain
-                            lastErrorMsg = error.message;
-                            break; 
+                            lastErrorMsg = error.message === 'AbortError' ? 'Koneksi ke Google Terputus (Timeout)' : error.message;
+                            break; // Gagal di model ini, coba model berikutnya
                         }
                     }
                     
-                    if (success) break; // Berhasil! Keluar dari loop model
+                    if (success) break; 
                 }
 
                 if (!success) {
-                    throw new Error(`Semua sistem AI sibuk atau gagal (Error 503/404).\n\nPesan Terakhir:\n${lastErrorMsg}\n\nSilakan coba lagi dalam beberapa menit.`);
+                    throw new Error(`Semua server AI sedang sibuk atau menolak koneksi.\n\nPesan Terakhir:\n${lastErrorMsg}\n\nSilakan coba lagi dalam beberapa menit.`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!textResponse) throw new Error("Google AI merespons dengan hasil kosong. Coba ulangi kembali.");
                 
-                // Bersihkan string dari markdown
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 
                 let jsonData;
