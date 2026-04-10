@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Radar Mode</title>
+    <title>Cetak Nota - Radar Mode Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 40
-        if (!localStorage.getItem('ZETTBOT_V40_RADAR')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 41
+        if (!localStorage.getItem('ZETTBOT_V41_FIX')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V40_RADAR', 'true');
+            localStorage.setItem('ZETTBOT_V41_FIX', 'true');
         }
         
         // URL GAS ANDA
@@ -134,14 +134,14 @@
 
     <!-- PAGE 3: TETAPAN -->
     <div id="page-settings" class="page-container hidden max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden">
-        <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Tetapan</h2>
+        <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Tetapan & Kunci</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4">
             
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
                     <span>API KEY MANUAL</span>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Tempel API Key di sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
+                <input type="password" id="setting-apikey" placeholder="Tampal Kunci API Baru Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
@@ -162,7 +162,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v40.0 - RADAR MODE ACTIVE</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v41.0 - Strict 1.5 Flash Radar</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -176,7 +176,7 @@
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </div>
                 </button>
             </div>
@@ -280,7 +280,7 @@
         }
 
         // ============================================================================
-        // SISTEM RADAR MODE (SMART AUTO-DETECT) - ANTI 404 NOT FOUND
+        // SISTEM RADAR MODE (STRICT 1.5 FLASH ONLY) - ANTI 2.0 QUOTA LIMIT
         // ============================================================================
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
@@ -291,7 +291,7 @@
             }
 
             toggleLoader(true, "Mendeteksi Radar Model Google...");
-            let selectedModel = "";
+            let validModels = [];
 
             try {
                 // TAHAP 1: BERTANYA KEPADA GOOGLE MODEL APA SAJA YANG TERSEDIA
@@ -302,44 +302,23 @@
                 if (!radarRes.ok) {
                     let errMsg = radarData.error?.message || "Gagal menghubungi server.";
                     if (radarRes.status === 400 || radarRes.status === 403) {
-                        throw new Error(`[KUNCI API TIDAK VALID / MATI]\n${errMsg}\n\nPastikan Kunci API Anda benar dan bukan berasal dari akun yang terkena blokir.`);
+                        throw new Error(`[KUNCI API TIDAK VALID / MATI]\n${errMsg}\n\nPastikan Kunci API Anda benar.`);
                     }
                     throw new Error(`[Gagal Melacak Model]\n${errMsg}`);
                 }
                 
-                // TAHAP 2: MENYARING MODEL YANG BISA MEMBACA GAMBAR
-                const validModels = radarData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"));
+                // TAHAP 2: MENYARING MODEL (HANYA IZINKAN 1.5 FLASH, BLOKIR 2.0 DAN PRO)
+                validModels = radarData.models.filter(m => 
+                    m.supportedGenerationMethods && 
+                    m.supportedGenerationMethods.includes("generateContent") &&
+                    m.name.includes("1.5-flash") // INI KUNCI UTAMANYA: Mengunci murni di 1.5 Flash
+                );
                 
                 if (validModels.length === 0) {
-                    throw new Error("API Key Anda valid, tetapi akun Anda tidak memiliki akses ke model AI apa pun saat ini.");
-                }
-                
-                // TAHAP 3: MEMILIH MODEL TERBAIK SECARA OTOMATIS (Memprioritaskan 1.5 Flash agar terhindar limit 2.0)
-                const targetNames = [
-                    "models/gemini-1.5-flash", 
-                    "models/gemini-1.5-flash-latest", 
-                    "models/gemini-1.5-flash-8b", 
-                    "models/gemini-1.5-pro",
-                    "models/gemini-2.0-flash"
-                ];
-                
-                for (let target of targetNames) {
-                    if (validModels.find(m => m.name === target)) {
-                        selectedModel = target;
-                        break;
-                    }
-                }
-                
-                // Jika tidak ada di daftar prioritas, ambil sembarang model yang tersedia
-                if (!selectedModel) {
-                    selectedModel = validModels[0].name;
+                    throw new Error("API Key Anda valid, tetapi Google tidak memberikan akses ke model Gemini 1.5 Flash gratis untuk akun ini.");
                 }
 
-                // Update UI dengan nama model yang terpilih
-                let modelShortName = selectedModel.split('/')[1].toUpperCase();
-                getEl('loader-subtext').innerText = `Model Terpilih: ${modelShortName}`;
-                
-                // TAHAP 4: PERSIAPAN GAMBAR & PROMPT
+                // TAHAP 3: PERSIAPAN GAMBAR & PROMPT
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -365,38 +344,54 @@
                     promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
                 }
 
-                // TAHAP 5: EKSEKUSI API DENGAN MODEL YANG SUDAH DIKONFIRMASI "ADA"
-                const url = `https://generativelanguage.googleapis.com/v1beta/${selectedModel}:generateContent?key=${key.trim()}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0.1 }
-                    })
-                });
+                // TAHAP 4: MENCOBA MODEL SATU PER SATU DARI DAFTAR YANG ADA
+                let finalRes = null;
+                let lastError = "Gagal memproses gambar.";
 
-                const rawText = await response.text();
-                
-                // Tangani Error Saat Eksekusi
-                if (!response.ok) {
-                    let errMsg = "Terjadi kesalahan yang tidak diketahui.";
+                for (let model of validModels) {
+                    let modelName = model.name;
+                    getEl('loader-subtext').innerText = `Mencoba: ${modelName.split('/')[1]}...`;
+                    
                     try {
-                        const errObj = JSON.parse(rawText);
-                        errMsg = errObj.error?.message || errMsg;
-                    } catch(e) {}
-                    
-                    if (response.status === 429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("exhausted")) {
-                        throw new Error(`[KUOTA GOOGLE HABIS]\nModel ${modelShortName} menolak permintaan karena limit kuota akun Anda.\n\nDetail:\n${errMsg}`);
+                        const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key.trim()}`;
+                        
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                                generationConfig: { temperature: 0.1 }
+                            })
+                        });
+
+                        const rawText = await response.text();
+                        
+                        if (response.ok) {
+                            finalRes = JSON.parse(rawText);
+                            break; // BERHASIL! Keluar dari loop.
+                        } else {
+                            let errObj = {};
+                            try { errObj = JSON.parse(rawText); } catch(e) {}
+                            lastError = errObj.error?.message || response.statusText;
+                            
+                            // Jika kunci salah, jangan coba-coba lagi. Berhenti.
+                            if (response.status === 400 && lastError.toLowerCase().includes("key")) {
+                                throw new Error(`[KUNCI API SALAH]\n${lastError}`);
+                            }
+                            // Jika model ini kena limit/kuota, biarkan loop berjalan dan mencoba model 1.5 flash lainnya (misal: 1.5-flash-8b)
+                        }
+                    } catch (e) {
+                        if (e.message.includes("[KUNCI API SALAH]")) throw e;
+                        lastError = e.message;
                     }
-                    
-                    throw new Error(`SERVER ERROR [${response.status}]:\n${errMsg}`);
                 }
 
-                // Parse Hasil
-                const resJson = JSON.parse(rawText);
-                let textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!finalRes) {
+                     throw new Error(`[SEMUA MODEL GRATIS GAGAL DIHUBUNGI]\n\nDetail Terakhir:\n${lastError}`);
+                }
+
+                // Parse Hasil Akhir
+                let textResponse = finalRes.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (!textResponse) {
                     throw new Error("Gambar berhasil dibaca, tetapi AI merespons dengan hasil kosong. Coba gunakan foto yang lebih jelas.");
