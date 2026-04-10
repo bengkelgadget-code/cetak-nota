@@ -233,7 +233,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v16.3<br>Ultimate Model Gateway</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v16.4<br>Pure Gemini (Clean Diagnostics)</p>
             </div>
         </div>
     </div>
@@ -366,7 +366,7 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- GOOGLE GEMINI VISION AI ENGINE (Ultimate Gateway) ---
+        // --- GOOGLE GEMINI VISION AI ENGINE (V16.4) ---
         async function processImageOCR(file) {
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
             const apiKey = (savedSettings.apikey || "").trim();
@@ -381,7 +381,8 @@
             getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
             try {
-                const base64DataRaw = await new Promise((resolve, reject) => {
+                // Resize image untuk hemat kuota dan cegah memory penuh
+                const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
@@ -402,26 +403,9 @@
                     reader.readAsDataURL(file);
                 });
 
-                const base64Data = base64DataRaw;
-                
-                // LOGIKA GATEWAY API DENGAN ARRAY FALLBACK (V16.3)
-                // Sistem akan mencoba 6 model ini berurutan secara otomatis sampai ada yang berhasil lolos 404
-                let modelsToTry = [];
-                if (apiKey) {
-                    modelsToTry = [
-                        "gemini-1.5-flash",
-                        "gemini-1.5-flash-8b",
-                        "gemini-1.5-flash-latest",
-                        "gemini-1.5-flash-001",
-                        "gemini-1.5-flash-002",
-                        "gemini-1.5-pro"
-                    ];
-                } else {
-                    modelsToTry = ["gemini-2.5-flash-preview-09-2025"]; // Khusus canvas internal
-                }
-
-                let currentModelIndex = 0;
-                let currentModel = modelsToTry[currentModelIndex];
+                // Menggunakan model standar yang paling stabil (Flash)
+                const modelTarget = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelTarget}:generateContent?key=${apiKey}`;
 
                 let promptText = "";
                 let schema = {};
@@ -471,11 +455,10 @@
 
                 let result;
                 let retries = 3;
-                let delays = [1000, 2000, 3000];
+                let delays = [1000, 2000, 4000];
                 
                 for (let i = 0; i <= retries; i++) {
                     try {
-                        const url = `https://generativelanguage.googleapis.com/v1/models/${currentModel}:generateContent?key=${apiKey}`;
                         const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -486,36 +469,32 @@
                             let errText = "Gagal menghubungi server Gemini.";
                             try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
                             
-                            if (response.status === 400 && !apiKey) throw new Error("API Key Gemini belum diisi di Setelan.");
-                            if (response.status === 403) throw new Error("Akses API Ditolak (403) oleh Server Google.\n\nPastikan API Key di Setelan tidak memiliki spasi.");
-                            
-                            // AUTO FALLBACK JIKA MODEL 404 ATAU 400
-                            if ((response.status === 404 || response.status === 400) && apiKey) {
-                                currentModelIndex++;
-                                if (currentModelIndex < modelsToTry.length) {
-                                    currentModel = modelsToTry[currentModelIndex];
-                                    throw new Error("FALLBACK_RETRY"); // Langsung ganti gigi ke model berikutnya
-                                } else {
-                                    throw new Error(`Semua model AI menolak akses (404/400).\nDetail: ${errText}\n\nSolusi: Buat API Key baru menggunakan akun Google yang berbeda.`);
-                                }
+                            // Jika error dari sisi klien (API Key salah, kuota habis, dsb), langsung lemparkan tanpa retry
+                            if (response.status >= 400 && response.status < 500) {
+                                if (response.status === 400) throw new Error(`Format API Key Anda Salah (Error 400).\nPastikan API Key sudah dimasukkan dengan benar di menu Setelan.\n\nDetail Google: ${errText}`);
+                                if (response.status === 403) throw new Error(`Akses API Ditolak (Error 403).\nAPI Key Anda mungkin belum diaktifkan, dibatasi oleh Google, atau ada salah ketik.\n\nDetail Google: ${errText}`);
+                                if (response.status === 404) throw new Error(`Model AI tidak ditemukan (Error 404) untuk API Key Anda.\n\nDetail Google: ${errText}`);
+                                throw new Error(`Error API ${response.status}:\n${errText}`);
                             }
                             
-                            throw new Error(`HTTP error! status: ${response.status}\nDetail: ${errText}`);
+                            throw new Error(`Server Error ${response.status}: ${errText}`); // Ini akan di-retry
                         }
+                        
                         result = await response.json();
                         break; 
+                        
                     } catch (error) {
-                        if (error.message === "FALLBACK_RETRY") {
-                            i--; // Jangan hitung ini sebagai network retry gagal karena kita hanya ganti model
-                            continue; 
+                        // Jika pesan error mengandung kode client error (400, 403, 404), hentikan retry
+                        if (error.message.includes("(Error 400)") || error.message.includes("(Error 403)") || error.message.includes("(Error 404)")) {
+                            throw error;
                         }
-                        if (i === retries || error.message.includes("API Key") || error.message.includes("Akses API Ditolak") || error.message.includes("Semua model AI")) throw error;
+                        if (i === retries) throw error;
                         await new Promise(r => setTimeout(r, delays[i]));
                     }
                 }
 
                 const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!textResponse) throw new Error("Respons AI Kosong. Coba ulangi kembali.");
+                if (!textResponse) throw new Error("Google AI merespons dengan hasil kosong. Coba ulangi kembali.");
                 
                 const jsonData = JSON.parse(textResponse);
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
@@ -523,7 +502,7 @@
 
             } catch (err) {
                 console.error("AI Error:", err);
-                alert("GAGAL MEMPROSES GAMBAR\n\n" + (err.message || "Terdapat gangguan pada pembacaan. Silakan isi manual."));
+                alert("❌ GAGAL MEMPROSES GAMBAR\n\n" + (err.message || "Terdapat gangguan sistem."));
                 updateTime();
             } finally {
                 toggleLoader(false);
