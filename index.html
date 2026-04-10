@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - AI Scanner v31</title>
+    <title>Cetak Nota - AI Scanner v31.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,7 +28,7 @@
 <body class="pb-24">
 
     <script>
-        // URL GAS ANDA
+        // URL GAS ANDA (Pusat Kunci)
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
 
@@ -156,7 +156,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Semua Cache Kunci</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v31.0 - Gemini 1.5 Stable</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v31.1 - Auto Fallback Engine</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -273,7 +273,7 @@
             updateKeyStatusUI();
         }
 
-        // KEMBALI KE GEMINI 1.5 FLASH (DIJAMIN FREE TIER)
+        // --- SISTEM AUTO FALLBACK (ANTI 404 NOT FOUND) ---
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
             if (!key || key.length < 20) {
@@ -305,21 +305,52 @@
                     "Extract data from receipt. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), bank, name, nominal(int), admin(int), total(int)." :
                     "Extract PLN token data. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), meter_no, name, kwh, token, total(int), sn.";
 
-                // MENGGUNAKAN GEMINI 1.5 FLASH (Free Tier Paling Stabil)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
-                });
+                // Daftar Jalur Model - Akan dicoba satu per satu secara otomatis
+                const endpoints = [
+                    "v1/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash-latest",
+                    "v1beta/models/gemini-1.5-pro",
+                    "v1/models/gemini-1.5-pro"
+                ];
 
-                const resJson = await response.json();
-                
-                // MUNCULKAN ERROR ASLI DARI GOOGLE AGAR KITA TAHU PASTI PENYEBABNYA
-                if (!response.ok) {
-                    let googleErrorMsg = resJson.error?.message || response.statusText;
-                    throw new Error(`[Server Google Menolak]\n\n${googleErrorMsg}`);
+                let resJson = null;
+                let requestOk = false;
+                let googleErrorMsg = "Semua model Google gagal diakses.";
+
+                // Auto-Fallback Engine
+                for (let endpoint of endpoints) {
+                    getEl('loader-subtext').innerText = `Mencoba jalur ${endpoint.split('/')[2]}...`;
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${key}`;
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
+                        });
+
+                        const tempJson = await response.json();
+                        
+                        if (response.ok) {
+                            resJson = tempJson;
+                            requestOk = true;
+                            break; // Berhasil, langsung keluar dari loop
+                        } else {
+                            googleErrorMsg = tempJson.error?.message || response.statusText;
+                            // Jika error terkait Quota / Kunci salah, jangan coba jalur lain, langsung lempar error!
+                            if (googleErrorMsg.toLowerCase().includes("quota") || googleErrorMsg.toLowerCase().includes("key invalid") || googleErrorMsg.toLowerCase().includes("expired") || response.status === 403) {
+                                throw new Error(`[Server Google Menolak Akses]\n\n${googleErrorMsg}`);
+                            }
+                        }
+                    } catch (e) {
+                        if (e.message.includes("[Server Google Menolak Akses]")) {
+                            throw e; 
+                        }
+                        googleErrorMsg = e.message;
+                    }
+                }
+
+                if (!requestOk || !resJson) {
+                    throw new Error(`[Gagal Menghubungi Google AI]\n\n${googleErrorMsg}`);
                 }
 
                 let text = resJson.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/gi, '').trim();
