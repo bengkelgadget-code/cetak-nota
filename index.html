@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - AI Scanner v31.1</title>
+    <title>Cetak Nota - AI Scanner v32</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,14 +28,14 @@
 <body class="pb-24">
 
     <script>
-        // URL GAS ANDA (Pusat Kunci)
+        // URL GAS ANDA (Pusat Kunci Cloud)
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
 
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-6"></div>
         <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Memproses...</span>
-        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menghubungi Server Google</div>
+        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menghubungi Server Google AI</div>
     </div>
 
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
@@ -156,7 +156,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Semua Cache Kunci</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v31.1 - Auto Fallback Engine</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v32.0 - Single Stable Endpoint</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -182,7 +182,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V31') || ""
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V32') || ""
         };
 
         const getEl = id => document.getElementById(id);
@@ -190,6 +190,9 @@
         const setElText = (id, v) => { if(getEl(id)) getEl(id).innerText = v; };
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Bersihkan sisa memori kunci lama
+            ['_usr_key_v27', '_stable_man_key', 'ZETTBOT_API_KEY_V31', 'man_key_v26_1'].forEach(k => localStorage.removeItem(k));
+            
             loadSettings(); 
             syncCloud(); 
             switchPage('home');
@@ -242,14 +245,14 @@
             const alamat = getElText('setting-alamat');
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V31', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V32', JSON.stringify({ toko, alamat })); 
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V31', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V32', mKey);
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V31');
+                localStorage.removeItem('ZETTBOT_API_KEY_V32');
             }
 
             const ori = btn.innerText;
@@ -261,7 +264,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V31');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V32');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -273,7 +276,7 @@
             updateKeyStatusUI();
         }
 
-        // --- SISTEM AUTO FALLBACK (ANTI 404 NOT FOUND) ---
+        // --- SINGLE STABLE ENDPOINT ENGINE ---
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
             if (!key || key.length < 20) {
@@ -305,52 +308,21 @@
                     "Extract data from receipt. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), bank, name, nominal(int), admin(int), total(int)." :
                     "Extract PLN token data. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), meter_no, name, kwh, token, total(int), sn.";
 
-                // Daftar Jalur Model - Akan dicoba satu per satu secara otomatis
-                const endpoints = [
-                    "v1/models/gemini-1.5-flash",
-                    "v1beta/models/gemini-1.5-flash-latest",
-                    "v1beta/models/gemini-1.5-pro",
-                    "v1/models/gemini-1.5-pro"
-                ];
+                // MENGGUNAKAN SATU ENDPOINT PALING STABIL (Gemini 1.5 Flash v1beta)
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
+                });
 
-                let resJson = null;
-                let requestOk = false;
-                let googleErrorMsg = "Semua model Google gagal diakses.";
-
-                // Auto-Fallback Engine
-                for (let endpoint of endpoints) {
-                    getEl('loader-subtext').innerText = `Mencoba jalur ${endpoint.split('/')[2]}...`;
-                    try {
-                        const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${key}`;
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
-                        });
-
-                        const tempJson = await response.json();
-                        
-                        if (response.ok) {
-                            resJson = tempJson;
-                            requestOk = true;
-                            break; // Berhasil, langsung keluar dari loop
-                        } else {
-                            googleErrorMsg = tempJson.error?.message || response.statusText;
-                            // Jika error terkait Quota / Kunci salah, jangan coba jalur lain, langsung lempar error!
-                            if (googleErrorMsg.toLowerCase().includes("quota") || googleErrorMsg.toLowerCase().includes("key invalid") || googleErrorMsg.toLowerCase().includes("expired") || response.status === 403) {
-                                throw new Error(`[Server Google Menolak Akses]\n\n${googleErrorMsg}`);
-                            }
-                        }
-                    } catch (e) {
-                        if (e.message.includes("[Server Google Menolak Akses]")) {
-                            throw e; 
-                        }
-                        googleErrorMsg = e.message;
-                    }
-                }
-
-                if (!requestOk || !resJson) {
-                    throw new Error(`[Gagal Menghubungi Google AI]\n\n${googleErrorMsg}`);
+                const resJson = await response.json();
+                
+                // MUNCULKAN ERROR RAW DARI GOOGLE JIKA GAGAL
+                if (!response.ok) {
+                    let errMsg = resJson.error?.message || "Tidak ada rincian.";
+                    throw new Error(`[Error API Google: ${response.status}]\n\n${errMsg}`);
                 }
 
                 let text = resJson.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/gi, '').trim();
@@ -363,7 +335,7 @@
                 updateTime();
             } catch(err) {
                 toggleLoader(false);
-                alert("GAGAL MEMPROSES:\n\n" + err.message);
+                alert("GAGAL MEMPROSES GAMBAR:\n\n" + err.message);
             }
         }
 
@@ -431,7 +403,7 @@
         }
 
         function fetchHistory() {
-            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V31') || '[]');
+            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V32') || '[]');
             const list = getEl('history-list');
             if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Rekod Kosong</p>'; return; }
             list.innerHTML = h.map((item, idx) => `
@@ -452,8 +424,8 @@
         }
 
         function delH(i) {
-            let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V31') || '[]');
-            h.splice(i, 1); localStorage.setItem('ZETTBOT_HISTORY_V31', JSON.stringify(h));
+            let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V32') || '[]');
+            h.splice(i, 1); localStorage.setItem('ZETTBOT_HISTORY_V32', JSON.stringify(h));
             fetchHistory();
         }
 
@@ -463,12 +435,12 @@
             const name = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
             if (API_URL && API_URL.includes("exec")) fetch(API_URL, { method: 'POST', body: JSON.stringify({ nama: name, tipe: state.currentType }) }).catch(e=>console.log(e));
             setTimeout(() => {
-                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V31') || '[]');
+                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V32') || '[]');
                 const tgl = state.currentType === 'Token' ? getElText('t-tgl') : getElText('r-tgl');
                 const tot = state.currentType === 'Token' ? getElText('t-tot') : getElText('r-tot');
                 h.unshift({ nama: name, tgl: tgl, tot: tot, tipe: state.currentType });
                 if(h.length > 30) h.pop();
-                localStorage.setItem('ZETTBOT_HISTORY_V31', JSON.stringify(h));
+                localStorage.setItem('ZETTBOT_HISTORY_V32', JSON.stringify(h));
                 toggleLoader(false); switchPage('home'); fetchHistory();
             }, 1000);
         }
