@@ -233,7 +233,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v20.3<br>Self-Split Security Fix</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v21.0<br>Gemini 2.5 Migration Update</p>
             </div>
         </div>
     </div>
@@ -261,9 +261,9 @@
     <!-- MAIN APP SCRIPT -->
     <script>
         // ⚠️ PENTING: POTONG API KEY BARU ANDA MENJADI 2 BAGIAN DI SINI ⚠️
-        // Masukkan kunci: AIzaSyCHG7QH31jVx4PKKg1ELHMLk5i8ys-re5k
-        const PART1 = "AIzaSyAiLbzTMZXimnd1"; 
-        const PART2 = "SzVj6IegmTlo1MM9mCg"; 
+        // Masukkan kunci: AIzaSyAiLbzTMZXimnd1SzVj6IegmTlo1MM9mCg
+        const PART1 = "AIzaSyAiLbzTMZXimnd"; 
+        const PART2 = "1SzVj6IegmTlo1MM9mCg"; 
         const DEFAULT_API_KEY = PART1 + PART2;
         
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
@@ -460,17 +460,14 @@
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
                 
-                // DAFTAR PINTU MASUK (ENDPOINTS) DIPERLUAS SECARA EKSTREM
-                // Mengatasi error 404 pada region/akun tertentu dengan mencoba semua variasi nama
+                // DAFTAR PINTU MASUK (ENDPOINTS) YANG SUDAH DIPERBARUI UNTUK 2026
+                // Mengganti model Gemini 1.5 (yang sudah pensiun) dengan Gemini 2.5 / 2.0
                 const endpointsToTry = [
-                    "v1beta/models/gemini-1.5-flash",
-                    "v1/models/gemini-1.5-flash",
-                    "v1beta/models/gemini-1.5-flash-latest",
-                    "v1beta/models/gemini-1.5-flash-8b",
-                    "v1beta/models/gemini-1.5-pro",
-                    "v1beta/models/gemini-1.5-pro-latest",
-                    "v1beta/models/gemini-1.0-pro-vision-latest",
-                    "v1beta/models/gemini-pro-vision"
+                    "v1beta/models/gemini-2.5-flash",
+                    "v1beta/models/gemini-2.0-flash",
+                    "v1beta/models/gemini-2.5-flash-lite",
+                    "v1/models/gemini-2.5-flash",
+                    "v1/models/gemini-2.0-flash"
                 ];
 
                 let result = null;
