@@ -233,7 +233,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v20.0<br>Anti-Leak & Force-Date Fix</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v20.2<br>Anti-Leak & Force-Date Fix</p>
             </div>
         </div>
     </div>
@@ -261,7 +261,8 @@
     <!-- MAIN APP SCRIPT -->
     <script>
         // METODE PENGAMAN KUNCI: Disimpan dalam Base64 agar tidak diblokir GitHub/Google
-        const DEFAULT_API_KEY = atob("QUl6YVN5Q3lYVlV0Vnhyb3dWRE9wS1ZXX1lPbEVicHFKd3A4SFpZ");
+        // Kunci API yang diperbarui: AIzaSyCHG7QH31jVx4PKKg1ELHMLk5i8ys-re5k
+        const DEFAULT_API_KEY = atob("QUl6YVN5Q0hHN1FIMzFqVng0UEtLZzFFTEhNTEs1aTh5cy1yZTVr");
         
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
@@ -278,6 +279,13 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Auto-Clean Kunci Lama yang Rusak dari Memori Setelan Pengguna
+            let storedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+            if (storedSettings.apikey && storedSettings.apikey.trim() !== "" && storedSettings.apikey !== DEFAULT_API_KEY) {
+                storedSettings.apikey = ""; // Bersihkan agar menggunakan kunci bawaan yang baru
+                localStorage.setItem('app_settings', JSON.stringify(storedSettings));
+            }
+
             loadSettings(); 
             switchPage('home');
             fetchHistory();
@@ -451,20 +459,17 @@
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
                 
-                // DAFTAR PINTU MASUK (ENDPOINTS) YANG SUPER TAHAN BANTING
-                // Mengutamakan jalur 'v1' (Stabil) daripada 'v1beta' (Eksperimental)
+                // DAFTAR PINTU MASUK (ENDPOINTS)
+                // Kita gunakan daftar model stabil sebagai jalur utama.
                 const endpointsToTry = [
-                    "v1/models/gemini-1.5-flash",
                     "v1beta/models/gemini-1.5-flash",
                     "v1beta/models/gemini-1.5-flash-8b",
-                    "v1beta/models/gemini-1.5-flash-latest",
-                    "v1beta/models/gemini-1.5-pro",
-                    "v1beta/models/gemini-pro-vision"
+                    "v1beta/models/gemini-1.5-pro"
                 ];
 
                 let result = null;
                 let success = false;
-                let errorLogs = []; // Untuk mencatat jejak jika semua model gagal
+                let errorLogs = []; 
 
                 for (let endpoint of endpointsToTry) {
                     const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${apiKey}`;
@@ -477,7 +482,7 @@
                             if (i > 0) getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang (${i}/2)...`;
 
                             const fetchController = new AbortController();
-                            const fetchTimeout = setTimeout(() => fetchController.abort(), 12000);
+                            const fetchTimeout = setTimeout(() => fetchController.abort(), 15000); // 15 detik timeout
 
                             const response = await fetch(url, {
                                 method: 'POST',
@@ -493,16 +498,22 @@
                                 let errMsg = errText;
                                 try { const e = JSON.parse(errText); errMsg = e.error?.message || errText; } catch(e){}
                                 
-                                if (response.status === 400 && errMsg.toLowerCase().includes("not valid")) throw new Error("API_INVALID");
-                                if (response.status === 403) throw new Error("API_FORBIDDEN");
+                                // CEK ERROR FATAL (Kunci salah/diblokir oleh Google)
+                                if (response.status === 400 && errMsg.toLowerCase().includes("api key")) {
+                                    throw new Error(`API_FATAL: ${errMsg}`);
+                                }
+                                if (response.status === 403) {
+                                    throw new Error(`API_FATAL: ${errMsg}`);
+                                }
                                 
-                                // Jika Model Tidak Ditemukan (404) atau Ditolak (400) -> Lewati model ini, coba model berikutnya
+                                // Jika Model Tidak Ditemukan (404) atau Error Payload lain (400) -> Lewati model ini
                                 if (response.status === 404 || response.status === 400) {
-                                    errorLogs.push(`${endpoint.split('/')[2]} (${response.status})`);
+                                    let cleanErr = errMsg.length > 40 ? errMsg.substring(0, 40) + "..." : errMsg;
+                                    errorLogs.push(`${endpoint.split('/')[2]} (${response.status}: ${cleanErr})`);
                                     break; 
                                 }
                                 
-                                // Jika 503 / 429 (Sibuk) -> Ulangi fetch
+                                // Jika 503 / 429 (Sibuk) -> Ulangi fetch (Retry)
                                 throw new Error("RETRY_NEEDED");
                             }
                             
@@ -510,16 +521,17 @@
                             success = true;
                             break; // Berhasil! Keluar dari loop Retry
                         } catch(error) {
-                            if (error.message === "API_INVALID") throw new Error(`API Key Tidak Valid.\nPastikan kunci tidak ada salah ketik/spasi.`);
-                            if (error.message === "API_FORBIDDEN") throw new Error(`Akses API Ditolak (403).\nAPI Key Anda tidak memiliki izin atau kuota habis.`);
+                            if (error.message.startsWith("API_FATAL:")) {
+                                throw new Error(`API Key Ditolak oleh Google.\nPastikan kunci aktif dan tidak dibatasi.\n\nDetail Error: ${error.message.replace("API_FATAL: ", "")}`);
+                            }
                             
-                            // Eksekusi Retry jika error jaringan atau sibuk
+                            // Eksekusi Retry jika error jaringan, timeout, atau server sibuk
                             if ((error.message === "RETRY_NEEDED" || error.name === "AbortError" || error.name === "TypeError") && i < retries) {
                                 await new Promise(r => setTimeout(r, delays[i]));
                                 continue;
                             }
                             
-                            // Catat log jika gagal total di model ini
+                            // Catat log jika gagal total di model ini dan lanjut coba model berikutnya
                             if (error.name === "AbortError") errorLogs.push(`${endpoint.split('/')[2]} (Timeout)`);
                             else if (error.message !== "RETRY_NEEDED") errorLogs.push(`${endpoint.split('/')[2]} (${error.message})`);
                             
@@ -530,7 +542,7 @@
                 }
 
                 if (!success) {
-                    throw new Error(`Semua jalur AI gagal/ditolak oleh Google.\n\nJejak Error:\n${errorLogs.join(" | ")}\n\nSaran: Gunakan API Key yang baru.`);
+                    throw new Error(`Semua jalur AI gagal diproses atau tidak ditemukan.\n\nJejak Error:\n${errorLogs.join(" | ")}`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
