@@ -273,7 +273,7 @@
             updateKeyStatusUI();
         }
 
-        // --- SISTEM ASLI: KEMBALI KE DASAR (BACK TO BASICS) ---
+        // --- SISTEM ASLI: KEMBALI KE DASAR DENGAN JALUR V1 STABIL ---
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
             if (!key || key.length < 20) {
@@ -302,37 +302,70 @@
                     reader.readAsDataURL(file);
                 });
 
-                // 2. Siapkan Prompt
-                const prompt = state.currentType === 'Transfer' ? 
-                    "Ekstrak data struk transfer bank. Format WAJIB JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"bank\":\"string\",\"nama\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0}" :
-                    "Ekstrak data struk token PLN. Format WAJIB JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"meter_no\":\"string\",\"nama\":\"string\",\"kwh\":\"string\",\"token\":\"string\",\"total\":0,\"sn\":\"string\"}";
+                // 2. Siapkan Prompt yang ketat (Dari versi asli Anda)
+                let promptText = "";
+                if (state.currentType === 'Transfer') {
+                    promptText = "Ekstrak data dari gambar struk transfer bank ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"bank\": \"string\",\n  \"nama\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\":angka (integer)\n";
+                } else {
+                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"meter_no\": \"string\",\n  \"nama\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
+                }
 
-                // 3. PANGGILAN API SEDERHANA DAN LANGSUNG (Seperti versi awal yang lancar)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.trim()}`;
+                // 3. PERBAIKAN UTAMA: Gunakan jalur resmi "v1" (bukan v1beta yang ditutup oleh Google)
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key.trim()}`;
                 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ 
-                            parts: [
-                                { text: prompt }, 
-                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-                            ] 
-                        }] 
-                    })
-                });
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                    generationConfig: { temperature: 0.1 }
+                };
 
-                const resJson = await response.json();
+                let result;
+                let retries = 3;
+                let delays = [1000, 2000, 4000];
                 
-                // 4. Tangani Error secara sederhana
-                if (!response.ok) {
-                    throw new Error(resJson.error?.message || "Terjadi kesalahan pada server Google.");
+                // 4. Sistem Retry Asli Anda yang terbukti stabil
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!response.ok) {
+                            let errText = "Gagal menghubungi server Gemini.";
+                            try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
+                            
+                            if (response.status >= 400 && response.status < 500) {
+                                if (response.status === 400) throw new Error(`Format API Key Anda Salah (Error 400).\nDetail: ${errText}`);
+                                if (response.status === 403) throw new Error(`Akses API Ditolak (Error 403).\nDetail: ${errText}`);
+                                if (response.status === 404) throw new Error(`Model AI tidak ditemukan di server (Error 404).\nDetail: ${errText}`);
+                                if (response.status === 429 || errText.toLowerCase().includes("quota")) throw new Error(`Kuota API Habis/Mati (Error 429).\nSilakan buat akun Gmail baru.\nDetail: ${errText}`);
+                                throw new Error(`Error API ${response.status}:\n${errText}`);
+                            }
+                            
+                            throw new Error(`Server Error ${response.status}: ${errText}`);
+                        }
+                        
+                        result = await response.json();
+                        break; 
+                        
+                    } catch (error) {
+                        // Jangan di-retry kalau errornya karena kunci salah/kuota habis
+                        if (error.message.includes("(Error 400)") || error.message.includes("(Error 403)") || error.message.includes("(Error 404)") || error.message.includes("(Error 429)")) {
+                            throw error; 
+                        }
+                        if (i === retries) throw error;
+                        getEl('loader-subtext').innerText = `Mencoba ulang koneksi (${i+1}/${retries})...`;
+                        await new Promise(r => setTimeout(r, delays[i]));
+                    }
                 }
 
                 // 5. Parse Data
-                let text = resJson.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/gi, '').trim();
-                const data = JSON.parse(text);
+                let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResponse) throw new Error("Google AI merespons dengan hasil kosong.");
+                
+                textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
+                const data = JSON.parse(textResponse);
 
                 if (state.currentType === 'Token') populateToken(data); else populateTransfer(data);
                 
