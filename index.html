@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - History Fix V49</title>
+    <title>Cetak Nota - Auto Save V50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 49
-        if (!localStorage.getItem('ZETTBOT_V49_FIX')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 50
+        if (!localStorage.getItem('ZETTBOT_V50_AUTOSAVE')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V49_FIX', 'true');
+            localStorage.setItem('ZETTBOT_V50_AUTOSAVE', 'true');
         }
         
         // URL GAS ANDA
@@ -188,7 +188,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v49.0 - History Fix</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v50.0 - Auto Save Draft</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -214,8 +214,9 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V49') || "",
-            editingField: ""
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V50') || "",
+            editingField: "",
+            currentReceiptId: null // Menyimpan ID nota yang sedang aktif/diedit
         };
 
         const getEl = id => document.getElementById(id);
@@ -264,6 +265,7 @@
             const val = parseInt(getEl('modal-input').value, 10) || 0;
             setElText(state.editingField, formatRupiahStr(val));
             calculateTotal();
+            saveLocalHistory(); // Auto-save saat selesai mengedit
             closeEditModal();
         }
 
@@ -283,8 +285,7 @@
             return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD YANG SANGAT AGRESIF ---
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
         async function syncCloud(isManual = false) {
             if (!API_URL || API_URL.includes("exec") === false) {
                 updateStatusUI("URL SERVER KOSONG", "red");
@@ -310,7 +311,7 @@
                     
                     if (!state.manualKey || state.manualKey !== data.key) {
                         state.manualKey = data.key;
-                        localStorage.setItem('ZETTBOT_API_KEY_V49', data.key);
+                        localStorage.setItem('ZETTBOT_API_KEY_V50', data.key);
                         const inputKey = getEl('setting-apikey');
                         if (inputKey) inputKey.value = data.key;
                     }
@@ -382,14 +383,14 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V49', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V50', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V49', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V50', mKey);
                 
                 if (API_URL && API_URL.includes("exec")) {
                     fetch(API_URL, {
@@ -401,7 +402,7 @@
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V49');
+                localStorage.removeItem('ZETTBOT_API_KEY_V50');
             }
 
             const ori = btn.innerText;
@@ -416,7 +417,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V49');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V50');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -577,10 +578,14 @@
                 else populateTransferFromJSON(jsonData);
 
                 calculateTotal();
+                updateTime();
+
+                // Generate ID unik untuk nota ini dan auto-save ke riwayat
+                state.currentReceiptId = Date.now().toString();
+                saveLocalHistory();
 
                 toggleLoader(false);
                 switchPage('preview');
-                updateTime();
 
             } catch (err) {
                 toggleLoader(false);
@@ -758,10 +763,15 @@
             return leftStr + " ".repeat(spacesCount) + rightStr;
         }
 
-        // --- MENYIMPAN RIWAYAT KE MEMORI HP ---
+        // --- MENYIMPAN RIWAYAT KE MEMORI HP (OTOMATIS & PINTAR) ---
         function saveLocalHistory() {
+            // Jika tidak ada ID aktif, buat ID baru (fallback keamanan)
+            if (!state.currentReceiptId) {
+                state.currentReceiptId = Date.now().toString();
+            }
+
             const item = {
-                id: Date.now().toString(),
+                id: state.currentReceiptId,
                 tipe: state.currentType,
                 r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'),
                 r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'),
@@ -772,18 +782,28 @@
                 t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
             };
 
-            let history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
-            history.unshift(item);
+            let history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
+            
+            // Cek apakah ID ini sudah ada (Mode Edit) atau Baru
+            const existingIdx = history.findIndex(h => h.id === state.currentReceiptId);
+            if (existingIdx !== -1) {
+                history[existingIdx] = item; // Update data lama
+            } else {
+                history.unshift(item); // Masukkan sebagai nota baru
+            }
+            
             if(history.length > 50) history.pop(); 
-            localStorage.setItem('ZETTBOT_HISTORY_V49', JSON.stringify(history));
+            localStorage.setItem('ZETTBOT_HISTORY_V50', JSON.stringify(history));
+            fetchHistory(); // Segarkan tampilan daftar riwayat
         }
 
         // --- MEMUAT ULANG RIWAYAT KE PRATINJAU ---
         function loadReceipt(id) {
-            const history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+            const history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
             const item = history.find(h => h.id === id);
             
             if(item) {
+                state.currentReceiptId = id; // Set ID yang sedang aktif agar saveLocalHistory tahu
                 state.currentType = item.tipe || 'Transfer';
                 
                 if (state.currentType === 'Transfer') {
@@ -877,6 +897,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50)); 
                 }
 
+                // Update simpanan riwayat terakhir kali
                 saveLocalHistory();
 
                 const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
@@ -889,7 +910,6 @@
                 }
 
                 toggleLoader(false);
-                fetchHistory();
                 switchPage('home');
             } catch(e) {
                 toggleLoader(false);
@@ -901,7 +921,7 @@
         }
 
         function fetchHistory() {
-            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
             const list = getEl('history-list');
             if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Riwayat Kosong</p>'; return; }
             list.innerHTML = h.map((item) => `
@@ -927,9 +947,9 @@
         function delH(id, event) {
             event.stopPropagation(); // Mencegah loadReceipt terpanggil saat menghapus
             if(confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) {
-                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
                 h = h.filter(item => item.id !== id);
-                localStorage.setItem('ZETTBOT_HISTORY_V49', JSON.stringify(h));
+                localStorage.setItem('ZETTBOT_HISTORY_V50', JSON.stringify(h));
                 fetchHistory();
             }
         }
