@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Cloud Diagnostic V48</title>
+    <title>Cetak Nota - History Fix V49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,14 +28,14 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 48
-        if (!localStorage.getItem('ZETTBOT_V48_SYNC')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 49
+        if (!localStorage.getItem('ZETTBOT_V49_FIX')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V48_SYNC', 'true');
+            localStorage.setItem('ZETTBOT_V49_FIX', 'true');
         }
         
         // URL GAS ANDA
-        const API_URL = "https://script.google.com/macros/s/AKfycbwVMsbF34Gv9JkXD5DlxfA1EIb9yRk8S1uKxeCsqE33yU2T5NP7JmLheGyyuNjLqsJd/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
 
     <div id="loader" class="loading-overlay">
@@ -93,7 +93,7 @@
             <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Lokal</h3>
             <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase transition-all active:scale-95">Segarkan</button>
         </div>
-        <div id="history-list" class="space-y-3 pb-2 max-h-[300px] overflow-y-auto no-scrollbar"></div>
+        <div id="history-list" class="space-y-3 pb-4 max-h-[350px] overflow-y-auto pointer-events-auto"></div>
     </div>
 
     <!-- PAGE 2: PRATINJAU -->
@@ -169,7 +169,6 @@
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
                     <span>API KEY GEMINI</span>
-                    <!-- TOMBOL BARU: MEMAKSA MENARIK DARI SERVER -->
                     <button onclick="syncCloud(true)" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                         Tarik dari Server
@@ -189,7 +188,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v48.0 - Cloud Diagnostic</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v49.0 - History Fix</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -215,7 +214,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V48') || "",
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V49') || "",
             editingField: ""
         };
 
@@ -225,7 +224,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings(); 
-            syncCloud(false); // Otomatis sync saat aplikasi dibuka
+            syncCloud(false);
             switchPage('home');
             fetchHistory();
             
@@ -299,7 +298,6 @@
                 const res = await fetch(API_URL + "?action=getKey&t=" + Date.now(), { redirect: "follow" });
                 const textRes = await res.text();
                 
-                // Jika response adalah HTML (Halaman Authorization Google), artinya belum di-deploy dengan benar
                 if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
                     updateStatusUI("ERROR: WAJIB DEPLOY NEW VERSION CODE.GS!", "red");
                     if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.\n\nSOLUSI WAJIB (Lakukan di PC):\n1. Buka code.gs\n2. Klik 'Terapkan' (Deploy)\n3. Pilih 'Kelola deployment'\n4. Klik Ikon Pensil (Edit)\n5. Ubah 'Versi' menjadi 'Versi Baru'\n6. Klik 'Terapkan'.");
@@ -310,11 +308,12 @@
                 if (data.key && data.key.length > 20 && !data.key.includes("Masukkan Key Anda")) {
                     state.cloudKey = data.key;
                     
-                    // SELALU PAKSA TIMPA MEMORI LOKAL DENGAN DATA DARI SERVER!
-                    state.manualKey = data.key;
-                    localStorage.setItem('ZETTBOT_API_KEY_V48', data.key);
-                    const inputKey = getEl('setting-apikey');
-                    if (inputKey) inputKey.value = data.key;
+                    if (!state.manualKey || state.manualKey !== data.key) {
+                        state.manualKey = data.key;
+                        localStorage.setItem('ZETTBOT_API_KEY_V49', data.key);
+                        const inputKey = getEl('setting-apikey');
+                        if (inputKey) inputKey.value = data.key;
+                    }
                     
                     updateStatusUI(`...${data.key.slice(-4)} (TERHUBUNG KE SERVER)`, "green");
                     if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs dan siap digunakan.");
@@ -331,7 +330,6 @@
             }
         }
 
-        // --- HAPUS CACHE DI SERVER ---
         async function resetCloudKey() {
             if (!API_URL || API_URL.includes("exec") === false) return;
             if(!confirm("Ini akan menghapus API Key yang 'nyangkut' di memori server Google. Lanjutkan?")) return;
@@ -384,14 +382,14 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V48', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V49', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V48', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V49', mKey);
                 
                 if (API_URL && API_URL.includes("exec")) {
                     fetch(API_URL, {
@@ -403,14 +401,13 @@
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V48');
+                localStorage.removeItem('ZETTBOT_API_KEY_V49');
             }
 
             const ori = btn.innerText;
             btn.innerText = "DISIMPAN!";
             btn.classList.replace('bg-indigo-600', 'bg-[#00E676]');
             
-            // Update status UI
             const active = state.manualKey || state.cloudKey;
             if (active) updateStatusUI(`...${active.slice(-4)} (TERSIPAN LOKAL)`, "green");
             else updateStatusUI("KUNCI KOSONG!", "red");
@@ -419,7 +416,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V48');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V49');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -579,7 +576,6 @@
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData); 
                 else populateTransferFromJSON(jsonData);
 
-                // Lakukan kalkulasi awal
                 calculateTotal();
 
                 toggleLoader(false);
@@ -724,7 +720,6 @@
             state.isConnected = c;
             const icon = getEl('printer-icon-svg');
             if (icon) {
-                // Menggunakan setAttribute agar warna SVG benar-benar berubah di browser
                 icon.setAttribute("class", c 
                     ? "h-6 w-6 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.9)] transition-all duration-300" 
                     : "h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300");
@@ -761,6 +756,48 @@
             let spacesCount = maxChars - leftStr.length - rightStr.length;
             if (spacesCount < 1) spacesCount = 1; 
             return leftStr + " ".repeat(spacesCount) + rightStr;
+        }
+
+        // --- MENYIMPAN RIWAYAT KE MEMORI HP ---
+        function saveLocalHistory() {
+            const item = {
+                id: Date.now().toString(),
+                tipe: state.currentType,
+                r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'),
+                r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'),
+                r_nom: getElText('r-nom'), r_adm: getElText('r-adm'), r_tot: getElText('r-tot'),
+                t_toko: getElText('t-toko'), t_alamat: getElText('t-alamat'), t_tgl: getElText('t-tgl'), t_jam: getElText('t-jam'),
+                t_meter: getElText('t-meter'), t_nama: getElText('t-nama'), t_daya: getElText('t-daya'), t_kwh: getElText('t-kwh'),
+                t_token: getEl('t-token') ? getEl('t-token').innerHTML : '',
+                t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
+            };
+
+            let history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+            history.unshift(item);
+            if(history.length > 50) history.pop(); 
+            localStorage.setItem('ZETTBOT_HISTORY_V49', JSON.stringify(history));
+        }
+
+        // --- MEMUAT ULANG RIWAYAT KE PRATINJAU ---
+        function loadReceipt(id) {
+            const history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+            const item = history.find(h => h.id === id);
+            
+            if(item) {
+                state.currentType = item.tipe || 'Transfer';
+                
+                if (state.currentType === 'Transfer') {
+                    setElText('r-toko', item.r_toko); setElText('r-alamat', item.r_alamat); setElText('r-tgl', item.r_tgl); setElText('r-jam', item.r_jam);
+                    setElText('r-ref', item.r_ref); setElText('r-bank', item.r_bank); setElText('r-rek', item.r_rek); setElText('r-nama', item.r_nama);
+                    setElText('r-nom', item.r_nom); setElText('r-adm', item.r_adm); setElText('r-tot', item.r_tot);
+                } else {
+                    setElText('t-toko', item.t_toko); setElText('t-alamat', item.t_alamat); setElText('t-tgl', item.t_tgl); setElText('t-jam', item.t_jam);
+                    setElText('t-meter', item.t_meter); setElText('t-nama', item.t_nama); setElText('t-daya', item.t_daya); setElText('t-kwh', item.t_kwh);
+                    if(getEl('t-token')) getEl('t-token').innerHTML = item.t_token;
+                    setElText('t-nom', item.t_nom); setElText('t-adm', item.t_adm); setElText('t-tot', item.t_tot); setElText('t-sn', item.t_sn);
+                }
+                switchPage('preview');
+            }
         }
 
         async function executePrint() {
@@ -840,14 +877,16 @@
                     await new Promise(resolve => setTimeout(resolve, 50)); 
                 }
 
+                saveLocalHistory();
+
                 const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
-                
-                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_RADAR') || '[]');
-                const tgl = state.currentType === 'Token' ? getElText('t-tgl') : getElText('r-tgl');
-                const tot = state.currentType === 'Token' ? getElText('t-tot') : getElText('r-tot');
-                h.unshift({ nama: namaUtama, tgl: tgl, tot: tot, tipe: state.currentType });
-                if(h.length > 30) h.pop();
-                localStorage.setItem('ZETTBOT_HISTORY_RADAR', JSON.stringify(h));
+                if (typeof google !== 'undefined' || API_URL !== "") {
+                    fetch(API_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ nama: namaUtama, tipe: state.currentType }) 
+                    }).catch(e => console.log(e));
+                }
 
                 toggleLoader(false);
                 fetchHistory();
@@ -862,30 +901,37 @@
         }
 
         function fetchHistory() {
-            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_RADAR') || '[]');
+            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
             const list = getEl('history-list');
             if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Riwayat Kosong</p>'; return; }
-            list.innerHTML = h.map((item, idx) => `
-                <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-2">
-                    <div class="flex-1">
-                        <h4 class="font-black text-gray-800 text-[10px] uppercase truncate">${item.nama || '---'}</h4>
-                        <p class="text-[8px] text-gray-400 font-bold uppercase">${item.tgl || '---'}</p>
+            list.innerHTML = h.map((item) => `
+                <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-2 transition-all hover:bg-gray-50 cursor-pointer">
+                    <div onclick="loadReceipt('${item.id}')" class="flex-1">
+                        <h4 class="font-black text-gray-800 text-[10px] uppercase truncate">${(item.tipe === 'Token' ? item.t_nama : item.r_nama) || '---'}</h4>
+                        <p class="text-[8px] text-gray-400 font-bold uppercase mt-1">${(item.tipe === 'Token' ? item.t_tgl : item.r_tgl) || '---'} - ${(item.tipe === 'Token' ? item.t_jam : item.r_jam) || '--:--'}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="text-right">
+                        <div onclick="loadReceipt('${item.id}')" class="text-right flex flex-col items-end">
                            <div class="px-2 py-0.5 ${item.tipe==='Token'?'bg-orange-50 text-orange-500':'bg-indigo-50 text-indigo-500'} rounded-md text-[7px] font-black uppercase mb-1">${item.tipe}</div>
-                           <span class="text-[9px] font-black text-gray-600">${item.tot || 'Rp 0'}</span>
+                           <span class="text-[11px] font-black text-gray-600">${(item.tipe === 'Token' ? item.t_tot : item.r_tot) || 'Rp 0'}</span>
                         </div>
-                        <button onclick="delH(${idx})" class="p-2 text-red-300 active:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                        <div class="h-8 w-px bg-gray-100 mx-1"></div>
+                        <button onclick="delH('${item.id}', event)" class="p-2 text-red-300 hover:text-red-500 active:scale-90 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function delH(i) {
-            let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_RADAR') || '[]');
-            h.splice(i, 1); localStorage.setItem('ZETTBOT_HISTORY_RADAR', JSON.stringify(h));
-            fetchHistory();
+        function delH(id, event) {
+            event.stopPropagation(); // Mencegah loadReceipt terpanggil saat menghapus
+            if(confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) {
+                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V49') || '[]');
+                h = h.filter(item => item.id !== id);
+                localStorage.setItem('ZETTBOT_HISTORY_V49', JSON.stringify(h));
+                fetchHistory();
+            }
         }
     </script>
 </body>
