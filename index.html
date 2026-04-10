@@ -6,7 +6,6 @@
     <title>Cetak Nota - AI Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8F9FE; -webkit-tap-highlight-color: transparent; }
         .receipt-font { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #000; letter-spacing: -0.5px; }
@@ -60,7 +59,7 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100 transition-all active:scale-95">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-2">Cetak Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>Sistem AI Cerdas akan mengisi nota otomatis.</p>
+                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>Google Gemini AI akan mengisi nota otomatis.</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
@@ -222,11 +221,11 @@
             
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>Gemini API Key (Opsional)</span>
+                    <span>API Key Gemini Wajib</span>
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Dapatkan Gratis</a>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Kosongkan untuk AI Offline" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
-                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">Jika kosong, aplikasi otomatis menggunakan AI Tesseract (Offline). Isi key untuk tingkat akurasi maksimal 99%.</p>
+                <input type="password" id="setting-apikey" placeholder="Masukkan API Key Gemini" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
+                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">Wajib diisi agar fitur Scan Gambar (AI) bisa bekerja dengan tingkat akurasi 99.9%.</p>
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
@@ -234,7 +233,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v16.1<br>Auto-Fallback API Gateway</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v16.3<br>Ultimate Model Gateway</p>
             </div>
         </div>
     </div>
@@ -263,29 +262,6 @@
     <script>
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
-
-        // GLOBAL KEYWORDS DICTIONARY (Untuk Tesseract Offline AI)
-        const BANK_KEYWORDS = [
-            { id: 'BCA', keys: ['BCA', 'M-BCA', 'MBCA', 'M-TRANSFER', 'SAKUKU', 'BLU'] },
-            { id: 'BRI', keys: ['BRI', 'BRIMO', 'BRIVA', 'SETOR TUNAI TANPA KARTU', 'BANK RAKYAT INDONESIA'] },
-            { id: 'MANDIRI', keys: ['MANDIRI', 'LIVIN', 'BANK MANDIRI'] },
-            { id: 'BNI', keys: ['BNI', 'MOBILE BANKING BNI'] },
-            { id: 'BSI', keys: ['BSI', 'SYARIAH INDONESIA'] },
-            { id: 'DANA', keys: ['DANA', 'SALDO DANA', 'DNID', 'ESPAY', 'PT ESPAY'] },
-            { id: 'OVO', keys: ['OVO', 'OVO CASH', 'VISIONET', 'PT VISIONET'] },
-            { id: 'GOPAY', keys: ['GOPAY', 'GO-PAY', 'GOTO', 'DOMPET ANAK BANGSA'] },
-            { id: 'LINKAJA', keys: ['LINKAJA', 'LINK AJA', 'FINTEK KARYA NUSANTARA', 'PT FINTEK'] },
-            { id: 'SHOPEEPAY', keys: ['SHOPEE', 'SHOPEEPAY', 'SPAY', 'AIRPAY'] },
-            { id: 'SEABANK', keys: ['SEA', 'SEABANK'] },
-            { id: 'JAGO', keys: ['JAGO', 'BANK JAGO'] },
-            { id: 'NEO', keys: ['NEO', 'BNC', 'NEOBANK'] },
-            { id: 'MEGA', keys: ['MEGA', 'BANK MEGA', 'M-SMILE'] },
-            { id: 'CIMB', keys: ['CIMB', 'NIAGA', 'OCTO'] },
-            { id: 'DKI', keys: ['DKI', 'JAKONE'] },
-            { id: 'PERMATA', keys: ['PERMATA', 'PERMATAMOBILE'] },
-            { id: 'DANAMON', keys: ['DANAMON', 'D-BANK'] },
-            { id: 'BJB', keys: ['BJB', 'DIGI'] }
-        ];
 
         // --- DOM HELPERS ---
         const getEl = id => document.getElementById(id);
@@ -390,28 +366,34 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- HYBRID AI ENGINE (GEMINI CLOUD + TESSERACT OFFLINE) ---
+        // --- GOOGLE GEMINI VISION AI ENGINE (Ultimate Gateway) ---
         async function processImageOCR(file) {
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
             const apiKey = (savedSettings.apikey || "").trim();
 
+            if (!apiKey && window.location.hostname.includes('github.io')) {
+                alert("⚠️ PERHATIAN: API KEY KOSONG!\n\nKarena web ini berjalan di GitHub Pages, Anda WAJIB mendapatkan API Key dari Google secara gratis agar fitur Scan Gambar bisa bekerja.\n\nSistem akan mengarahkan Anda ke menu Setelan.");
+                switchPage('settings');
+                return;
+            }
+
             toggleLoader(true, "MEMBACA GAMBAR...");
+            getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
             try {
-                // Resize image (Optimal untuk performa HP dan Kuota Cloud)
                 const base64DataRaw = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            const MAX_DIM = 1200; 
+                            const MAX_DIM = 1024; 
                             let w = img.width, h = img.height;
                             if (w > h && w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
                             else if (h > w && h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
                             canvas.width = w; canvas.height = h;
                             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]); 
                         };
                         img.onerror = () => reject(new Error("File gambar rusak."));
                         img.src = e.target.result;
@@ -420,122 +402,124 @@
                     reader.readAsDataURL(file);
                 });
 
-                // JIKA USER MEMASUKKAN API KEY -> GUNAKAN GEMINI AI (CLOUD) DENGAN FALLBACK
+                const base64Data = base64DataRaw;
+                
+                // LOGIKA GATEWAY API DENGAN ARRAY FALLBACK (V16.3)
+                // Sistem akan mencoba 6 model ini berurutan secara otomatis sampai ada yang berhasil lolos 404
+                let modelsToTry = [];
                 if (apiKey) {
-                    getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
-                    const base64Data = base64DataRaw.split(',')[1];
-                    
-                    let currentModel = "gemini-1.5-flash-latest"; // Menggunakan alias paling aman
-                    
-                    let promptText = "";
-                    let schema = {};
-
-                    if (state.currentType === 'Transfer') {
-                        promptText = "Ekstrak data dari gambar struk transfer bank ini. Berikan respons dalam JSON.";
-                        schema = {
-                            type: "OBJECT",
-                            properties: {
-                                tanggal: { type: "STRING", description: "Format DD-MM-YYYY. Hari ini jika tidak ada." },
-                                waktu: { type: "STRING", description: "Format HH:mm. Saat ini jika tidak ada." },
-                                referensi: { type: "STRING", description: "Nomor referensi, struk, atau ID transaksi" },
-                                bank_tujuan: { type: "STRING", description: "Nama bank penerima/tujuan (Contoh: BCA, BRI, MANDIRI, DANA, OVO, MEGA, dll)" },
-                                rekening_tujuan: { type: "STRING", description: "Nomor rekening atau HP tujuan. Biarkan tanda bintang jika ada (contoh: 4605 **** **** 500)" },
-                                nama_penerima: { type: "STRING", description: "Nama orang/perusahaan penerima" },
-                                nominal: { type: "INTEGER", description: "Jumlah uang yang ditransfer (angka saja)" },
-                                admin: { type: "INTEGER", description: "Biaya admin atau fee (angka saja, 0 jika gratis)" },
-                                total: { type: "INTEGER", description: "Total keseluruhan (angka saja)" }
-                            },
-                            required: ["tanggal", "waktu", "referensi", "bank_tujuan", "rekening_tujuan", "nama_penerima", "nominal", "admin", "total"]
-                        };
-                    } else {
-                        promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. Berikan respons dalam JSON.";
-                        schema = {
-                            type: "OBJECT",
-                            properties: {
-                                tanggal: { type: "STRING", description: "Format DD-MM-YYYY" },
-                                waktu: { type: "STRING", description: "Format HH:mm" },
-                                no_meter: { type: "STRING", description: "Nomor Meter / ID Pelanggan PLN" },
-                                nama: { type: "STRING", description: "Nama pelanggan PLN" },
-                                tarif_daya: { type: "STRING", description: "Tarif dan Daya (Contoh: R1M/900 VA)" },
-                                kwh: { type: "STRING", description: "Jumlah kWh (Contoh: 50.5)" },
-                                token: { type: "STRING", description: "20 digit angka stroom/token PLN" },
-                                nominal: { type: "INTEGER", description: "Nominal pembelian (angka saja)" },
-                                admin: { type: "INTEGER", description: "Biaya admin (angka saja)" },
-                                total: { type: "INTEGER", description: "Total bayar (angka saja)" },
-                                sn: { type: "STRING", description: "Nomor SN / Referensi" }
-                            },
-                            required: ["tanggal", "waktu", "no_meter", "nama", "tarif_daya", "kwh", "token", "nominal", "admin", "total", "sn"]
-                        };
-                    }
-
-                    const payload = {
-                        contents: [{ role: "user", parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0.1, responseMimeType: "application/json", responseSchema: schema }
-                    };
-
-                    let result;
-                    let retries = 4;
-                    let delays = [1000, 2000, 3000, 4000];
-                    
-                    for (let i = 0; i <= retries; i++) {
-                        try {
-                            const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-                            const response = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            });
-                            
-                            if (!response.ok) {
-                                let errText = "Gagal menghubungi server Gemini.";
-                                try { const e = await response.json(); errText = e.error?.message; } catch(e){}
-                                
-                                if (response.status === 400 && !apiKey) throw new Error("API Key Gemini belum diisi di Setelan.");
-                                if (response.status === 403) throw new Error("Akses API Ditolak (403) oleh Server Google.\n\nPesan Error dari Google:\n" + errText + "\n\nSolusi:\n1. Pastikan API Key di Setelan tidak memiliki spasi yang ikut tersalin.\n2. Jika masih gagal, buat ulang API Key baru di aistudio.google.com.");
-                                
-                                // AUTO FALLBACK JIKA MODEL 404
-                                if (response.status === 404 && apiKey) {
-                                    if (currentModel === "gemini-1.5-flash-latest") {
-                                        currentModel = "gemini-1.5-pro-latest"; // Ganti gigi ke model pro
-                                        throw new Error("FALLBACK_RETRY");
-                                    } else if (currentModel === "gemini-1.5-pro-latest") {
-                                        currentModel = "gemini-1.5-flash"; // Ganti gigi ke base model
-                                        throw new Error("FALLBACK_RETRY");
-                                    } else {
-                                        throw new Error(`Model AI tidak tersedia (404) untuk API Key ini.\nDetail: ${errText}\n\nSolusi: Buat API Key baru di aistudio.google.com dengan akun Google yang berbeda.`);
-                                    }
-                                }
-                                
-                                throw new Error(`HTTP error! status: ${response.status}\nDetail: ${errText}`);
-                            }
-                            result = await response.json();
-                            break; 
-                        } catch (error) {
-                            if (error.message === "FALLBACK_RETRY") continue; // Langsung hajar dengan model baru tanpa delay panjang
-                            if (i === retries || error.message.includes("API Key") || error.message.includes("Akses API Ditolak") || error.message.includes("404")) throw error;
-                            await new Promise(r => setTimeout(r, delays[i]));
-                        }
-                    }
-
-                    const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!textResponse) throw new Error("Respons AI Kosong. Coba ulangi kembali.");
-                    
-                    const jsonData = JSON.parse(textResponse);
-                    if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
-                    else populateTransferFromJSON(jsonData);
-
+                    modelsToTry = [
+                        "gemini-1.5-flash",
+                        "gemini-1.5-flash-8b",
+                        "gemini-1.5-flash-latest",
+                        "gemini-1.5-flash-001",
+                        "gemini-1.5-flash-002",
+                        "gemini-1.5-pro"
+                    ];
                 } else {
-                    // JIKA API KEY KOSONG -> OTOMATIS GUNAKAN TESSERACT AI (OFFLINE)
-                    getEl('loader-subtext').innerText = "AI Offline sedang mengekstrak data struk...";
-                    
-                    const worker = await Tesseract.createWorker('ind');
-                    const result = await worker.recognize(base64DataRaw);
-                    const text = result.data.text;
-                    await worker.terminate();
-
-                    if(state.currentType === 'Token') parseTokenOCROffline(text);
-                    else parseTransferOCROffline(text);
+                    modelsToTry = ["gemini-2.5-flash-preview-09-2025"]; // Khusus canvas internal
                 }
+
+                let currentModelIndex = 0;
+                let currentModel = modelsToTry[currentModelIndex];
+
+                let promptText = "";
+                let schema = {};
+
+                if (state.currentType === 'Transfer') {
+                    promptText = "Ekstrak data dari gambar struk transfer bank ini. Berikan respons dalam JSON.";
+                    schema = {
+                        type: "OBJECT",
+                        properties: {
+                            tanggal: { type: "STRING", description: "Format DD-MM-YYYY. Hari ini jika tidak ada." },
+                            waktu: { type: "STRING", description: "Format HH:mm. Saat ini jika tidak ada." },
+                            referensi: { type: "STRING", description: "Nomor referensi, struk, atau ID transaksi" },
+                            bank_tujuan: { type: "STRING", description: "Nama bank penerima/tujuan (Contoh: BCA, BRI, MANDIRI, DANA, OVO, MEGA, dll)" },
+                            rekening_tujuan: { type: "STRING", description: "Nomor rekening atau HP tujuan. Biarkan tanda bintang jika ada (contoh: 4605 **** **** 500)" },
+                            nama_penerima: { type: "STRING", description: "Nama orang/perusahaan penerima" },
+                            nominal: { type: "INTEGER", description: "Jumlah uang yang ditransfer (angka saja)" },
+                            admin: { type: "INTEGER", description: "Biaya admin atau fee (angka saja, 0 jika gratis)" },
+                            total: { type: "INTEGER", description: "Total keseluruhan (angka saja)" }
+                        },
+                        required: ["tanggal", "waktu", "referensi", "bank_tujuan", "rekening_tujuan", "nama_penerima", "nominal", "admin", "total"]
+                    };
+                } else {
+                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. Berikan respons dalam JSON.";
+                    schema = {
+                        type: "OBJECT",
+                        properties: {
+                            tanggal: { type: "STRING", description: "Format DD-MM-YYYY" },
+                            waktu: { type: "STRING", description: "Format HH:mm" },
+                            no_meter: { type: "STRING", description: "Nomor Meter / ID Pelanggan PLN" },
+                            nama: { type: "STRING", description: "Nama pelanggan PLN" },
+                            tarif_daya: { type: "STRING", description: "Tarif dan Daya (Contoh: R1M/900 VA)" },
+                            kwh: { type: "STRING", description: "Jumlah kWh (Contoh: 50.5)" },
+                            token: { type: "STRING", description: "20 digit angka stroom/token PLN" },
+                            nominal: { type: "INTEGER", description: "Nominal pembelian (angka saja)" },
+                            admin: { type: "INTEGER", description: "Biaya admin (angka saja)" },
+                            total: { type: "INTEGER", description: "Total bayar (angka saja)" },
+                            sn: { type: "STRING", description: "Nomor SN / Referensi" }
+                        },
+                        required: ["tanggal", "waktu", "no_meter", "nama", "tarif_daya", "kwh", "token", "nominal", "admin", "total", "sn"]
+                    };
+                }
+
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                    generationConfig: { temperature: 0.1, responseMimeType: "application/json", responseSchema: schema }
+                };
+
+                let result;
+                let retries = 3;
+                let delays = [1000, 2000, 3000];
+                
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!response.ok) {
+                            let errText = "Gagal menghubungi server Gemini.";
+                            try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
+                            
+                            if (response.status === 400 && !apiKey) throw new Error("API Key Gemini belum diisi di Setelan.");
+                            if (response.status === 403) throw new Error("Akses API Ditolak (403) oleh Server Google.\n\nPastikan API Key di Setelan tidak memiliki spasi.");
+                            
+                            // AUTO FALLBACK JIKA MODEL 404 ATAU 400
+                            if ((response.status === 404 || response.status === 400) && apiKey) {
+                                currentModelIndex++;
+                                if (currentModelIndex < modelsToTry.length) {
+                                    currentModel = modelsToTry[currentModelIndex];
+                                    throw new Error("FALLBACK_RETRY"); // Langsung ganti gigi ke model berikutnya
+                                } else {
+                                    throw new Error(`Semua model AI menolak akses (404/400).\nDetail: ${errText}\n\nSolusi: Buat API Key baru menggunakan akun Google yang berbeda.`);
+                                }
+                            }
+                            
+                            throw new Error(`HTTP error! status: ${response.status}\nDetail: ${errText}`);
+                        }
+                        result = await response.json();
+                        break; 
+                    } catch (error) {
+                        if (error.message === "FALLBACK_RETRY") {
+                            i--; // Jangan hitung ini sebagai network retry gagal karena kita hanya ganti model
+                            continue; 
+                        }
+                        if (i === retries || error.message.includes("API Key") || error.message.includes("Akses API Ditolak") || error.message.includes("Semua model AI")) throw error;
+                        await new Promise(r => setTimeout(r, delays[i]));
+                    }
+                }
+
+                const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResponse) throw new Error("Respons AI Kosong. Coba ulangi kembali.");
+                
+                const jsonData = JSON.parse(textResponse);
+                if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
+                else populateTransferFromJSON(jsonData);
 
             } catch (err) {
                 console.error("AI Error:", err);
@@ -582,224 +566,6 @@
             setElText('t-adm', formatRupiahStr(data.admin || 0));
             setElText('t-tot', formatRupiahStr(data.total || 0));
             setElText('t-sn', data.sn || "XXXXXXXXXXXXXXXXXXXXX");
-        }
-
-        // --- ALGORITMA PARSER OCR OFFLINE - TRANSFER BANK (V14.0 SOLID ENGINE) ---
-        function parseTransferOCROffline(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-            const combinedUpper = combinedText.toUpperCase();
-
-            // 1. TANGGAL & WAKTU
-            const dateMatch = combinedText.match(/(\d{2}[\s\-\/][A-Za-z]{3}[\s\-\/]\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
-            if (dateMatch) {
-                let d = dateMatch[1];
-                if (d.includes('-') && d.split('-')[0].length === 4) { 
-                    const pts = d.split('-'); setElText('r-tgl', `${pts[2]}-${pts[1]}-${pts[0]}`);
-                } else { setElText('r-tgl', d.replace(/\//g, '-')); }
-            } else { updateTimeOnlyDate('r-tgl'); }
-
-            const timeMatch = combinedText.match(/(\d{2}:\d{2}(?::\d{2})?)/);
-            if (timeMatch) setElText('r-jam', timeMatch[1]);
-            else { updateTimeOnlyTime('r-jam'); }
-
-            // 2. NOMINAL, ADMIN, TOTAL
-            let moneyValues = [];
-            const moneyRegex = /(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/gi;
-            let m;
-            while ((m = moneyRegex.exec(combinedText)) !== null) {
-                if (m[1]) {
-                    let val = parseInt(m[1].replace(/\./g, ''));
-                    if (val > 0) moneyValues.push(val);
-                }
-            }
-            moneyValues = [...new Set(moneyValues)].sort((a,b) => b-a);
-            
-            let nominal = 0, admin = 0, total = 0;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                let lineMoneyMatch = lines[i].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i);
-                let nextLineMoneyMatch = lines[i+1] ? lines[i+1].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i) : null;
-                
-                let val = 0;
-                if (lineMoneyMatch && lineMoneyMatch[1]) val = parseInt(lineMoneyMatch[1].replace(/\./g, ''));
-                else if (nextLineMoneyMatch && nextLineMoneyMatch[1]) val = parseInt(nextLineMoneyMatch[1].replace(/\./g, ''));
-
-                if (up.match(/(BIAYA|ADMIN|FEE)/) && val > 0 && val < 50000) admin = val;
-                else if (up.match(/(TOTAL)/) && val > 0) total = val;
-                else if (up.match(/(NOMINAL|JUMLAH TRANSFER|JUMLAH)/) && val > 0 && !up.match(/TOTAL/)) nominal = val;
-            }
-
-            if (total === 0 && moneyValues.length > 0) total = moneyValues[0];
-            if (nominal === 0) {
-                if (moneyValues.length >= 2) nominal = moneyValues.find(x => x < total) || total;
-                else nominal = total;
-            }
-            if (admin === 0 && total > nominal) admin = total - nominal;
-            if (total !== nominal + admin) {
-                 if (moneyValues.length > 0) {
-                     total = moneyValues[0];
-                     nominal = moneyValues.length > 1 ? moneyValues[1] : total;
-                     admin = total > nominal ? total - nominal : 0;
-                 }
-            }
-
-            setElText('r-nom', formatRupiahStr(nominal));
-            setElText('r-adm', formatRupiahStr(admin));
-            setElText('r-tot', formatRupiahStr(total));
-
-            // 3. REFERENSI
-            let ref = "";
-            for(let i=0; i<lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/(REFERENSI|REF|ORDER|ID TRANSAKSI)/)) {
-                    let matchRef = up.match(/([A-Z0-9]{8,25})/);
-                    if (matchRef && matchRef[0]) ref = matchRef[0];
-                }
-            }
-            if (!ref) {
-                let refMatch = combinedText.match(/(?:REFERENSI|REF|ORDER|ID TRANSAKSI|NO REF)[\s\:\.]*([A-Z0-9]{8,25})/i);
-                if (refMatch && refMatch[1]) ref = refMatch[1].replace(/[^A-Z0-9]/gi, '');
-            }
-            setElText('r-ref', ref || "0000000000");
-
-            // 4. BANK, REKENING, NAMA
-            let bank = "", rek = "", nama = "";
-            let destIdx = -1;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/^(TUJUAN|PENERIMA|KEPADA|REKENING TUJUAN|DATA PENERIMA)/)) {
-                    if (!up.match(/SUMBER|DARI/)) { destIdx = i; break; }
-                }
-            }
-
-            let nameCandidates = [];
-            let rekCandidates = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                let up = line.toUpperCase();
-                
-                if (up.match(/NOMINAL|BIAYA|ADMIN|TOTAL|SALDO|TRANSAKSI|WAKTU|TANGGAL|REF|ID|STRUK|CETAK|BAGIKAN|SELESAI|KEMBALI|BERHASIL|SUMBER DANA/)) continue;
-                
-                let rMatch = line.match(/(\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,20})/);
-                
-                if (rMatch && rMatch[0] && !up.includes('RP')) {
-                    let cleanMatch = rMatch[0].replace(/[^\d\*]/g, '');
-                    let cleanRef = (ref || '').replace(/[^0-9]/g, '');
-                    
-                    if (cleanMatch !== cleanRef || cleanMatch === '') {
-                        if (line.includes('-')) {
-                            let parts = line.split('-');
-                            let p1 = parts[0].trim();
-                            let p2 = parts.slice(1).join('-').trim();
-                            
-                            if (p1.replace(/[^\d\*]/g,'').length >= 8) {
-                                rekCandidates.push({val: p1, idx: i});
-                                if (p2.replace(/[^A-Za-z]/g, '').length > 3) nameCandidates.push({val: p2, idx: i, fromSplit: true});
-                                continue;
-                            }
-                        }
-                        rekCandidates.push({val: rMatch[0], idx: i});
-                    }
-                } else {
-                    if (up.replace(/[^A-Z]/g, '').length > 3) {
-                        nameCandidates.push({val: line, idx: i});
-                    }
-                }
-            }
-
-            if (rekCandidates.length > 0) {
-                let validReks = rekCandidates.filter(c => destIdx === -1 || c.idx >= destIdx);
-                rek = (validReks.length > 0 ? validReks[0].val : rekCandidates[rekCandidates.length-1].val);
-            }
-
-            if (nameCandidates.length > 0) {
-                const badNames = /BANK|MANDIRI|BRI|BCA|BNI|BSI|OVO|DANA|GOPAY|LINKAJA|SHOPEE|MEGA|CIMB|PERMATA|DANAMON|BJB|DKI|JAGO|NEO|SEABANK|REKENING|TUJUAN|PENERIMA|TRANSFER|PEMBAYARAN|JENIS|KETERANGAN|CATATAN|ALIAS|INFORMASI/i;
-                let validNames = nameCandidates.filter(c => !c.val.match(badNames) && c.val.replace(/[^A-Za-z]/g, '').length >= 3);
-                
-                if (destIdx !== -1) {
-                    let afterDest = validNames.filter(c => c.idx >= destIdx);
-                    if (afterDest.length > 0) {
-                        nama = afterDest[0].val;
-                        let splitName = validNames.find(c => c.fromSplit && c.idx === (rekCandidates.find(r=>r.val===rek) || {}).idx);
-                        if (splitName) nama = splitName.val;
-                    }
-                } else {
-                    if (rek) {
-                        let targetRekIdx = (rekCandidates.find(r => r.val === rek) || {}).idx || -1;
-                        if (targetRekIdx !== -1) {
-                            let closest = validNames.find(c => c.idx === targetRekIdx - 1 || c.idx === targetRekIdx + 1 || c.idx === targetRekIdx);
-                            if (closest) nama = closest.val;
-                            else nama = validNames[validNames.length-1].val;
-                        }
-                    } else {
-                        nama = validNames[0]?.val || "";
-                    }
-                }
-            }
-            
-            if (nama.toUpperCase().includes('DNID')) nama = nama.replace(/.*DNID[\s\:]*/i, '');
-            nama = (nama || '').replace(/^(TUJUAN|PENERIMA|KEPADA)[\s\:\=]+/i, '');
-            nama = (nama || '').replace(/^[^a-zA-Z0-9]+/, '');
-
-            for (let b of BANK_KEYWORDS) {
-                if (b.keys.some(k => combinedUpper.includes(k))) { bank = b.id; break; }
-            }
-
-            setElText('r-bank', bank || "BANK LAIN");
-            setElText('r-rek', rek ? rek.replace(/\*/g, ' * ') : "0000000000");
-            setElText('r-nama', (nama || "NAMA PELANGGAN").substring(0, 40).toUpperCase());
-        }
-
-        // ALGORITMA PARSER OFFLINE - TOKEN PLN
-        function parseTokenOCROffline(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-
-            updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
-
-            const meterMatch = combinedText.match(/(\d{11,12})/);
-            if (meterMatch) setElText('t-meter', meterMatch[1]);
-
-            let namaToken = "NAMA PELANGGAN";
-            for (let i = 0; i < lines.length; i++) {
-                let lineUpper = lines[i].toUpperCase();
-                if (lineUpper.includes('NAMA') && !lineUpper.includes('BANK')) {
-                    let cleanName = lineUpper.replace(/.*NAMA(?: PELANGGAN)?[\s\:\=]+/i, '').trim();
-                    if (cleanName && cleanName.length > 2 && !cleanName.match(/METER|TARIF|DAYA|KWH/i)) {
-                        namaToken = cleanName;
-                    } else if (lines[i+1] && !lines[i+1].match(/METER|TARIF|TRF|DAYA|R1|KWH|RP|TOTAL/i)) {
-                        namaToken = lines[i+1].trim();
-                    }
-                    break;
-                }
-            }
-            setElText('t-nama', namaToken.substring(0, 35)); 
-
-            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
-            if (rpMatches.length > 0 && rpMatches[0][1]) {
-                setElText('t-nom', formatRupiahStr(parseInt(rpMatches[0][1].replace(/[^0-9]/g, ''))));
-            }
-
-            const tokenMatch = combinedText.replace(/[\s\-]/g, '').match(/(\d{20})/);
-            if (tokenMatch) {
-                const tk = tokenMatch[1];
-                if(getEl('t-token')) getEl('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
-            }
-
-            const dayaMatch = combinedText.match(/([A-Z0-9]+\/\s*\d+[\.,]?\d*\s*VA)/i);
-            if (dayaMatch) setElText('t-daya', dayaMatch[1]);
-
-            const kwhMatch = combinedText.match(/([\d\.,]+)\s*kWh/i);
-            if (kwhMatch) setElText('t-kwh', kwhMatch[1] + " kWh");
-
-            const snMatch = combinedText.match(/(?:SN|Ref)[\s\:\-]*([A-Z0-9]{10,35})/i);
-            if (snMatch && snMatch[1]) setElText('t-sn', snMatch[1]);
-
-            calculateTotal();
         }
 
         // --- FUNGSI BANTUAN ---
