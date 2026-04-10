@@ -460,11 +460,17 @@
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
                 
-                // DAFTAR PINTU MASUK (ENDPOINTS)
+                // DAFTAR PINTU MASUK (ENDPOINTS) DIPERLUAS SECARA EKSTREM
+                // Mengatasi error 404 pada region/akun tertentu dengan mencoba semua variasi nama
                 const endpointsToTry = [
                     "v1beta/models/gemini-1.5-flash",
+                    "v1/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash-latest",
                     "v1beta/models/gemini-1.5-flash-8b",
-                    "v1beta/models/gemini-1.5-pro"
+                    "v1beta/models/gemini-1.5-pro",
+                    "v1beta/models/gemini-1.5-pro-latest",
+                    "v1beta/models/gemini-1.0-pro-vision-latest",
+                    "v1beta/models/gemini-pro-vision"
                 ];
 
                 let result = null;
@@ -474,15 +480,15 @@
                 for (let endpoint of endpointsToTry) {
                     const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${apiKey}`;
                     
-                    let retries = 2; 
-                    let delays = [1500, 3000]; 
+                    let retries = 1; // Kurangi retry per model agar pencarian model yang benar lebih cepat
+                    let delays = [1500]; 
 
                     for(let i = 0; i <= retries; i++) {
                         try {
-                            if (i > 0) getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang (${i}/2)...`;
+                            if (i > 0) getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang...`;
 
                             const fetchController = new AbortController();
-                            const fetchTimeout = setTimeout(() => fetchController.abort(), 15000); // 15 detik timeout
+                            const fetchTimeout = setTimeout(() => fetchController.abort(), 12000); // 12 detik max per tembakan
 
                             const response = await fetch(url, {
                                 method: 'POST',
@@ -509,7 +515,7 @@
                                 // Jika Model Tidak Ditemukan (404) atau Error Payload lain (400) -> Lewati model ini
                                 if (response.status === 404 || response.status === 400) {
                                     let cleanErr = errMsg.length > 40 ? errMsg.substring(0, 40) + "..." : errMsg;
-                                    errorLogs.push(`${endpoint.split('/')[2]} (${response.status}: ${cleanErr})`);
+                                    errorLogs.push(`${endpoint.split('/')[2]} (${response.status})`);
                                     break; 
                                 }
                                 
@@ -542,7 +548,9 @@
                 }
 
                 if (!success) {
-                    throw new Error(`Semua jalur AI gagal diproses atau tidak ditemukan.\n\nJejak Error:\n${errorLogs.join(" | ")}`);
+                    // Hilangkan duplikat log agar pesan tidak terlalu panjang
+                    let uniqueLogs = [...new Set(errorLogs)];
+                    throw new Error(`Semua jalur AI gagal diproses atau tidak ditemukan.\n\nJejak Error:\n${uniqueLogs.join(" | ")}`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
