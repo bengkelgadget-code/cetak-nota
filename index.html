@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Universal Radar</title>
+    <title>Cetak Nota - Cloud Sync V43</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 42
-        if (!localStorage.getItem('ZETTBOT_V42_UNIVERSAL')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 43 (Menghapus bug UI transparan sebelumnya)
+        if (!localStorage.getItem('ZETTBOT_V43_SYNC')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V42_UNIVERSAL', 'true');
+            localStorage.setItem('ZETTBOT_V43_SYNC', 'true');
         }
         
         // URL GAS ANDA
@@ -97,8 +97,8 @@
                 
                 <!-- TEMPLATE BUKTI TRANSFER -->
                 <div id="template-transfer" class="hidden">
-                    <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KEDAI</div>
-                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KEDAI</div>
+                    <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
+                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KONTER</div>
                     <div class="py-1 text-gray-300">------------------------------</div>
                     <div class="flex justify-between text-left"><span>TARIKH</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
                     <div class="flex justify-between text-left mb-2"><span>MASA</span><span contenteditable="true" id="r-jam">--:--</span></div>
@@ -148,7 +148,7 @@
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
                     <span>API KEY MANUAL</span>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Tampal Kunci API Baru Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
+                <input type="password" id="setting-apikey" placeholder="Tampal Kunci API Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center">
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
@@ -158,10 +158,11 @@
 
             <div class="border-t border-dashed border-gray-200 my-6 py-2"></div>
             
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">Data Kedai</label>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px]" contenteditable="true" id="setting-toko" data-placeholder="Nama Kedai"></div>
-                <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px] mt-2" contenteditable="true" id="setting-alamat" data-placeholder="Alamat"></div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">DATA KONTER</label>
+                <!-- PERBAIKAN: Menggunakan tag INPUT agar kotak selalu terlihat meski kosong -->
+                <input type="text" id="setting-toko" placeholder="Nama Kedai..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center">
+                <input type="text" id="setting-alamat" placeholder="Alamat Kedai..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center mt-2">
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan Perubahan</button>
@@ -169,7 +170,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v42.0 - Universal Auto-Fallback</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v43.0 - Cloud Sync Active</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -195,7 +196,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_RADAR') || ""
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V43') || ""
         };
 
         const getEl = id => document.getElementById(id);
@@ -215,6 +216,7 @@
             };
         });
 
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
         async function syncCloud() {
             if (!API_URL || API_URL.includes("exec") === false) return;
             try {
@@ -222,6 +224,14 @@
                 const data = await res.json();
                 if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
+                    
+                    // JIKA HP BARU DIBUKA DAN MEMORI KOSONG, OTOMATIS TARIK DARI CLOUD!
+                    if (!state.manualKey) {
+                        state.manualKey = data.key;
+                        localStorage.setItem('ZETTBOT_API_KEY_V43', data.key);
+                        if(getEl('setting-apikey')) getEl('setting-apikey').value = data.key;
+                    }
+                    
                     updateKeyStatusUI();
                 }
             } catch(e) { console.log("Cloud offline."); }
@@ -246,23 +256,40 @@
             localStorage.clear();
             state.manualKey = "";
             getEl('setting-apikey').value = "";
+            getEl('setting-toko').value = "";
+            getEl('setting-alamat').value = "";
             alert("Memori dibersihkan. Silakan mulai ulang aplikasi.");
             location.reload();
         }
 
         function saveSettings(btn) {
-            const toko = getElText('setting-toko');
-            const alamat = getElText('setting-alamat');
+            // Mengambil nilai dari <input> (bukan div)
+            const toko = getEl('setting-toko').value.trim();
+            const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_RADAR', JSON.stringify({ toko, alamat })); 
+            // Simpan profil toko di memori HP
+            localStorage.setItem('ZETTBOT_PROFILE_V43', JSON.stringify({ toko, alamat })); 
+            
+            // Update tampilan nota secara langsung
+            if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
+            if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_RADAR', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V43', mKey);
+                
+                // SYNC KE CLOUD: Mengirim API Key baru agar tersimpan selamanya di server Google!
+                if (API_URL && API_URL.includes("exec")) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'updateKey', key: mKey })
+                    }).catch(e => console.log("Gagal sync ke cloud:", e));
+                }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_RADAR');
+                localStorage.removeItem('ZETTBOT_API_KEY_V43');
             }
 
             const ori = btn.innerText;
@@ -274,12 +301,13 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_RADAR');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V43');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
-                    if (s.toko) { setElText('setting-toko', s.toko); setElText('r-toko', s.toko); setElText('t-toko', s.toko); }
-                    if (s.alamat) { setElText('setting-alamat', s.alamat); setElText('r-alamat', s.alamat); setElText('t-alamat', s.alamat); }
+                    // Mengisi nilai ke dalam tag <input>
+                    if (s.toko) { getEl('setting-toko').value = s.toko; setElText('r-toko', s.toko); setElText('t-toko', s.toko); }
+                    if (s.alamat) { getEl('setting-alamat').value = s.alamat; setElText('r-alamat', s.alamat); setElText('t-alamat', s.alamat); }
                 } catch(e) {}
             }
             if (state.manualKey) getEl('setting-apikey').value = state.manualKey;
@@ -287,7 +315,7 @@
         }
 
         // ============================================================================
-        // SISTEM UNIVERSAL RADAR LOOP (V42.0) - TERKUAT & TERPINTAR
+        // SISTEM UNIVERSAL RADAR LOOP (V43.0) 
         // ============================================================================
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
@@ -301,7 +329,6 @@
             let validModels = [];
 
             try {
-                // TAHAP 1: BERTANYA KEPADA GOOGLE MODEL APA SAJA YANG TERSEDIA
                 const radarUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${key.trim()}`;
                 const radarRes = await fetch(radarUrl);
                 const radarData = await radarRes.json();
@@ -314,7 +341,6 @@
                     throw new Error(`[Gagal Melacak Model]\n${errMsg}`);
                 }
                 
-                // TAHAP 2: MENYARING MODEL (Ambil semua yang bisa generateContent)
                 validModels = radarData.models.filter(m => 
                     m.supportedGenerationMethods && 
                     m.supportedGenerationMethods.includes("generateContent") &&
@@ -326,11 +352,10 @@
                     throw new Error("API Key Anda valid, tetapi akun ini tidak memiliki akses ke model AI pemroses teks apa pun.");
                 }
 
-                // TAHAP 3: URUTKAN BERDASARKAN PRIORITAS (Yang paling ringan & gratis di atas)
                 const priorities = [
                     "models/gemini-1.5-flash",
                     "models/gemini-1.5-flash-8b",
-                    "models/gemini-2.0-flash-lite-preview-02-05", // Model gratis terbaru Google
+                    "models/gemini-2.0-flash-lite-preview-02-05", 
                     "models/gemini-2.0-flash-lite", 
                     "models/gemini-1.5-flash-latest",
                     "models/gemini-1.5-pro",
@@ -346,7 +371,6 @@
                     return indexA - indexB;
                 });
 
-                // TAHAP 4: PERSIAPAN GAMBAR & PROMPT
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -372,7 +396,6 @@
                     promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
                 }
 
-                // TAHAP 5: MENCOBA MODEL SATU PER SATU DARI DAFTAR (DENGAN SKIP OTOMATIS)
                 let finalRes = null;
                 let lastError = "Gagal memproses gambar.";
                 let quotaErrors = 0;
@@ -397,22 +420,19 @@
                         
                         if (response.ok) {
                             finalRes = JSON.parse(rawText);
-                            break; // BERHASIL! Keluar dari loop.
+                            break; 
                         } else {
                             let errObj = {};
                             try { errObj = JSON.parse(rawText); } catch(e) {}
                             let errMsg = errObj.error?.message || response.statusText;
                             
-                            // Jika kunci API salah, BERHENTI sepenuhnya
                             if (response.status === 400 && errMsg.toLowerCase().includes("key")) {
                                 throw new Error(`[KUNCI API SALAH]\n${errMsg}`);
                             }
                             
-                            // JIKA LIMIT KUOTA HABIS (429 atau pesan quota)
                             if (response.status === 429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("exhausted")) {
                                 quotaErrors++;
                                 lastError = `[KUOTA HABIS di ${modelName.split('/')[1]}]\n${errMsg}`;
-                                // JANGAN DIBUANG ERRORNYA, LANJUTKAN KE MODEL BERIKUTNYA YANG ADA DI DAFTAR!
                                 continue; 
                             }
 
@@ -424,7 +444,6 @@
                     }
                 }
 
-                // JIKA SEMUA MODEL DI DALAM DAFTAR GAGAL DICOBA
                 if (!finalRes) {
                     if (quotaErrors > 0 && quotaErrors >= validModels.length - 3) {
                         throw new Error(`[SEMUA MODEL HABIS KUOTA]\n\nAkun Anda telah kehabisan limit gratis di SEMUA model yang tersedia.\nSolusi: Gunakan Kunci API dari akun Gmail yang baru.\n\nInfo Terakhir:\n${lastError}`);
@@ -432,7 +451,6 @@
                     throw new Error(`[GAGAL DI SEMUA MODEL]\n\nDetail Terakhir:\n${lastError}`);
                 }
 
-                // Parse Hasil Akhir
                 let textResponse = finalRes.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (!textResponse) {
@@ -442,7 +460,6 @@
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 const jsonData = JSON.parse(textResponse);
 
-                // Masukkan data ke antarmuka aplikasi
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData); 
                 else populateTransferFromJSON(jsonData);
 
@@ -493,7 +510,6 @@
             setElText('t-sn', data.sn || "XXXXXXXXXXXXXXXXXXXXX");
         }
 
-        // --- FUNGSI BANTUAN ---
         function formatRupiahStr(num) { return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         
         function updateTime() {
@@ -504,7 +520,6 @@
             else { if(getElText('r-tgl')==='--/--/----') setElText('r-tgl', d); setElText('r-jam', t); }
         }
 
-        // --- NAVIGASI ---
         function switchPage(pageId) {
             ['home', 'preview', 'settings'].forEach(id => {
                 const el = getEl(`page-${id}`);
@@ -522,7 +537,6 @@
                 if (iconBox) iconBox.className = `nav-icon-box p-2 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
             });
 
-            // FIX TAMPILAN NOTA PUTIH (MEMUNCULKAN TEMPLATE YANG SEMBUNYI)
             if (pageId === 'preview') {
                 const tTransfer = getEl('template-transfer');
                 const tToken = getEl('template-token');
@@ -552,9 +566,6 @@
             if(ldr) ldr.style.display = s ? 'flex' : 'none';
         }
 
-        /**
-         * BLUETOOTH SCAN & CONNECT 
-         */
         async function startBluetoothScan() {
             if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
 
@@ -601,7 +612,6 @@
             if (icon) icon.className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
         }
 
-        // FUNGSI BANTUAN: Membungkus text ESC/POS
         function wrapText(label, value, maxChars = 32) {
             let indent = label.length;
             let maxV = maxChars - indent;
@@ -626,7 +636,6 @@
             return res;
         }
 
-        // FUNGSI BANTUAN: Format rata kanan
         function formatLineAlignRight(label, value, maxChars = 32) {
             let leftStr = label.toString();
             let rightStr = value.toString();
@@ -635,9 +644,6 @@
             return leftStr + " ".repeat(spacesCount) + rightStr;
         }
 
-        /**
-         * CETAK ENGINE LANGSUNG KE BLUETOOTH PRINTER
-         */
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
                 alert("Printer terputus! Silakan klik icon printer di Beranda untuk menyambung kembali.");
