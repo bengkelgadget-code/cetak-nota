@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Cloud Sync V44</title>
+    <title>Cetak Nota - V45 Interactive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -19,29 +19,40 @@
         .page-container { width: 100%; min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         button:active { transform: scale(0.96); transition: 0.1s; }
-        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; }
+        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: all 0.2s; }
         [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; }
-        .neon-red { color: #FF0055 !important; filter: drop-shadow(0 0 5px rgba(255,0,85,0.8)); }
-        .neon-blue { color: #00FFFF !important; filter: drop-shadow(0 0 5px rgba(0,255,255,0.8)); }
+        /* Style untuk elemen yang bisa di-klik modal */
+        .editable-click { cursor: pointer; border-bottom: 1px dashed #ccc; transition: all 0.2s; }
+        .editable-click:active { background-color: rgba(79, 70, 229, 0.1); border-bottom: 1px dashed #4F46E5; }
     </style>
 </head>
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 44
-        if (!localStorage.getItem('ZETTBOT_V44_CLOUD')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 45
+        if (!localStorage.getItem('ZETTBOT_V45_UI')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V44_CLOUD', 'true');
+            localStorage.setItem('ZETTBOT_V45_UI', 'true');
         }
-        
         // URL GAS ANDA
-        const API_URL = "https://script.google.com/macros/s/AKfycbwVMsbF34Gv9JkXD5DlxfA1EIb9yRk8S1uKxeCsqE33yU2T5NP7JmLheGyyuNjLqsJd/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
 
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-6"></div>
         <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Memproses...</span>
         <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menghidupkan Radar Google AI...</div>
+    </div>
+
+    <!-- MODAL POPUP UNTUK EDIT NOMINAL / ADMIN -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[10005] hidden items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-[32px] p-8 w-11/12 max-w-sm card-shadow transform transition-all scale-100">
+            <h3 id="modal-title" class="text-sm font-black text-indigo-600 mb-6 text-center uppercase tracking-widest">EDIT: ADMIN</h3>
+            <input type="number" id="modal-input" class="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl p-5 text-center text-2xl font-black text-gray-800 outline-none transition-all mb-6" placeholder="0">
+            
+            <button onclick="saveEditModal()" class="w-full bg-[#00E676] text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-[0_0_20px_rgba(0,230,118,0.5)] active:scale-95 transition-all">Selesai</button>
+            <button onclick="closeEditModal()" class="w-full mt-3 bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest py-4 rounded-2xl active:scale-95 transition-all hover:bg-gray-200">Batal</button>
+        </div>
     </div>
 
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
@@ -53,8 +64,9 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
             </div>
-            <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 neon-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <!-- TOMBOL PRINTER (Akan berubah HIJAU NEON saat terkoneksi) -->
+            <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90">
+                <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
             </button>
@@ -64,14 +76,14 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-1 uppercase tracking-tight">Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk imbas resit bank</p>
+                    <p class="text-indigo-100 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk memindai struk</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
             <button onclick="handleMenuClick('Token')" class="w-full relative overflow-hidden bg-gradient-to-r from-[#FF6B00] to-[#FF9900] rounded-[32px] p-8 text-left shadow-xl shadow-orange-200">
                 <div class="z-10 relative text-white">
-                    <h2 class="text-xl font-bold mb-1 uppercase tracking-tight">Token Elektrik</h2>
-                    <p class="text-orange-50 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk imbas resit PLN</p>
+                    <h2 class="text-xl font-bold mb-1 uppercase tracking-tight">Token Listrik</h2>
+                    <p class="text-orange-50 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk memindai struk</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-20 rounded-full"></div>
             </button>
@@ -79,7 +91,7 @@
 
         <div class="flex justify-between items-center mb-4 px-1">
             <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Lokal</h3>
-            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase">Segarkan</button>
+            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase transition-all active:scale-95">Segarkan</button>
         </div>
         <div id="history-list" class="space-y-3 pb-2 max-h-[300px] overflow-y-auto no-scrollbar"></div>
     </div>
@@ -87,7 +99,7 @@
     <!-- PAGE 2: PRATINJAU -->
     <div id="page-preview" class="page-container hidden max-w-md mx-auto pt-4 flex flex-col h-screen overflow-hidden">
         <div class="px-5 flex items-center gap-4 mb-6">
-            <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
+            <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <h2 class="text-xl font-black text-gray-800 tracking-tight uppercase">Pratinjau Nota</h2>
@@ -100,24 +112,24 @@
                     <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
                     <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KONTER</div>
                     <div class="py-1 text-gray-300">------------------------------</div>
-                    <div class="flex justify-between text-left"><span>TARIKH</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
-                    <div class="flex justify-between text-left mb-2"><span>MASA</span><span contenteditable="true" id="r-jam">--:--</span></div>
+                    <div class="flex justify-between text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
+                    <div class="flex justify-between text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>BANK</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
                     <div class="flex justify-between text-left mb-1"><span>NO. REK</span><span contenteditable="true" id="r-rek" class="text-right">---</span></div>
                     <div class="flex justify-between text-left mb-3"><span>NAMA</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
-                    <div class="flex justify-between mb-2"><span>ADMIN</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
-                    <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>JUMLAH</span><span contenteditable="true" id="r-tot">Rp 0</span></div>
-                    <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berjaya **</div>
+                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('r-nom', 'Nominal')" id="r-nom" class="editable-click">Rp 0</span></div>
+                    <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('r-adm', 'Admin')" id="r-adm" class="editable-click">Rp 0</span></div>
+                    <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="r-tot">Rp 0</span></div>
+                    <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berhasil **</div>
                 </div>
 
                 <!-- TEMPLATE TOKEN PLN -->
                 <div id="template-token" class="hidden">
-                    <div contenteditable="true" id="t-toko" class="text-[13px] mb-1 uppercase font-black">Nama Konter</div>
-                    <div contenteditable="true" id="t-alamat" class="uppercase text-[9px]">Alamat Konter</div>
-                    <div class="mt-4 mb-2 text-[10px] font-black uppercase tracking-tight">RESIT PEMBELIAN TOKEN</div>
+                    <div contenteditable="true" id="t-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
+                    <div contenteditable="true" id="t-alamat" class="uppercase text-[9px]">ALAMAT KONTER</div>
+                    <div class="mt-4 mb-2 text-[10px] font-black uppercase tracking-tight">STRUK PEMBELIAN TOKEN</div>
                     <div class="mb-3 text-[9px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>ID PEL</span><span>: <span contenteditable="true" id="t-meter">---</span></span></div>
@@ -127,9 +139,11 @@
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div contenteditable="true" id="t-token" class="text-[15px] my-4 tracking-[0.12em] font-black uppercase leading-tight">XXXX XXXX XXXX XXXX</div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between text-[12px] font-black uppercase"><span>JUMLAH</span><span contenteditable="true" id="t-tot">Rp 0</span></div>
+                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('t-nom', 'Nominal')" id="t-nom" class="editable-click">Rp 0</span></div>
+                    <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('t-adm', 'Admin')" id="t-adm" class="editable-click">Rp 0</span></div>
+                    <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="t-tot">Rp 0</span></div>
                     <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN: <span contenteditable="true" id="t-sn">---</span></div>
-                    <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berjaya **</div>
+                    <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berhasil **</div>
                 </div>
 
             </div>
@@ -141,35 +155,37 @@
 
     <!-- PAGE 3: TETAPAN -->
     <div id="page-settings" class="page-container hidden max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden">
-        <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">SETTING</h2>
+        <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Pengaturan</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4">
             
+            <!-- DATA KONTER DI ATAS SEKARANG -->
             <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API KEY MANUAL</span>
-                </label>
-                <input type="password" id="setting-apikey" placeholder="Tampal Kunci API Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center">
-                
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
-                    <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
-                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK CLOUD...</p>
-                </div>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">DATA KONTER</label>
+                <input type="text" id="setting-toko" placeholder="Nama Konter Anda..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center transition-all">
+                <input type="text" id="setting-alamat" placeholder="Alamat Konter..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center mt-2 transition-all">
             </div>
 
             <div class="border-t border-dashed border-gray-200 my-6 py-2"></div>
             
+            <!-- API KEY DI BAWAH SEKARANG -->
             <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">DATA KONTER</label>
-                <input type="text" id="setting-toko" placeholder="Nama Kedai..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center">
-                <input type="text" id="setting-alamat" placeholder="Alamat Kedai..." class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center mt-2">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
+                    <span>API KEY MANUAL</span>
+                </label>
+                <input type="password" id="setting-apikey" placeholder="Tempel Kunci API Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-100 text-center transition-all">
+                
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
+                    <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
+                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENGECEK CLOUD...</p>
+                </div>
             </div>
             
-            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan Perubahan</button>
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all hover:bg-indigo-700">Simpan Perubahan</button>
             <div class="pt-4 text-center">
-                <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Memori Cache</button>
+                <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v44.0 - Cloud Sync Active</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v45.0 - Interactive UI</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -195,7 +211,8 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V44') || ""
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V45') || "",
+            editingField: ""
         };
 
         const getEl = id => document.getElementById(id);
@@ -215,14 +232,66 @@
             };
         });
 
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD YANG LEBIH AGRESIF (V44) ---
+        // --- SISTEM MODAL (POPUP) UNTUK EDIT ANGKA ---
+        function openEditModal(fieldId, title) {
+            state.editingField = fieldId;
+            getEl('modal-title').innerText = `EDIT: ${title.toUpperCase()}`;
+            
+            // Ambil angka dari Rp 15.000 menjadi 15000
+            const currentVal = parseRupiahStr(getElText(fieldId));
+            const inputEl = getEl('modal-input');
+            inputEl.value = currentVal || '';
+            
+            const modal = getEl('edit-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Auto fokus dan blok teks agar mudah diketik ulang
+            setTimeout(() => {
+                inputEl.focus();
+                inputEl.select();
+            }, 100);
+        }
+
+        function closeEditModal() {
+            const modal = getEl('edit-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveEditModal() {
+            const val = parseInt(getEl('modal-input').value, 10) || 0;
+            // Update nilai yang diklik
+            setElText(state.editingField, formatRupiahStr(val));
+            // Langsung kalkulasi otomatis jumlahnya
+            calculateTotal();
+            closeEditModal();
+        }
+
+        function calculateTotal() {
+            const prefix = state.currentType === 'Token' ? 't' : 'r';
+            const nom = parseRupiahStr(getElText(`${prefix}-nom`));
+            const adm = parseRupiahStr(getElText(`${prefix}-adm`));
+            setElText(`${prefix}-tot`, formatRupiahStr(nom + adm));
+        }
+
+        function parseRupiahStr(text) {
+            let numStr = (text || '').toString().replace(/[^0-9]/g, '');
+            return numStr ? parseInt(numStr, 10) : 0;
+        }
+
+        function formatRupiahStr(num) {
+            return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
         async function syncCloud() {
             if (!API_URL || API_URL.includes("exec") === false) return;
             try {
                 const res = await fetch(API_URL + "?action=getKey", { redirect: "follow" });
                 const textRes = await res.text();
                 
-                // DETEKSI ERROR: Jika respons berupa HTML, artinya user belum melakukan "New Version Deploy" di GAS
                 if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
                     const debugEl = getEl('key-debug-text');
                     if (debugEl) {
@@ -233,15 +302,13 @@
                     return;
                 }
 
-                // Jika respons valid JSON
                 const data = JSON.parse(textRes);
                 if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
                     
-                    // PAKSA SINKRONISASI: Jika HP tidak punya kunci atau kuncinya beda, timpa dengan dari Cloud!
                     if (!state.manualKey || state.manualKey !== data.key) {
                         state.manualKey = data.key;
-                        localStorage.setItem('ZETTBOT_API_KEY_V44', data.key);
+                        localStorage.setItem('ZETTBOT_API_KEY_V45', data.key);
                         const inputKey = getEl('setting-apikey');
                         if (inputKey) inputKey.value = data.key;
                     }
@@ -250,7 +317,7 @@
                 }
             } catch(e) { 
                 console.log("Cloud sync error:", e); 
-                updateKeyStatusUI(); // Update UI walau gagal
+                updateKeyStatusUI();
             }
         }
 
@@ -285,16 +352,15 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V44', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V45', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V44', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V45', mKey);
                 
-                // SYNC KE CLOUD KETIKA KLIK SIMPAN
                 if (API_URL && API_URL.includes("exec")) {
                     fetch(API_URL, {
                         method: 'POST',
@@ -307,7 +373,7 @@
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V44');
+                localStorage.removeItem('ZETTBOT_API_KEY_V45');
             }
 
             const ori = btn.innerText;
@@ -319,7 +385,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V44');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V45');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -331,13 +397,13 @@
         }
 
         // ============================================================================
-        // SISTEM UNIVERSAL RADAR LOOP (V44.0) 
+        // SISTEM UNIVERSAL RADAR LOOP
         // ============================================================================
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
             
             if (!key || key.length < 20) {
-                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap masukkan API Key Gemini Anda di menu 'Setelan'.");
+                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap masukkan API Key Gemini Anda di menu 'Pengaturan'.");
                 switchPage('settings'); return;
             }
 
@@ -479,6 +545,9 @@
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData); 
                 else populateTransferFromJSON(jsonData);
 
+                // Lakukan kalkulasi awal
+                calculateTotal();
+
                 toggleLoader(false);
                 switchPage('preview');
                 updateTime();
@@ -493,7 +562,6 @@
         function populateTransferFromJSON(data) {
             setElText('r-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
             setElText('r-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
-            setElText('r-ref', data.referensi || "0000000000");
             setElText('r-bank', (data.bank_tujuan || "BANK LAIN").toUpperCase());
             
             let rek = data.rekening_tujuan || "0000000000";
@@ -502,7 +570,6 @@
             
             setElText('r-nom', formatRupiahStr(data.nominal || 0));
             setElText('r-adm', formatRupiahStr(data.admin || 0));
-            setElText('r-tot', formatRupiahStr(data.total || 0));
         }
 
         function populateTokenFromJSON(data) {
@@ -522,12 +589,9 @@
             
             setElText('t-nom', formatRupiahStr(data.nominal || 0));
             setElText('t-adm', formatRupiahStr(data.admin || 0));
-            setElText('t-tot', formatRupiahStr(data.total || 0));
             setElText('t-sn', data.sn || "XXXXXXXXXXXXXXXXXXXXX");
         }
 
-        function formatRupiahStr(num) { return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-        
         function updateTime() {
             const now = new Date();
             const d = now.toLocaleDateString('id-ID').replace(/\//g, '-');
@@ -550,7 +614,7 @@
                 const iconBox = btn.querySelector('.nav-icon-box');
                 const isMatch = (id === pageId);
                 btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
-                if (iconBox) iconBox.className = `nav-icon-box p-2 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
+                if (iconBox) iconBox.className = `nav-icon-box p-3 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
             });
 
             if (pageId === 'preview') {
@@ -625,7 +689,12 @@
         function updatePrinterUI(c) {
             state.isConnected = c;
             const icon = getEl('printer-icon-svg');
-            if (icon) icon.className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
+            if (icon) {
+                // Menggunakan Hijau Neon yang sangat terang saat terkoneksi
+                icon.className = c 
+                    ? "h-6 w-6 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.9)] transition-all duration-300" 
+                    : "h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300";
+            }
         }
 
         function wrapText(label, value, maxChars = 32) {
@@ -761,7 +830,7 @@
         function fetchHistory() {
             const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_RADAR') || '[]');
             const list = getEl('history-list');
-            if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Rekod Kosong</p>'; return; }
+            if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Riwayat Kosong</p>'; return; }
             list.innerHTML = h.map((item, idx) => `
                 <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-2">
                     <div class="flex-1">
