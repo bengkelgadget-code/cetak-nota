@@ -449,27 +449,35 @@
                     }]
                 };
 
-                // --- AUTO-DETECT MODELS (Mencegah 404) ---
-                getEl('loader-subtext').innerText = "Menghubungkan ke server Google...";
-                let modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]; 
-                
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
+                
+                // DAFTAR PINTU MASUK (ENDPOINTS) YANG SUPER TAHAN BANTING
+                // Mengutamakan jalur 'v1' (Stabil) daripada 'v1beta' (Eksperimental)
+                const endpointsToTry = [
+                    "v1/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash-8b",
+                    "v1beta/models/gemini-1.5-flash-latest",
+                    "v1beta/models/gemini-1.5-pro",
+                    "v1beta/models/gemini-pro-vision"
+                ];
+
                 let result = null;
                 let success = false;
-                let lastErrorMsg = "";
+                let errorLogs = []; // Untuk mencatat jejak jika semua model gagal
 
-                for (let model of modelsToTry) {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                for (let endpoint of endpointsToTry) {
+                    const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${apiKey}`;
                     
                     let retries = 2; 
-                    let delays = [2000, 4000]; 
+                    let delays = [1500, 3000]; 
 
                     for(let i = 0; i <= retries; i++) {
                         try {
                             if (i > 0) getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang (${i}/2)...`;
 
                             const fetchController = new AbortController();
-                            const fetchTimeout = setTimeout(() => fetchController.abort(), 18000);
+                            const fetchTimeout = setTimeout(() => fetchController.abort(), 12000);
 
                             const response = await fetch(url, {
                                 method: 'POST',
@@ -481,42 +489,62 @@
                             clearTimeout(fetchTimeout);
                             
                             if (!response.ok) {
-                                let errText = "";
-                                try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
-                                lastErrorMsg = errText || response.statusText;
+                                let errText = await response.text();
+                                let errMsg = errText;
+                                try { const e = JSON.parse(errText); errMsg = e.error?.message || errText; } catch(e){}
                                 
-                                if (response.status === 400 && lastErrorMsg.toLowerCase().includes("not valid")) throw new Error("API_INVALID");
+                                if (response.status === 400 && errMsg.toLowerCase().includes("not valid")) throw new Error("API_INVALID");
                                 if (response.status === 403) throw new Error("API_FORBIDDEN");
-                                if (response.status === 404 || response.status === 400) break; // Coba model lain
                                 
+                                // Jika Model Tidak Ditemukan (404) atau Ditolak (400) -> Lewati model ini, coba model berikutnya
+                                if (response.status === 404 || response.status === 400) {
+                                    errorLogs.push(`${endpoint.split('/')[2]} (${response.status})`);
+                                    break; 
+                                }
+                                
+                                // Jika 503 / 429 (Sibuk) -> Ulangi fetch
                                 throw new Error("RETRY_NEEDED");
                             }
                             
                             result = await response.json();
                             success = true;
-                            break; 
+                            break; // Berhasil! Keluar dari loop Retry
                         } catch(error) {
-                            if (error.message === "API_INVALID") throw new Error(`API Key Tidak Valid.\nPastikan kunci sudah benar.`);
-                            if (error.message === "API_FORBIDDEN") throw new Error(`Akses API Ditolak (403).\nKunci Anda mungkin dibatasi.`);
-                            if (error.message === "RETRY_NEEDED" && i < retries) {
+                            if (error.message === "API_INVALID") throw new Error(`API Key Tidak Valid.\nPastikan kunci tidak ada salah ketik/spasi.`);
+                            if (error.message === "API_FORBIDDEN") throw new Error(`Akses API Ditolak (403).\nAPI Key Anda tidak memiliki izin atau kuota habis.`);
+                            
+                            // Eksekusi Retry jika error jaringan atau sibuk
+                            if ((error.message === "RETRY_NEEDED" || error.name === "AbortError" || error.name === "TypeError") && i < retries) {
                                 await new Promise(r => setTimeout(r, delays[i]));
                                 continue;
                             }
-                            lastErrorMsg = error.message;
-                            break; 
+                            
+                            // Catat log jika gagal total di model ini
+                            if (error.name === "AbortError") errorLogs.push(`${endpoint.split('/')[2]} (Timeout)`);
+                            else if (error.message !== "RETRY_NEEDED") errorLogs.push(`${endpoint.split('/')[2]} (${error.message})`);
+                            
+                            break; // Keluar ke model berikutnya
                         }
                     }
                     if (success) break; 
                 }
 
-                if (!success) throw new Error(`Google AI sedang sibuk (503) atau menolak akses.\n\nPesan Google: ${lastErrorMsg}`);
+                if (!success) {
+                    throw new Error(`Semua jalur AI gagal/ditolak oleh Google.\n\nJejak Error:\n${errorLogs.join(" | ")}\n\nSaran: Gunakan API Key yang baru.`);
+                }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!textResponse) throw new Error("Hasil kosong dari AI.");
                 
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 
-                const jsonData = JSON.parse(textResponse);
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(textResponse);
+                } catch(e) {
+                    throw new Error("AI merespons dengan format yang tidak bisa dibaca sistem. \nCoba foto ulang struknya.");
+                }
+
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
                 else populateTransferFromJSON(jsonData);
 
