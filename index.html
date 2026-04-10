@@ -232,7 +232,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v18.0<br>Seamless Fallback Auto-Router</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v18.1<br>Pure Payload API & Transparent Error</p>
             </div>
         </div>
     </div>
@@ -380,8 +380,8 @@
             getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
             
             try {
-                // Resize image untuk hemat kuota dan cegah memory penuh
-                const base64DataRaw = await new Promise((resolve, reject) => {
+                // Resize image
+                const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
@@ -402,88 +402,81 @@
                     reader.readAsDataURL(file);
                 });
 
-                const base64Data = base64DataRaw;
-                
-                // MULTI-MODEL FALLBACK ARRAY UNTUK MENCEGAH ERROR 404
-                const modelsToTry = [
-                    "v1beta/models/gemini-1.5-flash",
-                    "v1/models/gemini-1.5-flash",
-                    "v1beta/models/gemini-1.5-flash-latest",
-                    "v1beta/models/gemini-1.5-pro",
-                    "v1beta/models/gemini-1.5-pro-latest",
-                    "v1beta/models/gemini-pro-vision"
-                ];
-
                 let promptText = "";
-
-                // PROMPT ENGINEERING SUPER KETAT MENGGANTIKAN RESPON-SCHEMA
                 if (state.currentType === 'Transfer') {
-                    promptText = "Ekstrak data dari gambar struk transfer bank ini. WAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown (jangan gunakan backticks). Gunakan struktur key JSON persis seperti ini: { \"tanggal\": \"DD-MM-YYYY\", \"waktu\": \"HH:mm\", \"referensi\": \"string\", \"bank_tujuan\": \"string\", \"rekening_tujuan\": \"string\", \"nama_penerima\": \"string\", \"nominal\": angka (integer), \"admin\": angka (integer), \"total\": angka (integer) }";
+                    promptText = "Ekstrak data dari gambar struk transfer bank ini. WAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown (jangan gunakan backticks). Gunakan struktur JSON persis seperti ini: { \"tanggal\": \"DD-MM-YYYY\", \"waktu\": \"HH:mm\", \"referensi\": \"string\", \"bank_tujuan\": \"string\", \"rekening_tujuan\": \"string\", \"nama_penerima\": \"string\", \"nominal\": 0, \"admin\": 0, \"total\": 0 }";
                 } else {
-                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. WAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown (jangan gunakan backticks). Gunakan struktur key JSON persis seperti ini: { \"tanggal\": \"DD-MM-YYYY\", \"waktu\": \"HH:mm\", \"no_meter\": \"string\", \"nama\": \"string\", \"tarif_daya\": \"string\", \"kwh\": \"string\", \"token\": \"string\", \"nominal\": angka (integer), \"admin\": angka (integer), \"total\": angka (integer), \"sn\": \"string\" }";
+                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. WAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown (jangan gunakan backticks). Gunakan struktur JSON persis seperti ini: { \"tanggal\": \"DD-MM-YYYY\", \"waktu\": \"HH:mm\", \"no_meter\": \"string\", \"nama\": \"string\", \"tarif_daya\": \"string\", \"kwh\": \"string\", \"token\": \"string\", \"nominal\": 0, \"admin\": 0, \"total\": 0, \"sn\": \"string\" }";
                 }
 
+                // PAYLOAD PALING BERSIH TANPA KONFIGURASI YANG BIKIN ERROR
                 const payload = {
-                    contents: [{ role: "user", parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                    generationConfig: { temperature: 0.1 }
+                    contents: [{
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                        ]
+                    }]
                 };
+
+                const modelsToTry = [
+                    "gemini-1.5-flash",
+                    "gemini-1.0-pro-vision-latest"
+                ];
 
                 let result = null;
                 let lastErrorMsg = "";
 
-                // COBA SEMUA ENDPOINT/MODEL AI SECARA BERURUTAN
-                for (let i = 0; i < modelsToTry.length; i++) {
-                    const currentEndpoint = modelsToTry[i];
-                    const url = `https://generativelanguage.googleapis.com/${currentEndpoint}:generateContent?key=${apiKey}`;
+                for (let model of modelsToTry) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        let errText = "";
+                        try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
+                        lastErrorMsg = errText || response.statusText;
                         
-                        if (!response.ok) {
-                            let errText = "";
-                            try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
-                            lastErrorMsg = errText || response.statusText;
-                            
-                            // Jika Google memblokir akses (API Key dilarang/tidak valid)
-                            if (response.status === 403) {
-                                throw new Error(`Akses API Ditolak (Error 403).\nAPI Key salah atau belum diaktifkan.\n\nDetail: ${lastErrorMsg}`);
-                            }
-                            if (response.status === 400 && lastErrorMsg.toLowerCase().includes("api key not valid")) {
-                                throw new Error(`API Key Tidak Valid (Error 400).\nPastikan tidak ada salah ketik/spasi.\n\nDetail: ${lastErrorMsg}`);
-                            }
-                            
-                            // Jika model tidak ditemukan (404) atau Error 400 (Bad Request payload) lanjutkan ke model berikutnya
+                        // Jika Error 404, artinya model tidak ada, coba model berikutnya
+                        if (response.status === 404) {
                             continue; 
                         }
                         
-                        result = await response.json();
-                        break; // BERHASIL! Keluar dari loop.
-                        
-                    } catch (error) {
-                        // Jika error fatal (403 atau API Key), lemparkan ke penangkap error luar agar muncul pop-up
-                        if (error.message.includes("Akses API Ditolak") || error.message.includes("API Key Tidak Valid")) {
-                            throw error;
+                        // JIKA ERROR 400 ATAU 403, BERHENTI MENGHINDAR DAN TAMPILKAN ERROR ASLINYA!
+                        if (response.status === 400 && lastErrorMsg.toLowerCase().includes("api key not valid")) {
+                            throw new Error(`API Key Tidak Valid (Error 400).\nPastikan tidak ada salah ketik/spasi.\n\nDetail: ${lastErrorMsg}`);
                         }
-                        // Jika error jaringan biasa, simpan pesan dan lanjut coba
-                        lastErrorMsg = error.message;
+                        if (response.status === 403) {
+                            throw new Error(`Akses API Ditolak (Error 403).\nAPI Key salah, belum diaktifkan, atau tidak memiliki izin.\n\nDetail: ${lastErrorMsg}`);
+                        }
+                        throw new Error(`Google API Error (${response.status}):\n${lastErrorMsg}`);
                     }
+                    
+                    result = await response.json();
+                    break; // Berhasil! Keluar dari loop pencarian.
                 }
 
                 if (!result) {
-                    throw new Error(`Semua versi Model AI Google gagal diakses.\nError Terakhir: ${lastErrorMsg}\n\nSolusi: Pastikan API Key baru Anda benar-benar aktif.`);
+                    throw new Error(`Model AI Gemini 1.5 gagal diakses atau tidak tersedia di region API Key Anda (Error 404).\n\nSaran: Buat ulang API Key dari akun Google yang fresh/baru.\nDetail Terakhir: ${lastErrorMsg}`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!textResponse) throw new Error("Google AI merespons dengan hasil kosong. Coba ulangi kembali.");
                 
-                // Bersihkan dari format Markdown (```json) jika AI masih ngeyel
+                // Bersihkan string dari markdown
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 
-                const jsonData = JSON.parse(textResponse);
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(textResponse);
+                } catch(e) {
+                    throw new Error("AI merespons dengan format yang salah. \nTeks AI: " + textResponse);
+                }
+
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
                 else populateTransferFromJSON(jsonData);
 
@@ -863,7 +856,7 @@
                             </div>
                             <div class="h-8 w-px bg-gray-100"></div>
                             <button onclick="deleteHistory('${item.id}', event)" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white active:scale-90 transition-all shadow-sm">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </div>
                     </div>`
