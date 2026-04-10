@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Stable Engine</title>
+    <title>Cetak Nota - Original Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -27,10 +27,21 @@
 </head>
 <body class="pb-24">
 
+    <script>
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 38
+        if (!localStorage.getItem('ZETTBOT_V38_CLEAN')) {
+            localStorage.clear();
+            localStorage.setItem('ZETTBOT_V38_CLEAN', 'true');
+        }
+        
+        // URL GAS ANDA
+        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
+    </script>
+
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-6"></div>
         <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Memproses...</span>
-        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Mengakses Gemini 1.5 Flash...</div>
+        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menghubungi Server Google...</div>
     </div>
 
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
@@ -128,9 +139,9 @@
             
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API KEY GEMINI (Wajib Isi)</span>
+                    <span>API KEY GEMINI</span>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Tempel API Key di sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
+                <input type="password" id="setting-apikey" placeholder="Tempel API Key baru di sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
             </div>
 
             <div class="border-t border-dashed border-gray-200 my-6 py-2"></div>
@@ -146,7 +157,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core Final - Stable API</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v38.0 - Original Engine Restored</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -171,6 +182,7 @@
     <script>
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
+            cloudKey: "", 
             manualKey: localStorage.getItem('ZETTBOT_API_KEY_FINAL') || ""
         };
 
@@ -180,6 +192,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings(); 
+            syncCloud(); 
             switchPage('home');
             fetchHistory();
             
@@ -189,6 +202,17 @@
                 e.target.value = '';
             };
         });
+
+        async function syncCloud() {
+            if (!API_URL || API_URL.includes("exec") === false) return;
+            try {
+                const res = await fetch(API_URL + "?action=getKey");
+                const data = await res.json();
+                if (data.key && data.key.length > 20) {
+                    state.cloudKey = data.key;
+                }
+            } catch(e) { console.log("Cloud offline."); }
+        }
 
         function forceDeepClean() {
             if(!confirm("Hapus semua pengaturan dan riwayat aplikasi ini?")) return;
@@ -217,6 +241,7 @@
             const ori = btn.innerText;
             btn.innerText = "DISIMPAN!";
             btn.classList.replace('bg-indigo-600', 'bg-green-500');
+            
             setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-green-500', 'bg-indigo-600'); }, 1500);
         }
 
@@ -232,12 +257,12 @@
             if (state.manualKey) getEl('setting-apikey').value = state.manualKey;
         }
 
-        // --- SISTEM PEMROSESAN AI 1.5 FLASH STABIL (SANGAT MIRIP VERSI AWAL) ---
+        // --- SISTEM PEMROSESAN ASLI (MENGEMBALIKAN MESIN GEMINI 2.0 FLASH SEBAGAI PRIORITAS UTAMA) ---
         async function processImageOCR(file) {
-            const key = state.manualKey;
+            const key = state.manualKey || state.cloudKey;
             
             if (!key || key.length < 20) {
-                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap masukkan API Key Gemini Anda di menu 'Setelan'.\nSangat disarankan menggunakan akun Gmail yang sudah lama dibuat.");
+                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap masukkan API Key Gemini Anda di menu 'Setelan'.");
                 switchPage('settings'); return;
             }
 
@@ -270,44 +295,69 @@
                     promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
                 }
 
-                // 3. PANGGIL API GOOGLE (Menggunakan Gemini 1.5 Flash di jalur v1beta yang paling stabil)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.trim()}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0.1 }
-                    })
-                });
+                // 3. MENGKEMBALIKAN MESIN ASLI: Gemini 2.0 Flash sebagai prioritas utama
+                const endpoints = [
+                    "v1/models/gemini-2.0-flash",
+                    "v1beta/models/gemini-2.0-flash",
+                    "v1/models/gemini-1.5-flash",
+                    "v1beta/models/gemini-1.5-flash",
+                    "v1/models/gemini-1.5-pro"
+                ];
 
-                const rawText = await response.text();
-                
-                // Tangkap jika terjadi Error dari Server Google
-                if (!response.ok) {
-                    let errMsg = "Terjadi kesalahan yang tidak diketahui.";
+                let finalRes = null;
+                let fatalError = null;
+                let allErrors = [];
+
+                for (let endpoint of endpoints) {
+                    getEl('loader-subtext').innerText = `Mengakses: ${endpoint.split('/')[2]}...`;
                     try {
-                        const errObj = JSON.parse(rawText);
-                        errMsg = errObj.error?.message || errMsg;
-                    } catch(e) {}
-                    
-                    if (response.status === 400 && errMsg.toLowerCase().includes("key")) {
-                        throw new Error(`KUNCI API SALAH ATAU TIDAK DITEMUKAN.\n\nPastikan Anda telah menyalin API Key dengan benar tanpa ada spasi yang tertinggal.`);
+                        const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${key.trim()}`;
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                                generationConfig: { temperature: 0.1 }
+                            })
+                        });
+
+                        const rawText = await response.text();
+                        
+                        if (response.ok) {
+                            finalRes = JSON.parse(rawText);
+                            break; // Berhasil, langsung keluar dari loop!
+                        } else {
+                            let errObj = {};
+                            try { errObj = JSON.parse(rawText); } catch(e) {}
+                            let errMsg = errObj.error?.message || response.statusText;
+                            
+                            allErrors.push(`[${endpoint}] Error ${response.status}: ${errMsg}`);
+                            
+                            // Jika API Key benar-benar salah (bukan masalah kuota/404), hentikan semua percobaan.
+                            if (response.status === 400 && errMsg.toLowerCase().includes("api_key_invalid")) {
+                                fatalError = `KUNCI API SALAH ATAU TIDAK VALID.\n\nPastikan Anda menyalin API Key dengan benar dari AI Studio tanpa ada spasi yang tertinggal.\nDetail: ${errMsg}`;
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        allErrors.push(`[${endpoint}] Gagal Koneksi: ${e.message}`);
                     }
-                    if (response.status === 403 || response.status === 429 || errMsg.toLowerCase().includes("quota")) {
-                        throw new Error(`KUOTA GOOGLE ANDA HABIS ATAU DIBLOKIR (Limit: 0).\n\nSolusi Wajib: Anda harus menggunakan akun Gmail yang LAMA untuk membuat API Key yang baru. Akun baru sering dicurigai sebagai spam oleh Google.`);
-                    }
-                    if (response.status === 404) {
-                        throw new Error(`API Key Anda valid, tetapi akun Anda tidak diberikan akses ke model AI oleh Google.\n\nSolusi: Buat API Key baru dari akun Gmail yang berbeda.`);
-                    }
-                    
-                    throw new Error(`SERVER ERROR [${response.status}]:\n${errMsg}`);
                 }
 
-                // Parse Hasil
-                const resJson = JSON.parse(rawText);
-                let textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+                // Jika loop selesai tapi tidak ada hasil, evaluasi errornya
+                if (!finalRes) {
+                    if (fatalError) throw new Error(fatalError);
+                    
+                    const isQuota = allErrors.some(e => e.toLowerCase().includes("quota") || e.includes("429") || e.toLowerCase().includes("exhausted"));
+                    if (isQuota) {
+                        throw new Error(`KUOTA GOOGLE ANDA HABIS (Limit 0).\n\nSistem Google menolak API Key ini untuk penggunaan gratis. Anda wajib membuat akun Gmail yang baru lagi, lalu buat API Key dari akun tersebut.\n\nLog Internal:\n${allErrors[0]}`);
+                    }
+                    
+                    throw new Error(`Semua model AI gagal diakses.\n\nLog Terakhir:\n${allErrors[allErrors.length - 1]}`);
+                }
+
+                // 4. Parse Data JSON
+                let textResponse = finalRes.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (!textResponse) {
                     throw new Error("Gambar berhasil dibaca, tetapi AI merespons dengan hasil kosong. Coba gunakan foto yang lebih jelas.");
@@ -316,7 +366,7 @@
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 const jsonData = JSON.parse(textResponse);
 
-                // Masukkan data ke antarmuka aplikasi
+                // 5. Masukkan data ke antarmuka aplikasi
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData); 
                 else populateTransferFromJSON(jsonData);
 
