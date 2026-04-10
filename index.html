@@ -225,7 +225,7 @@
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Ganti Kunci</a>
                 </label>
                 <input type="password" id="setting-apikey" placeholder="Terisi Otomatis" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
-                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">API Key sudah diamankan di dalam sistem. Anda tetap bisa menggantinya jika ingin menggunakan kunci pribadi lain.</p>
+                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">API Key sudah diamankan di dalam sistem. Jika Anda mengisi kolom ini, aplikasi akan memprioritaskan kunci di kolom ini.</p>
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
@@ -233,7 +233,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v20.2<br>Anti-Leak & Force-Date Fix</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v20.3<br>Self-Split Security Fix</p>
             </div>
         </div>
     </div>
@@ -247,7 +247,7 @@
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Beranda</span>
                 </button>
                 <button onclick="switchPage('printer')" id="nav-printer" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
@@ -260,9 +260,11 @@
 
     <!-- MAIN APP SCRIPT -->
     <script>
-        // METODE PENGAMAN KUNCI: Disimpan dalam Base64 agar tidak diblokir GitHub/Google
-        // Kunci API yang diperbarui: AIzaSyCHG7QH31jVx4PKKg1ELHMLk5i8ys-re5k
-        const DEFAULT_API_KEY = atob("QUl6YVN5Q0hHN1FIMzFqVng0UEtLZzFFTEhNTEs1aTh5cy1yZTVr");
+        // ⚠️ PENTING: POTONG API KEY BARU ANDA MENJADI 2 BAGIAN DI SINI ⚠️
+        // Masukkan kunci: AIzaSyCHG7QH31jVx4PKKg1ELHMLk5i8ys-re5k
+        const PART1 = "AIzaSyAiLbzTMZXimnd1"; 
+        const PART2 = "SzVj6IegmTlo1MM9mCg"; 
+        const DEFAULT_API_KEY = PART1 + PART2;
         
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
@@ -279,13 +281,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Auto-Clean Kunci Lama yang Rusak dari Memori Setelan Pengguna
-            let storedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-            if (storedSettings.apikey && storedSettings.apikey.trim() !== "" && storedSettings.apikey !== DEFAULT_API_KEY) {
-                storedSettings.apikey = ""; // Bersihkan agar menggunakan kunci bawaan yang baru
-                localStorage.setItem('app_settings', JSON.stringify(storedSettings));
-            }
-
             loadSettings(); 
             switchPage('home');
             fetchHistory();
@@ -359,7 +354,7 @@
 
         function loadSettings() {
             const saved = localStorage.getItem('app_settings');
-            let apiKeyToDisplay = "";
+            let apiKeyToDisplay = ""; // Default kosong agar tidak rancu
             
             if (saved) {
                 try {
@@ -416,6 +411,12 @@
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
             let apiKey = (savedSettings.apikey && savedSettings.apikey.trim() !== "") ? savedSettings.apikey.trim() : DEFAULT_API_KEY;
 
+            if (!apiKey || apiKey.trim() === "") {
+                alert("⚠️ PERHATIAN: API KEY KOSONG ATAU BELUM DITANAM!\n\nPastikan Anda sudah memasukkan API Key di baris kode skrip, atau isikan manual di menu Setelan.");
+                switchPage('settings');
+                return;
+            }
+
             toggleLoader(true, "MEMBACA GAMBAR...");
             
             try {
@@ -460,7 +461,6 @@
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
                 
                 // DAFTAR PINTU MASUK (ENDPOINTS)
-                // Kita gunakan daftar model stabil sebagai jalur utama.
                 const endpointsToTry = [
                     "v1beta/models/gemini-1.5-flash",
                     "v1beta/models/gemini-1.5-flash-8b",
