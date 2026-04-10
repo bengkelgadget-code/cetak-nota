@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V45 Interactive</title>
+    <title>Cetak Nota - V46 Final Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -29,10 +29,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 45
-        if (!localStorage.getItem('ZETTBOT_V45_UI')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 46
+        if (!localStorage.getItem('ZETTBOT_V46_FINAL')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V45_UI', 'true');
+            localStorage.setItem('ZETTBOT_V46_FINAL', 'true');
         }
         // URL GAS ANDA
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
@@ -185,7 +185,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v45.0 - Interactive UI</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v46.0 - Final Sync</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -211,7 +211,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V45') || "",
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V46') || "",
             editingField: ""
         };
 
@@ -285,11 +285,12 @@
         }
 
 
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD DENGAN CACHE BUSTER ---
         async function syncCloud() {
             if (!API_URL || API_URL.includes("exec") === false) return;
             try {
-                const res = await fetch(API_URL + "?action=getKey", { redirect: "follow" });
+                // Menambahkan 't=Date.now()' memastikan browser tidak membaca cache lama
+                const res = await fetch(API_URL + "?action=getKey&t=" + Date.now(), { redirect: "follow" });
                 const textRes = await res.text();
                 
                 if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
@@ -306,9 +307,10 @@
                 if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
                     
+                    // Paksa timpa kunci lokal jika dari server berbeda (untuk HP baru)
                     if (!state.manualKey || state.manualKey !== data.key) {
                         state.manualKey = data.key;
-                        localStorage.setItem('ZETTBOT_API_KEY_V45', data.key);
+                        localStorage.setItem('ZETTBOT_API_KEY_V46', data.key);
                         const inputKey = getEl('setting-apikey');
                         if (inputKey) inputKey.value = data.key;
                     }
@@ -328,8 +330,9 @@
             
             if (active && active.length > 10) {
                 const last4 = active.slice(-4);
-                debugEl.innerText = `...${last4} (SIAP DIGUNAKAN)`;
-                debugEl.className = "text-[12px] text-green-600 font-mono font-black text-center tracking-widest";
+                debugEl.innerText = `...${last4} (AKTIF)`;
+                // Warna hijau neon ditambahkan kembali
+                debugEl.className = "text-[12px] text-[#00E676] font-mono font-black text-center tracking-widest drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
             } else {
                 debugEl.innerText = "KUNCI KOSONG!";
                 debugEl.className = "text-[10px] text-red-600 font-mono font-black text-center tracking-widest";
@@ -352,40 +355,39 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V45', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V46', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V45', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V46', mKey);
                 
                 if (API_URL && API_URL.includes("exec")) {
+                    // MODE NO-CORS: Memaksa browser mengirim data tanpa diblokir aturan keamanan lintas web
                     fetch(API_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify({ action: 'updateKey', key: mKey })
-                    })
-                    .then(res => res.text())
-                    .then(txt => console.log("Cloud Update Status:", txt))
-                    .catch(e => console.log("Gagal sync ke cloud:", e));
+                    }).catch(e => console.log("Gagal sync ke cloud:", e));
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V45');
+                localStorage.removeItem('ZETTBOT_API_KEY_V46');
             }
 
             const ori = btn.innerText;
             btn.innerText = "DISIMPAN!";
-            btn.classList.replace('bg-indigo-600', 'bg-green-500');
+            btn.classList.replace('bg-indigo-600', 'bg-[#00E676]');
             updateKeyStatusUI();
             
-            setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-green-500', 'bg-indigo-600'); }, 1500);
+            setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-[#00E676]', 'bg-indigo-600'); }, 1500);
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V45');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V46');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -690,10 +692,10 @@
             state.isConnected = c;
             const icon = getEl('printer-icon-svg');
             if (icon) {
-                // Menggunakan Hijau Neon yang sangat terang saat terkoneksi
-                icon.className = c 
+                // Menggunakan setAttribute agar warna SVG benar-benar berubah di browser
+                icon.setAttribute("class", c 
                     ? "h-6 w-6 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.9)] transition-all duration-300" 
-                    : "h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300";
+                    : "h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300");
             }
         }
 
