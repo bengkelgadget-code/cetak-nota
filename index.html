@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Auto Pull Sync V47</title>
+    <title>Cetak Nota - Cloud Diagnostic V48</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,14 +28,14 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 47
-        if (!localStorage.getItem('ZETTBOT_V47_SYNC')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 48
+        if (!localStorage.getItem('ZETTBOT_V48_SYNC')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V47_SYNC', 'true');
+            localStorage.setItem('ZETTBOT_V48_SYNC', 'true');
         }
         
         // URL GAS ANDA
-        const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwVMsbF34Gv9JkXD5DlxfA1EIb9yRk8S1uKxeCsqE33yU2T5NP7JmLheGyyuNjLqsJd/exec";
     </script>
 
     <div id="loader" class="loading-overlay">
@@ -184,11 +184,12 @@
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all hover:bg-indigo-700">Simpan Perubahan</button>
-            <div class="pt-4 text-center">
-                <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Bersihkan Memori Cache</button>
+            <div class="pt-4 flex justify-between gap-2">
+                <button onclick="forceDeepClean()" class="w-1/2 text-gray-500 text-[10px] font-black px-4 py-3 bg-gray-100 rounded-xl uppercase tracking-widest hover:bg-gray-200 transition-all">Hapus Lokal</button>
+                <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v47.0 - Auto Pull Sync</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v48.0 - Cloud Diagnostic</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -214,7 +215,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V47') || "",
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V48') || "",
             editingField: ""
         };
 
@@ -301,25 +302,25 @@
                 // Jika response adalah HTML (Halaman Authorization Google), artinya belum di-deploy dengan benar
                 if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
                     updateStatusUI("ERROR: WAJIB DEPLOY NEW VERSION CODE.GS!", "red");
-                    if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.\n\nBuka kembali script code.gs di PC Anda, lalu klik Deploy -> Kelola Deployment -> Edit (Ikon Pensil) -> Ubah 'Versi' menjadi 'Versi Baru' (New Version) -> Simpan.");
+                    if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.\n\nSOLUSI WAJIB (Lakukan di PC):\n1. Buka code.gs\n2. Klik 'Terapkan' (Deploy)\n3. Pilih 'Kelola deployment'\n4. Klik Ikon Pensil (Edit)\n5. Ubah 'Versi' menjadi 'Versi Baru'\n6. Klik 'Terapkan'.");
                     return;
                 }
 
                 const data = JSON.parse(textRes);
-                if (data.key && data.key.length > 20) {
+                if (data.key && data.key.length > 20 && !data.key.includes("Masukkan Key Anda")) {
                     state.cloudKey = data.key;
                     
                     // SELALU PAKSA TIMPA MEMORI LOKAL DENGAN DATA DARI SERVER!
                     state.manualKey = data.key;
-                    localStorage.setItem('ZETTBOT_API_KEY_V47', data.key);
+                    localStorage.setItem('ZETTBOT_API_KEY_V48', data.key);
                     const inputKey = getEl('setting-apikey');
                     if (inputKey) inputKey.value = data.key;
                     
                     updateStatusUI(`...${data.key.slice(-4)} (TERHUBUNG KE SERVER)`, "green");
                     if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs dan siap digunakan.");
                 } else {
-                    updateStatusUI("SERVER TIDAK MEMILIKI KUNCI!", "orange");
-                    if (isManual) alert("⚠️ Server terhubung, tetapi Anda belum memasukkan API Key apa pun di dalam code.gs.");
+                    updateStatusUI("KUNCI SERVER KOSONG/LAMA!", "orange");
+                    if (isManual) alert("⚠️ Server terhubung, tetapi kunci yang dikirim masih kosong atau menggunakan template lama.\n\nSOLUSI WAJIB (Di PC Anda):\n1. Buka code.gs\n2. Pastikan API Key diisi di baris 7\n3. Klik Terapkan (Deploy)\n4. Pilih Kelola deployment\n5. Klik Ikon Pensil (Edit)\n6. Ubah 'Versi' menjadi 'Versi Baru'\n7. Klik Terapkan.");
                 }
             } catch(e) { 
                 console.log("Cloud sync error:", e); 
@@ -327,6 +328,30 @@
                 if (isManual) alert("❌ Gagal menghubungi server. Pastikan HP terkoneksi internet dan URL code.gs sudah benar.");
             } finally {
                 if (isManual) toggleLoader(false);
+            }
+        }
+
+        // --- HAPUS CACHE DI SERVER ---
+        async function resetCloudKey() {
+            if (!API_URL || API_URL.includes("exec") === false) return;
+            if(!confirm("Ini akan menghapus API Key yang 'nyangkut' di memori server Google. Lanjutkan?")) return;
+            
+            try {
+                toggleLoader(true, "Mereset Server...");
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'updateKey', key: '' })
+                });
+                setTimeout(() => {
+                    toggleLoader(false);
+                    alert("Berhasil mereset server. Silakan tarik ulang dari server untuk memuat kunci asli.");
+                    syncCloud(true);
+                }, 2000);
+            } catch(e) {
+                toggleLoader(false);
+                alert("Gagal mereset server.");
             }
         }
 
@@ -344,7 +369,7 @@
         }
 
         function forceDeepClean() {
-            if(!confirm("Hapus semua pengaturan dan riwayat aplikasi ini?")) return;
+            if(!confirm("Hapus semua pengaturan dan riwayat lokal di HP ini?")) return;
             localStorage.clear();
             state.manualKey = "";
             getEl('setting-apikey').value = "";
@@ -359,14 +384,14 @@
             const alamat = getEl('setting-alamat').value.trim();
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V47', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_V48', JSON.stringify({ toko, alamat })); 
             
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V47', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_V48', mKey);
                 
                 if (API_URL && API_URL.includes("exec")) {
                     fetch(API_URL, {
@@ -378,7 +403,7 @@
                 }
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V47');
+                localStorage.removeItem('ZETTBOT_API_KEY_V48');
             }
 
             const ori = btn.innerText;
@@ -394,7 +419,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V47');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_V48');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
