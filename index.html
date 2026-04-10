@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - Radar Mode Fix</title>
+    <title>Cetak Nota - Universal Radar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 41
-        if (!localStorage.getItem('ZETTBOT_V41_FIX')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 42
+        if (!localStorage.getItem('ZETTBOT_V42_UNIVERSAL')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V41_FIX', 'true');
+            localStorage.setItem('ZETTBOT_V42_UNIVERSAL', 'true');
         }
         
         // URL GAS ANDA
@@ -162,7 +162,7 @@
                 <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Bersihkan Memori Cache</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v41.0 - Strict 1.5 Flash Radar</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v42.0 - Universal Auto-Fallback</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -176,7 +176,7 @@
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </div>
                 </button>
             </div>
@@ -280,7 +280,7 @@
         }
 
         // ============================================================================
-        // SISTEM RADAR MODE (STRICT 1.5 FLASH ONLY) - ANTI 2.0 QUOTA LIMIT
+        // SISTEM UNIVERSAL RADAR LOOP (V42.0) - TERKUAT & TERPINTAR
         // ============================================================================
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
@@ -307,18 +307,39 @@
                     throw new Error(`[Gagal Melacak Model]\n${errMsg}`);
                 }
                 
-                // TAHAP 2: MENYARING MODEL (HANYA IZINKAN 1.5 FLASH, BLOKIR 2.0 DAN PRO)
+                // TAHAP 2: MENYARING MODEL (Ambil semua yang bisa generateContent)
                 validModels = radarData.models.filter(m => 
                     m.supportedGenerationMethods && 
                     m.supportedGenerationMethods.includes("generateContent") &&
-                    m.name.includes("1.5-flash") // INI KUNCI UTAMANYA: Mengunci murni di 1.5 Flash
+                    !m.name.includes("embedding") &&
+                    !m.name.includes("aqa")
                 );
                 
                 if (validModels.length === 0) {
-                    throw new Error("API Key Anda valid, tetapi Google tidak memberikan akses ke model Gemini 1.5 Flash gratis untuk akun ini.");
+                    throw new Error("API Key Anda valid, tetapi akun ini tidak memiliki akses ke model AI pemroses teks apa pun.");
                 }
 
-                // TAHAP 3: PERSIAPAN GAMBAR & PROMPT
+                // TAHAP 3: URUTKAN BERDASARKAN PRIORITAS (Yang paling ringan & gratis di atas)
+                const priorities = [
+                    "models/gemini-1.5-flash",
+                    "models/gemini-1.5-flash-8b",
+                    "models/gemini-2.0-flash-lite-preview-02-05", // Model gratis terbaru Google
+                    "models/gemini-2.0-flash-lite", 
+                    "models/gemini-1.5-flash-latest",
+                    "models/gemini-1.5-pro",
+                    "models/gemini-2.0-flash",
+                    "models/gemini-pro"
+                ];
+
+                validModels.sort((a, b) => {
+                    let indexA = priorities.indexOf(a.name);
+                    let indexB = priorities.indexOf(b.name);
+                    if (indexA === -1) indexA = 999;
+                    if (indexB === -1) indexB = 999;
+                    return indexA - indexB;
+                });
+
+                // TAHAP 4: PERSIAPAN GAMBAR & PROMPT
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -344,13 +365,14 @@
                     promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
                 }
 
-                // TAHAP 4: MENCOBA MODEL SATU PER SATU DARI DAFTAR YANG ADA
+                // TAHAP 5: MENCOBA MODEL SATU PER SATU DARI DAFTAR (DENGAN SKIP OTOMATIS)
                 let finalRes = null;
                 let lastError = "Gagal memproses gambar.";
+                let quotaErrors = 0;
 
                 for (let model of validModels) {
                     let modelName = model.name;
-                    getEl('loader-subtext').innerText = `Mencoba: ${modelName.split('/')[1]}...`;
+                    getEl('loader-subtext').innerText = `Mencoba Model: ${modelName.split('/')[1]}...`;
                     
                     try {
                         const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key.trim()}`;
@@ -372,13 +394,22 @@
                         } else {
                             let errObj = {};
                             try { errObj = JSON.parse(rawText); } catch(e) {}
-                            lastError = errObj.error?.message || response.statusText;
+                            let errMsg = errObj.error?.message || response.statusText;
                             
-                            // Jika kunci salah, jangan coba-coba lagi. Berhenti.
-                            if (response.status === 400 && lastError.toLowerCase().includes("key")) {
-                                throw new Error(`[KUNCI API SALAH]\n${lastError}`);
+                            // Jika kunci API salah, BERHENTI sepenuhnya
+                            if (response.status === 400 && errMsg.toLowerCase().includes("key")) {
+                                throw new Error(`[KUNCI API SALAH]\n${errMsg}`);
                             }
-                            // Jika model ini kena limit/kuota, biarkan loop berjalan dan mencoba model 1.5 flash lainnya (misal: 1.5-flash-8b)
+                            
+                            // JIKA LIMIT KUOTA HABIS (429 atau pesan quota)
+                            if (response.status === 429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("exhausted")) {
+                                quotaErrors++;
+                                lastError = `[KUOTA HABIS di ${modelName.split('/')[1]}]\n${errMsg}`;
+                                // JANGAN DIBUANG ERRORNYA, LANJUTKAN KE MODEL BERIKUTNYA YANG ADA DI DAFTAR!
+                                continue; 
+                            }
+
+                            lastError = `[ERROR di ${modelName.split('/')[1]}]: ${errMsg}`;
                         }
                     } catch (e) {
                         if (e.message.includes("[KUNCI API SALAH]")) throw e;
@@ -386,8 +417,12 @@
                     }
                 }
 
+                // JIKA SEMUA MODEL DI DALAM DAFTAR GAGAL DICOBA
                 if (!finalRes) {
-                     throw new Error(`[SEMUA MODEL GRATIS GAGAL DIHUBUNGI]\n\nDetail Terakhir:\n${lastError}`);
+                    if (quotaErrors > 0 && quotaErrors >= validModels.length - 3) {
+                        throw new Error(`[SEMUA MODEL HABIS KUOTA]\n\nAkun Anda telah kehabisan limit gratis di SEMUA model yang tersedia.\nSolusi: Gunakan Kunci API dari akun Gmail yang baru.\n\nInfo Terakhir:\n${lastError}`);
+                    }
+                    throw new Error(`[GAGAL DI SEMUA MODEL]\n\nDetail Terakhir:\n${lastError}`);
                 }
 
                 // Parse Hasil Akhir
