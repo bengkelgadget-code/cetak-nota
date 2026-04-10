@@ -49,10 +49,12 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shadow-lg"><span class="text-white font-bold text-xl">T</span></div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">CETAK NOTA</h1>
             </div>
-            <div class="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-full border border-red-100 transition-all" id="home-bt-chip">
-                <div class="w-2 h-2 bg-red-500 rounded-full" id="home-bt-dot"></div>
-                <span class="text-[9px] font-bold text-red-600 uppercase" id="home-bt-text">Offline</span>
-            </div>
+            <!-- TOMBOL PRINTER (MERAH STABILO/BIRU STABILO) -->
+            <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 rounded-xl transition-all duration-300 bg-gray-800 text-[#FF0055] shadow-[0_0_12px_rgba(255,0,85,0.4)] hover:scale-105 active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+            </button>
         </div>
 
         <div class="space-y-4 mb-8">
@@ -165,46 +167,7 @@
         </div>
     </div>
 
-    <!-- PAGE 3: PRINTER -->
-    <div id="page-printer" class="page-container max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden hidden">
-        <div class="flex items-center gap-4 mb-6">
-            <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm active:scale-90 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <h2 class="text-xl font-bold text-gray-800">Koneksi Printer</h2>
-        </div>
-
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">STATUS SAAT INI</p>
-        
-        <div class="bg-white rounded-[28px] p-6 card-shadow border border-gray-50 mb-8 flex items-center gap-6">
-            <div class="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            </div>
-            <div>
-                <h3 id="printer-name-display" class="font-bold text-gray-800 text-lg">Printer</h3>
-                <div class="flex items-center gap-2">
-                    <div id="printer-dot" class="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span id="printer-status" class="text-xs font-bold text-red-400">Terputus</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-5">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">KONTROL BLUETOOTH</p>
-            <button onclick="startBluetoothScan()" class="text-indigo-600 text-[11px] font-bold flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full active:scale-95 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Cari Perangkat
-            </button>
-        </div>
-
-        <div class="p-5 bg-amber-50 rounded-2xl border border-amber-100">
-            <p class="text-[10px] text-amber-700 leading-relaxed text-center font-medium">
-                Klik tombol <b>"Cari Perangkat"</b> di atas untuk menyambungkan HP Anda dengan Printer Thermal secara langsung.
-            </p>
-        </div>
-    </div>
-
-    <!-- PAGE 4: SETELAN -->
+    <!-- PAGE 3: SETELAN (Printer Page Removed) -->
     <div id="page-settings" class="page-container max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden hidden">
         <h2 class="text-xl font-bold text-gray-800 mb-8">Setelan Aplikasi</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4 text-left">
@@ -233,7 +196,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v21.0<br>Gemini 2.5 Migration Update</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v21.1<br>Compact UI & Neon Connect</p>
             </div>
         </div>
     </div>
@@ -241,17 +204,19 @@
     <!-- BOTTOM NAV -->
     <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[9999]">
         <div class="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-gray-100 rounded-t-[35px] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-            <div class="flex justify-around items-center px-6 py-4">
+            <div class="flex justify-around items-center px-12 py-4">
                 <button onclick="switchPage('home')" id="nav-home" class="flex flex-col items-center gap-1 outline-none text-indigo-600 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all bg-indigo-50"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all bg-indigo-50">
+                        <!-- FUTURISTIC DASHBOARD ICON -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                    </div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Beranda</span>
                 </button>
-                <button onclick="switchPage('printer')" id="nav-printer" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></div>
-                    <span class="text-[9px] font-bold uppercase tracking-tighter">Printer</span>
-                </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all">
-                    <div class="nav-icon-box p-2 rounded-2xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg></div>
+                    <div class="nav-icon-box p-2 rounded-2xl transition-all">
+                        <!-- FUTURISTIC GEAR/SLIDERS ICON -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </div>
                     <span class="text-[9px] font-bold uppercase tracking-tighter">Setelan</span>
                 </button>
             </div>
@@ -261,7 +226,6 @@
     <!-- MAIN APP SCRIPT -->
     <script>
         // ⚠️ PENTING: POTONG API KEY BARU ANDA MENJADI 2 BAGIAN DI SINI ⚠️
-        // Masukkan kunci: AIzaSyAiLbzTMZXimnd1SzVj6IegmTlo1MM9mCg
         const PART1 = "AIzaSyAiLbzTMZXimnd"; 
         const PART2 = "1SzVj6IegmTlo1MM9mCg"; 
         const DEFAULT_API_KEY = PART1 + PART2;
@@ -375,7 +339,7 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- KOREKSI TANGGAL & WAKTU (Mencegah nota kosong) ---
+        // --- KOREKSI TANGGAL & WAKTU ---
         function getValidDate(val) {
             const isInvalid = !val || typeof val !== 'string' || val.trim() === '' || 
                             val.toLowerCase().includes('tidak') || val.includes('null') || 
@@ -460,8 +424,6 @@
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang memproses struk...";
                 
-                // DAFTAR PINTU MASUK (ENDPOINTS) YANG SUDAH DIPERBARUI UNTUK 2026
-                // Mengganti model Gemini 1.5 (yang sudah pensiun) dengan Gemini 2.5 / 2.0
                 const endpointsToTry = [
                     "v1beta/models/gemini-2.5-flash",
                     "v1beta/models/gemini-2.0-flash",
@@ -477,7 +439,7 @@
                 for (let endpoint of endpointsToTry) {
                     const url = `https://generativelanguage.googleapis.com/${endpoint}:generateContent?key=${apiKey}`;
                     
-                    let retries = 1; // Kurangi retry per model agar pencarian model yang benar lebih cepat
+                    let retries = 1; 
                     let delays = [1500]; 
 
                     for(let i = 0; i <= retries; i++) {
@@ -485,7 +447,7 @@
                             if (i > 0) getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang...`;
 
                             const fetchController = new AbortController();
-                            const fetchTimeout = setTimeout(() => fetchController.abort(), 12000); // 12 detik max per tembakan
+                            const fetchTimeout = setTimeout(() => fetchController.abort(), 12000); 
 
                             const response = await fetch(url, {
                                 method: 'POST',
@@ -501,7 +463,6 @@
                                 let errMsg = errText;
                                 try { const e = JSON.parse(errText); errMsg = e.error?.message || errText; } catch(e){}
                                 
-                                // CEK ERROR FATAL (Kunci salah/diblokir oleh Google)
                                 if (response.status === 400 && errMsg.toLowerCase().includes("api key")) {
                                     throw new Error(`API_FATAL: ${errMsg}`);
                                 }
@@ -509,43 +470,38 @@
                                     throw new Error(`API_FATAL: ${errMsg}`);
                                 }
                                 
-                                // Jika Model Tidak Ditemukan (404) atau Error Payload lain (400) -> Lewati model ini
                                 if (response.status === 404 || response.status === 400) {
                                     let cleanErr = errMsg.length > 40 ? errMsg.substring(0, 40) + "..." : errMsg;
                                     errorLogs.push(`${endpoint.split('/')[2]} (${response.status})`);
                                     break; 
                                 }
                                 
-                                // Jika 503 / 429 (Sibuk) -> Ulangi fetch (Retry)
                                 throw new Error("RETRY_NEEDED");
                             }
                             
                             result = await response.json();
                             success = true;
-                            break; // Berhasil! Keluar dari loop Retry
+                            break; 
                         } catch(error) {
                             if (error.message.startsWith("API_FATAL:")) {
                                 throw new Error(`API Key Ditolak oleh Google.\nPastikan kunci aktif dan tidak dibatasi.\n\nDetail Error: ${error.message.replace("API_FATAL: ", "")}`);
                             }
                             
-                            // Eksekusi Retry jika error jaringan, timeout, atau server sibuk
                             if ((error.message === "RETRY_NEEDED" || error.name === "AbortError" || error.name === "TypeError") && i < retries) {
                                 await new Promise(r => setTimeout(r, delays[i]));
                                 continue;
                             }
                             
-                            // Catat log jika gagal total di model ini dan lanjut coba model berikutnya
                             if (error.name === "AbortError") errorLogs.push(`${endpoint.split('/')[2]} (Timeout)`);
                             else if (error.message !== "RETRY_NEEDED") errorLogs.push(`${endpoint.split('/')[2]} (${error.message})`);
                             
-                            break; // Keluar ke model berikutnya
+                            break; 
                         }
                     }
                     if (success) break; 
                 }
 
                 if (!success) {
-                    // Hilangkan duplikat log agar pesan tidak terlalu panjang
                     let uniqueLogs = [...new Set(errorLogs)];
                     throw new Error(`Semua jalur AI gagal diproses atau tidak ditemukan.\n\nJejak Error:\n${uniqueLogs.join(" | ")}`);
                 }
@@ -623,13 +579,14 @@
             else { setElText('r-tgl', getValidDate('')); setElText('r-jam', getValidTime('')); }
         }
 
-        // --- NAVIGASI ---
+        // --- NAVIGASI & PRINTER TOGGLE ---
         function switchPage(pageId) {
-            ['home', 'preview', 'printer', 'settings'].forEach(id => {
-                getEl(`page-${id}`).classList.toggle('hidden', id !== pageId);
+            ['home', 'preview', 'settings'].forEach(id => {
+                const el = getEl(`page-${id}`);
+                if (el) el.classList.toggle('hidden', id !== pageId);
             });
             getEl('bottom-nav').style.display = (pageId === 'preview') ? 'none' : 'block';
-            ['home', 'printer', 'settings'].forEach(id => {
+            ['home', 'settings'].forEach(id => {
                 const btn = getEl(`nav-${id}`);
                 if (!btn) return;
                 const isMatch = (id === pageId);
@@ -647,8 +604,22 @@
         function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
 
         /**
-         * BLUETOOTH SCAN & CONNECT 
+         * BLUETOOTH SCAN & CONNECT (Pilih Printer Langsung)
          */
+        async function togglePrinter() {
+            if (state.isConnected) {
+                if (confirm("Printer thermal sudah terhubung. Apakah Anda ingin memutuskan koneksi?")) {
+                    if (state.btDevice && state.btDevice.gatt.connected) {
+                        state.btDevice.gatt.disconnect();
+                    } else {
+                        onDisconnected();
+                    }
+                }
+            } else {
+                startBluetoothScan();
+            }
+        }
+
         async function startBluetoothScan() {
             if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
             try {
@@ -664,10 +635,10 @@
                 state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
                 if (state.printerChar) {
                     state.isConnected = true;
-                    updatePrinterUI(true, state.btDevice.name || "Printer Thermal");
+                    updatePrinterUI(true);
                     requestWakeLock();
                     alert("Printer Berhasil Terhubung!");
-                } else { throw new Error("Layanan print tidak ditemukan."); }
+                } else { throw new Error("Layanan print tidak ditemukan pada perangkat ini."); }
             } catch (e) { 
                 updatePrinterUI(false);
                 if(e.name !== 'NotFoundError') alert("Koneksi Gagal: " + e.message); 
@@ -681,21 +652,17 @@
             releaseWakeLock(); 
         }
 
-        function updatePrinterUI(connected, name = "Printer") {
-            const statusColor = connected ? 'green' : 'red';
-            const pulse = connected ? ' animate-pulse' : '';
-            const statusText = connected ? 'Tersambung' : 'Terputus';
-            const dot = getEl('printer-dot');
-            if (dot) dot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
-            const stat = getEl('printer-status');
-            if (stat) { stat.innerText = statusText; stat.className = `text-xs font-bold text-${statusColor}-500`; }
-            setElText('printer-name-display', name);
-            const homeChip = getEl('home-bt-chip');
-            if (homeChip) homeChip.className = `flex items-center gap-2 bg-${statusColor}-50 px-3 py-1.5 rounded-full border border-${statusColor}-100`;
-            const homeDot = getEl('home-bt-dot');
-            if (homeDot) homeDot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
-            const homeText = getEl('home-bt-text');
-            if (homeText) { homeText.innerText = connected ? 'Printer Ready' : 'Offline'; homeText.className = `text-[9px] font-bold text-${statusColor}-600 uppercase`; }
+        function updatePrinterUI(connected) {
+            const btn = getEl('bt-printer-btn');
+            if (btn) {
+                if (connected) {
+                    // Biru stabilo (Neon Cyan) jika terkoneksi
+                    btn.className = "p-2.5 rounded-xl transition-all duration-300 bg-gray-800 text-[#00FFFF] shadow-[0_0_12px_rgba(0,255,255,0.4)] hover:scale-105 active:scale-95";
+                } else {
+                    // Merah stabilo (Neon Red/Pink) jika terputus
+                    btn.className = "p-2.5 rounded-xl transition-all duration-300 bg-gray-800 text-[#FF0055] shadow-[0_0_12px_rgba(255,0,85,0.4)] hover:scale-105 active:scale-95";
+                }
+            }
         }
 
         function wrapText(label, value, maxChars = 32) {
@@ -727,8 +694,8 @@
 
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
-                alert("Printer terputus! Silakan sambungkan ulang di menu Printer.");
-                switchPage('printer');
+                alert("Printer belum terhubung! Silakan hubungkan printer Anda terlebih dahulu.");
+                startBluetoothScan();
                 return;
             }
             toggleLoader(true, "Mencetak...");
