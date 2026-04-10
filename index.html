@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V51 Auto Reconnect</title>
+    <title>Cetak Nota - V52 Auto Reconnect & UI Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 51
-        if (!localStorage.getItem('ZETTBOT_V51_NAV')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 52
+        if (!localStorage.getItem('ZETTBOT_V52_UPDATE')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V51_NAV', 'true');
+            localStorage.setItem('ZETTBOT_V52_UPDATE', 'true');
         }
         
         // URL GAS ANDA
@@ -47,11 +47,11 @@
     <!-- MODAL POPUP UNTUK EDIT NOMINAL / ADMIN -->
     <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[10005] hidden items-center justify-center backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-[32px] p-8 w-11/12 max-w-sm card-shadow transform transition-all scale-100">
-            <h3 id="modal-title" class="text-sm font-black text-indigo-600 mb-6 text-center uppercase tracking-widest">EDIT: ADMIN</h3>
-            <input type="number" id="modal-input" class="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl p-5 text-center text-2xl font-black text-gray-800 outline-none transition-all mb-6" placeholder="0">
+            <h3 id="modal-title" class="text-sm font-black text-[#FF6B00] mb-6 text-center uppercase tracking-widest">EDIT: ADMIN</h3>
+            <input type="number" id="modal-input" class="w-full bg-gray-50 border-2 border-transparent focus:border-[#FF6B00] rounded-2xl p-4 text-center text-2xl font-black text-gray-800 outline-none transition-all mb-6" placeholder="0">
             
-            <button onclick="saveEditModal()" class="w-full bg-[#00E676] text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-[0_0_20px_rgba(0,230,118,0.5)] active:scale-95 transition-all">Selesai</button>
-            <button onclick="closeEditModal()" class="w-full mt-3 bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest py-4 rounded-2xl active:scale-95 transition-all hover:bg-gray-200">Batal</button>
+            <button onclick="saveEditModal()" class="w-full bg-[#FF6B00] text-white font-black text-xs uppercase tracking-widest py-3 rounded-2xl shadow-[0_0_15px_rgba(255,107,0,0.5)] active:scale-95 transition-all">Selesai</button>
+            <!-- Tombol Batal telah dihilangkan sesuai permintaan -->
         </div>
     </div>
 
@@ -178,7 +178,7 @@
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
-                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK CLOUD...</p>
+                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENGECEK CLOUD...</p>
                 </div>
             </div>
             
@@ -188,7 +188,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v51.0 - Nav & BT Fix</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v52.0 - Auto Reconnect & Priority Update</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -202,7 +202,7 @@
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </div>
                 </button>
             </div>
@@ -238,14 +238,20 @@
             syncCloud(false);
             fetchHistory();
             
-            // Auto Reconnect Printer (Hanya jika browser mengizinkan secara latar belakang)
-            autoConnectPrinter();
-
             getEl('gallery-input').onchange = (e) => { 
                 const file = e.target.files[0];
                 if (file) processImageOCR(file);
                 e.target.value = '';
             };
+            
+            // Auto Reconnect Printer (Terpicu saat pengguna melakukan interaksi pertama di layar)
+            let hasAttemptedReconnect = false;
+            document.body.addEventListener('click', () => {
+                if (!hasAttemptedReconnect && !state.isConnected) {
+                    hasAttemptedReconnect = true;
+                    autoConnectPrinter();
+                }
+            }, { once: true });
         });
 
         // FUNGSI NAVIGASI BARU: Memanfaatkan Hash agar tombol kembali HP bekerja
@@ -318,7 +324,10 @@
         }
 
         function saveEditModal() {
-            const val = parseInt(getEl('modal-input').value, 10) || 0;
+            const inputVal = getEl('modal-input').value.trim();
+            // Jika kosong langsung jadikan 0
+            const val = inputVal === '' ? 0 : (parseInt(inputVal, 10) || 0);
+            
             setElText(state.editingField, formatRupiahStr(val));
             calculateTotal();
             saveLocalHistory(); // Auto-save saat selesai mengedit
@@ -522,9 +531,12 @@
                     throw new Error("API Key Anda valid, tetapi akun ini tidak memiliki akses ke model AI pemroses teks apa pun.");
                 }
 
+                // PRIORITAS: Menaruh Gamma / Gemma / 1.5 Flash 8B di urutan paling atas!
                 const priorities = [
+                    "models/gemini-1.5-flash-8b", // Paling ringan & cepat, sangat sering tersedia gratis
+                    "models/gemma-2-2b-it", // Keluarga Gamma/Gemma ringan
+                    "models/gemma-2-9b-it", // Keluarga Gamma/Gemma menengah
                     "models/gemini-1.5-flash",
-                    "models/gemini-1.5-flash-8b",
                     "models/gemini-2.0-flash-lite-preview-02-05", 
                     "models/gemini-2.0-flash-lite", 
                     "models/gemini-1.5-flash-latest",
@@ -704,11 +716,9 @@
         // SISTEM BLUETOOTH AUTO-RECONNECT
         // ============================================================================
         async function autoConnectPrinter() {
-            // Mengecek apakah browser mendukung getDevices() (Browser modern Chrome/Edge)
             if (navigator.bluetooth && navigator.bluetooth.getDevices) {
                 try {
                     const devices = await navigator.bluetooth.getDevices();
-                    // Jika ada printer yang sudah pernah diizinkan, coba konek ulang!
                     if (devices.length > 0) {
                         state.btDevice = devices[0];
                         state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
