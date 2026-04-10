@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - AI Scanner v37</title>
+    <title>Cetak Nota - AI Scanner Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,12 +28,6 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI SAAT V37 DIBUKA
-        if (!localStorage.getItem('ZETTBOT_V37_CLEAN')) {
-            localStorage.clear();
-            localStorage.setItem('ZETTBOT_V37_CLEAN', 'true');
-        }
-        
         // URL GAS ANDA
         const API_URL = "https://script.google.com/macros/s/AKfycbx2mKDVJn3DyohtwBub1svw1Obij_kTZk_60ILcmP05csXfRKVTCZGn-yIfD2EKRcIK/exec";
     </script>
@@ -41,7 +35,7 @@
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-6"></div>
         <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Memproses...</span>
-        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Mengakses Gemini 1.5 Free Tier</div>
+        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Mengakses Gemini AI</div>
     </div>
 
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
@@ -139,12 +133,12 @@
             
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API KEY MANUAL (Prioritas)</span>
+                    <span>API KEY MANUAL</span>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Tampal Kunci API Baru Di Sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
+                <input type="password" id="setting-apikey" placeholder="Tempel API Key dari AI Studio di sini..." class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
-                    <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Kunci Aktif Saat Ini:</p>
+                    <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
                     <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK...</p>
                 </div>
             </div>
@@ -157,9 +151,12 @@
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px] mt-2" contenteditable="true" id="setting-alamat" data-placeholder="Alamat"></div>
             </div>
             
-            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan Kunci & Data</button>
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan Perubahan</button>
+            <div class="pt-4 text-center">
+                <button onclick="forceDeepClean()" class="text-red-500 text-[10px] font-black px-4 py-2 bg-red-50 rounded-lg uppercase tracking-widest border border-red-100">Hapus Semua Cache</button>
+            </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v37.0 - 1.5 Flash Locked</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core Final - Back to Basics</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -185,7 +182,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V37') || ""
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_FINAL') || ""
         };
 
         const getEl = id => document.getElementById(id);
@@ -223,7 +220,7 @@
             
             if (active && active.length > 10) {
                 const last4 = active.slice(-4);
-                debugEl.innerText = `...${last4} (AKTIF)`;
+                debugEl.innerText = `...${last4} (SIAP DIGUNAKAN)`;
                 debugEl.className = "text-[12px] text-green-600 font-mono font-black text-center tracking-widest";
             } else {
                 debugEl.innerText = "KUNCI KOSONG!";
@@ -231,19 +228,28 @@
             }
         }
 
+        function forceDeepClean() {
+            if(!confirm("Hapus semua pengaturan dan riwayat aplikasi ini?")) return;
+            localStorage.clear();
+            state.manualKey = "";
+            getEl('setting-apikey').value = "";
+            alert("Memori dibersihkan. Sila segarkan (refresh) aplikasi.");
+            location.reload();
+        }
+
         function saveSettings(btn) {
             const toko = getElText('setting-toko');
             const alamat = getElText('setting-alamat');
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('ZETTBOT_PROFILE_V37', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('ZETTBOT_PROFILE_FINAL', JSON.stringify({ toko, alamat })); 
             
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
-                localStorage.setItem('ZETTBOT_API_KEY_V37', mKey);
+                localStorage.setItem('ZETTBOT_API_KEY_FINAL', mKey);
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('ZETTBOT_API_KEY_V37');
+                localStorage.removeItem('ZETTBOT_API_KEY_FINAL');
             }
 
             const ori = btn.innerText;
@@ -255,7 +261,7 @@
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('ZETTBOT_PROFILE_V37');
+            const saved = localStorage.getItem('ZETTBOT_PROFILE_FINAL');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -267,7 +273,7 @@
             updateKeyStatusUI();
         }
 
-        // --- SISTEM PELACAK MODEL DINAMIS (ANTI 404 NOT FOUND) ---
+        // --- SISTEM ASLI: KEMBALI KE DASAR (BACK TO BASICS) ---
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
             if (!key || key.length < 20) {
@@ -275,48 +281,9 @@
                 switchPage('settings'); return;
             }
 
-            toggleLoader(true, "Mencari Model AI...");
+            toggleLoader(true, "Menganalisa Imej...");
             try {
-                // 1. TANYA GOOGLE: Daftar model apa yang tersedia untuk Kunci API ini?
-                const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key.trim()}`);
-                const modelsData = await modelsRes.json();
-
-                if (!modelsRes.ok) {
-                    let errMsg = modelsData.error?.message || "Gagal mengecek daftar model.";
-                    if (modelsRes.status === 400 || modelsRes.status === 403) {
-                        throw new Error(`[KUNCI API TIDAK VALID / MATI]\n${errMsg}\n\nSolusi: Gunakan kunci dari akun Gmail yang berbeda.`);
-                    }
-                    throw new Error(`[Error Cek Model]\n${errMsg}`);
-                }
-
-                // 2. Filter model yang mendukung "generateContent"
-                const validModels = modelsData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"));
-                
-                if (validModels.length === 0) {
-                    throw new Error("API Key Anda valid, tetapi tidak memiliki akses ke model AI apa pun.");
-                }
-
-                // 3. Pilih model terbaik secara otomatis
-                let bestModel = "";
-                const priorities = ["models/gemini-1.5-flash", "models/gemini-2.0-flash", "models/gemini-1.5-pro", "models/gemini-pro-vision", "models/gemini-1.0-pro-vision"];
-                
-                for (let pref of priorities) {
-                    if (validModels.find(m => m.name === pref)) {
-                        bestModel = pref;
-                        break;
-                    }
-                }
-                
-                // Jika tidak ada di prioritas, ambil model yang mengandung kata "flash" atau model pertama di daftar
-                if (!bestModel) {
-                    const fallback = validModels.find(m => m.name.includes("flash")) || validModels[0];
-                    bestModel = fallback.name;
-                }
-
-                // Update teks loading untuk memberi tahu kita model apa yang sedang dipakai
-                toggleLoader(true, `Model: ${bestModel.split('/')[1]}...`);
-
-                // 4. Ubah gambar ke Base64
+                // 1. Ubah gambar ke Base64
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -335,31 +302,35 @@
                     reader.readAsDataURL(file);
                 });
 
+                // 2. Siapkan Prompt
                 const prompt = state.currentType === 'Transfer' ? 
                     "Ekstrak data struk transfer bank. Format WAJIB JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"bank\":\"string\",\"nama\":\"string\",\"nominal\":0,\"admin\":0,\"total\":0}" :
                     "Ekstrak data struk token PLN. Format WAJIB JSON: {\"tanggal\":\"DD-MM-YYYY\",\"waktu\":\"HH:mm\",\"meter_no\":\"string\",\"nama\":\"string\",\"kwh\":\"string\",\"token\":\"string\",\"total\":0,\"sn\":\"string\"}";
 
-                // 5. Eksekusi API menggunakan model yang PASTI ADA di akun tersebut
-                const url = `https://generativelanguage.googleapis.com/v1beta/${bestModel}:generateContent?key=${key.trim()}`;
+                // 3. PANGGILAN API SEDERHANA DAN LANGSUNG (Seperti versi awal yang lancar)
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.trim()}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
+                    body: JSON.stringify({ 
+                        contents: [{ 
+                            parts: [
+                                { text: prompt }, 
+                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                            ] 
+                        }] 
+                    })
                 });
 
-                const rawText = await response.text(); 
+                const resJson = await response.json();
                 
+                // 4. Tangani Error secara sederhana
                 if (!response.ok) {
-                    const errObj = JSON.parse(rawText);
-                    const errMsg = errObj.error?.message || "Unknown error";
-                    if (response.status === 429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("exhausted")) {
-                        throw new Error(`[KUOTA HABIS / BLOKIR]\n${errMsg}\n\nSolusi: Gunakan kunci dari akun Gmail yang baru.`);
-                    }
-                    throw new Error(`[ERROR API]\n${errMsg}`);
+                    throw new Error(resJson.error?.message || "Terjadi kesalahan pada server Google.");
                 }
 
-                const resJson = JSON.parse(rawText);
+                // 5. Parse Data
                 let text = resJson.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 const data = JSON.parse(text);
 
@@ -368,9 +339,10 @@
                 toggleLoader(false);
                 switchPage('preview');
                 updateTime();
+                
             } catch(err) {
                 toggleLoader(false);
-                alert(`--- INFO ERROR V38 ---\n\n${err.message}`);
+                alert("GAGAL MEMPROSES:\n\n" + err.message);
             }
         }
 
@@ -438,7 +410,7 @@
         }
 
         function fetchHistory() {
-            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V37') || '[]');
+            const h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_FINAL') || '[]');
             const list = getEl('history-list');
             if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Rekod Kosong</p>'; return; }
             list.innerHTML = h.map((item, idx) => `
@@ -459,8 +431,8 @@
         }
 
         function delH(i) {
-            let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V37') || '[]');
-            h.splice(i, 1); localStorage.setItem('ZETTBOT_HISTORY_V37', JSON.stringify(h));
+            let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_FINAL') || '[]');
+            h.splice(i, 1); localStorage.setItem('ZETTBOT_HISTORY_FINAL', JSON.stringify(h));
             fetchHistory();
         }
 
@@ -470,12 +442,12 @@
             const name = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
             if (API_URL && API_URL.includes("exec")) fetch(API_URL, { method: 'POST', body: JSON.stringify({ nama: name, tipe: state.currentType }) }).catch(e=>console.log(e));
             setTimeout(() => {
-                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V37') || '[]');
+                let h = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_FINAL') || '[]');
                 const tgl = state.currentType === 'Token' ? getElText('t-tgl') : getElText('r-tgl');
                 const tot = state.currentType === 'Token' ? getElText('t-tot') : getElText('r-tot');
                 h.unshift({ nama: name, tgl: tgl, tot: tot, tipe: state.currentType });
                 if(h.length > 30) h.pop();
-                localStorage.setItem('ZETTBOT_HISTORY_V37', JSON.stringify(h));
+                localStorage.setItem('ZETTBOT_HISTORY_FINAL', JSON.stringify(h));
                 toggleLoader(false); switchPage('home'); fetchHistory();
             }, 1000);
         }
