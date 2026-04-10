@@ -6,7 +6,6 @@
     <title>Cetak Nota - AI Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8F9FE; -webkit-tap-highlight-color: transparent; }
         .receipt-font { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #000; letter-spacing: -0.5px; }
@@ -36,7 +35,7 @@
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
         <span id="loader-text" class="text-sm font-black text-indigo-600 uppercase tracking-widest text-center px-6">Processing...</span>
-        <span id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 text-center max-w-[80%]">Sistem sedang bekerja...</span>
+        <span id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 text-center max-w-[80%]">Gemini AI sedang mengekstrak data struk...</span>
     </div>
 
     <!-- HIDDEN FILE INPUT -->
@@ -60,7 +59,7 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100 transition-all active:scale-95">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-2">Cetak Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>Sistem AI Cerdas akan mengisi nota otomatis.</p>
+                    <p class="text-indigo-100 text-xs opacity-90 leading-relaxed">Upload screenshot,<br>Google Gemini AI akan mengisi nota otomatis.</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
@@ -222,11 +221,10 @@
             
             <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
-                    <span>API Key Gemini (Opsional)</span>
+                    <span>API Key Gemini Wajib</span>
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-500 hover:text-indigo-700 transition-colors">Dapatkan Gratis</a>
                 </label>
-                <input type="password" id="setting-apikey" placeholder="Kosongkan untuk AI Offline" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
-                <p class="text-[9px] text-gray-400 text-center mt-2 px-2">Isi API Key untuk akurasi pintar 99.9%. Jika dikosongkan, sistem akan kembali memakai AI Scanner bawaan (Offline).</p>
+                <input type="password" id="setting-apikey" placeholder="Masukkan API Key Google Anda" class="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 transition-all border-none text-center mt-2">
             </div>
             
             <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 mt-6">
@@ -234,7 +232,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v16.5<br>Ultimate Hybrid AI (Resistant)</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v17.0<br>Pure Payload API JSON Fix</p>
             </div>
         </div>
     </div>
@@ -263,29 +261,6 @@
     <script>
         const state = { currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null };
         let wakeLock = null;
-
-        // GLOBAL KEYWORDS DICTIONARY (Untuk Tesseract Offline AI)
-        const BANK_KEYWORDS = [
-            { id: 'BCA', keys: ['BCA', 'M-BCA', 'MBCA', 'M-TRANSFER', 'SAKUKU', 'BLU'] },
-            { id: 'BRI', keys: ['BRI', 'BRIMO', 'BRIVA', 'SETOR TUNAI TANPA KARTU', 'BANK RAKYAT INDONESIA'] },
-            { id: 'MANDIRI', keys: ['MANDIRI', 'LIVIN', 'BANK MANDIRI'] },
-            { id: 'BNI', keys: ['BNI', 'MOBILE BANKING BNI'] },
-            { id: 'BSI', keys: ['BSI', 'SYARIAH INDONESIA'] },
-            { id: 'DANA', keys: ['DANA', 'SALDO DANA', 'DNID', 'ESPAY', 'PT ESPAY'] },
-            { id: 'OVO', keys: ['OVO', 'OVO CASH', 'VISIONET', 'PT VISIONET'] },
-            { id: 'GOPAY', keys: ['GOPAY', 'GO-PAY', 'GOTO', 'DOMPET ANAK BANGSA'] },
-            { id: 'LINKAJA', keys: ['LINKAJA', 'LINK AJA', 'FINTEK KARYA NUSANTARA', 'PT FINTEK'] },
-            { id: 'SHOPEEPAY', keys: ['SHOPEE', 'SHOPEEPAY', 'SPAY', 'AIRPAY'] },
-            { id: 'SEABANK', keys: ['SEA', 'SEABANK'] },
-            { id: 'JAGO', keys: ['JAGO', 'BANK JAGO'] },
-            { id: 'NEO', keys: ['NEO', 'BNC', 'NEOBANK'] },
-            { id: 'MEGA', keys: ['MEGA', 'BANK MEGA', 'M-SMILE'] },
-            { id: 'CIMB', keys: ['CIMB', 'NIAGA', 'OCTO'] },
-            { id: 'DKI', keys: ['DKI', 'JAKONE'] },
-            { id: 'PERMATA', keys: ['PERMATA', 'PERMATAMOBILE'] },
-            { id: 'DANAMON', keys: ['DANAMON', 'D-BANK'] },
-            { id: 'BJB', keys: ['BJB', 'DIGI'] }
-        ];
 
         // --- DOM HELPERS ---
         const getEl = id => document.getElementById(id);
@@ -390,27 +365,34 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
-        // --- HYBRID AI ENGINE (GEMINI CLOUD + TESSERACT OFFLINE) ---
+        // --- GOOGLE GEMINI VISION PURE API ENGINE ---
         async function processImageOCR(file) {
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
             const apiKey = (savedSettings.apikey || "").trim();
 
+            if (!apiKey) {
+                alert("⚠️ PERHATIAN: API KEY KOSONG!\n\nAnda WAJIB mendapatkan API Key dari Google secara gratis agar fitur Scan Gambar bisa bekerja.\n\nSistem akan mengarahkan Anda ke menu Setelan.");
+                switchPage('settings');
+                return;
+            }
+
             toggleLoader(true, "MEMBACA GAMBAR...");
             
             try {
-                const base64DataRaw = await new Promise((resolve, reject) => {
+                // Resize image untuk hemat kuota dan cegah memory penuh
+                const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            const MAX_DIM = 1200; 
+                            const MAX_DIM = 1024; 
                             let w = img.width, h = img.height;
                             if (w > h && w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
                             else if (h > w && h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
                             canvas.width = w; canvas.height = h;
                             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]); 
                         };
                         img.onerror = () => reject(new Error("File gambar rusak."));
                         img.src = e.target.result;
@@ -419,749 +401,15 @@
                     reader.readAsDataURL(file);
                 });
 
-                // JIKA USER MEMASUKKAN API KEY -> GUNAKAN GEMINI AI (CLOUD) DENGAN FALLBACK
-                if (apiKey) {
-                    getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
-                    const base64Data = base64DataRaw.split(',')[1];
-                    
-                    // DAFTAR MODEL YANG AKAN DICOBA SECARA BERURUTAN (Anti 404)
-                    const modelsToTry = [
-                        { id: "gemini-1.5-flash", ver: "v1beta" },
-                        { id: "gemini-1.5-flash", ver: "v1" },
-                        { id: "gemini-1.5-flash-8b", ver: "v1beta" },
-                        { id: "gemini-1.5-flash-latest", ver: "v1beta" },
-                        { id: "gemini-1.5-pro", ver: "v1beta" }
-                    ];
-
-                    let promptText = "";
-                    let schema = {};
-
-                    if (state.currentType === 'Transfer') {
-                        promptText = "Ekstrak data dari gambar struk transfer bank ini. Berikan respons HANYA DALAM FORMAT JSON murni tanpa markdown. Struktur kunci wajib: tanggal, waktu, referensi, bank_tujuan, rekening_tujuan, nama_penerima, nominal, admin, total.";
-                        schema = {
-                            type: "OBJECT",
-                            properties: {
-                                tanggal: { type: "STRING", description: "Format DD-MM-YYYY." },
-                                waktu: { type: "STRING", description: "Format HH:mm." },
-                                referensi: { type: "STRING", description: "Nomor referensi/struk" },
-                                bank_tujuan: { type: "STRING", description: "Nama bank penerima (BCA, BRI, dll)" },
-                                rekening_tujuan: { type: "STRING", description: "Nomor rekening tujuan" },
-                                nama_penerima: { type: "STRING", description: "Nama penerima" },
-                                nominal: { type: "INTEGER", description: "Jumlah transfer (angka saja)" },
-                                admin: { type: "INTEGER", description: "Biaya admin (angka saja)" },
-                                total: { type: "INTEGER", description: "Total keseluruhan (angka saja)" }
-                            },
-                            required: ["tanggal", "waktu", "referensi", "bank_tujuan", "rekening_tujuan", "nama_penerima", "nominal", "admin", "total"]
-                        };
-                    } else {
-                        promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini. Berikan respons HANYA DALAM FORMAT JSON murni tanpa markdown. Struktur kunci wajib: tanggal, waktu, no_meter, nama, tarif_daya, kwh, token, nominal, admin, total, sn.";
-                        schema = {
-                            type: "OBJECT",
-                            properties: {
-                                tanggal: { type: "STRING", description: "Format DD-MM-YYYY" },
-                                waktu: { type: "STRING", description: "Format HH:mm" },
-                                no_meter: { type: "STRING", description: "Nomor Meter" },
-                                nama: { type: "STRING", description: "Nama pelanggan" },
-                                tarif_daya: { type: "STRING", description: "Tarif/Daya (R1M/900 VA)" },
-                                kwh: { type: "STRING", description: "Jumlah kWh" },
-                                token: { type: "STRING", description: "20 digit angka stroom PLN" },
-                                nominal: { type: "INTEGER", description: "Nominal (angka saja)" },
-                                admin: { type: "INTEGER", description: "Biaya admin (angka saja)" },
-                                total: { type: "INTEGER", description: "Total bayar (angka saja)" },
-                                sn: { type: "STRING", description: "Nomor SN" }
-                            },
-                            required: ["tanggal", "waktu", "no_meter", "nama", "tarif_daya", "kwh", "token", "nominal", "admin", "total", "sn"]
-                        };
-                    }
-
-                    const basePayload = {
-                        contents: [{ role: "user", parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0.1, responseMimeType: "application/json", responseSchema: schema }
-                    };
-
-                    let result = null;
-                    let success = false;
-                    let lastErrorMsg = "";
-
-                    // COBA SEMUA MODEL BERURUTAN SAMPAI ADA YANG TEMBUS
-                    for (let i = 0; i < modelsToTry.length; i++) {
-                        let currentTarget = modelsToTry[i];
-                        let url = `https://generativelanguage.googleapis.com/${currentTarget.ver}/models/${currentTarget.id}:generateContent?key=${apiKey}`;
-                        
-                        try {
-                            const response = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(basePayload)
-                            });
-                            
-                            if (!response.ok) {
-                                let errText = "";
-                                try { const e = await response.json(); errText = e.error?.message || ""; } catch(e){}
-                                lastErrorMsg = errText || response.statusText;
-                                
-                                if (response.status === 400 || response.status === 403) {
-                                    throw new Error(`Akses API Ditolak (${response.status}).\n\nGoogle menolak API Key Anda.\nPesan: ${lastErrorMsg}\n\nSolusi: Buat API Key BARU di aistudio.google.com.`);
-                                }
-                                
-                                if (response.status === 404) {
-                                    continue; // Model tidak ditemukan, langsung coba iterasi model berikutnya!
-                                }
-                                
-                                throw new Error(`HTTP Error ${response.status}: ${lastErrorMsg}`);
-                            }
-                            
-                            result = await response.json();
-                            success = true;
-                            break; // Berhasil! Keluar dari loop pencarian model.
-                            
-                        } catch (error) {
-                            if (error.message.includes("Akses API Ditolak")) throw error;
-                        }
-                    }
-
-                    if (!success) {
-                        throw new Error(`Semua model AI diblokir/tidak tersedia (404) untuk API Key Anda.\n\nHal ini biasanya terjadi jika Anda membuat API Key di Google Cloud Console pada wilayah yang belum didukung Google untuk Gemini 1.5.\n\nSOLUSI PASTI:\n1. Buka aistudio.google.com\n2. Klik "Create API Key" di project baru\n3. Salin kunci baru tersebut ke Setelan aplikasi ini.`);
-                    }
-
-                    let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!textResponse) throw new Error("Respons AI Kosong. Coba ulangi kembali.");
-                    
-                    // Bersihkan dari format Markdown (```json) jika AI lama mengembalikannya secara berantakan
-                    textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
-                    
-                    const jsonData = JSON.parse(textResponse);
-                    if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
-                    else populateTransferFromJSON(jsonData);
-
-                } else {
-                    // JIKA API KEY KOSONG -> OTOMATIS GUNAKAN TESSERACT AI (OFFLINE)
-                    getEl('loader-subtext').innerText = "AI Offline sedang mengekstrak data struk...";
-                    
-                    const worker = await Tesseract.createWorker('ind');
-                    const result = await worker.recognize(base64DataRaw);
-                    const text = result.data.text;
-                    await worker.terminate();
-
-                    if(state.currentType === 'Token') parseTokenOCROffline(text);
-                    else parseTransferOCROffline(text);
-                }
-
-            } catch (err) {
-                console.error("AI Error:", err);
-                
-                // JIKA TERJADI ERROR PADA GEMINI, TAWARKAN PINDAH KE OFFLINE SEMENTARA WAKTU
-                let userChoice = confirm("❌ GAGAL MEMPROSES GAMBAR DENGAN GEMINI AI\n\nPesan Error:\n" + err.message + "\n\nApakah Anda ingin menghapus API Key ini dan menggunakan AI Offline (Tesseract) sementara waktu?");
-                
-                if (userChoice) {
-                    getEl('setting-apikey').value = '';
-                    saveSettings(getEl('setting-apikey').nextElementSibling.nextElementSibling); // Simpan otomatis
-                    alert("API Key telah dihapus. Silakan upload ulang gambar Anda untuk di-scan secara Offline.");
-                } else {
-                    updateTime();
-                }
-            } finally {
-                toggleLoader(false);
-                switchPage('preview');
-            }
-        }
-
-        // --- MAP DATA GEMINI KE UI ---
-        function populateTransferFromJSON(data) {
-            setElText('r-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
-            setElText('r-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
-            setElText('r-ref', data.referensi || "0000000000");
-            setElText('r-bank', (data.bank_tujuan || "BANK LAIN").toUpperCase());
-            
-            let rek = data.rekening_tujuan || "0000000000";
-            setElText('r-rek', rek.replace(/\*/g, ' * '));
-            setElText('r-nama', (data.nama_penerima || "NAMA PELANGGAN").toUpperCase());
-            
-            setElText('r-nom', formatRupiahStr(data.nominal || 0));
-            setElText('r-adm', formatRupiahStr(data.admin || 0));
-            setElText('r-tot', formatRupiahStr(data.total || 0));
-        }
-
-        function populateTokenFromJSON(data) {
-            setElText('t-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
-            setElText('t-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
-            setElText('t-meter', data.no_meter || "00000000000");
-            setElText('t-nama', (data.nama || "NAMA PELANGGAN").toUpperCase());
-            setElText('t-daya', (data.tarif_daya || "R1M/900 VA").toUpperCase());
-            setElText('t-kwh', (data.kwh || "0.0") + " kWh");
-            
-            let tk = (data.token || "00000000000000000000").replace(/[^0-9]/g, '');
-            if(tk.length === 20) {
-                getEl('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
-            } else {
-                getEl('t-token').innerHTML = tk || "XXXX XXXX XXXX<br>XXXX XXXX";
-            }
-            
-            setElText('t-nom', formatRupiahStr(data.nominal || 0));
-            setElText('t-adm', formatRupiahStr(data.admin || 0));
-            setElText('t-tot', formatRupiahStr(data.total || 0));
-            setElText('t-sn', data.sn || "XXXXXXXXXXXXXXXXXXXXX");
-        }
-
-        // --- ALGORITMA PARSER OCR OFFLINE - TRANSFER BANK (V14.0 SOLID ENGINE) ---
-        function parseTransferOCROffline(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-            const combinedUpper = combinedText.toUpperCase();
-
-            // 1. TANGGAL & WAKTU
-            const dateMatch = combinedText.match(/(\d{2}[\s\-\/][A-Za-z]{3}[\s\-\/]\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/);
-            if (dateMatch) {
-                let d = dateMatch[1];
-                if (d.includes('-') && d.split('-')[0].length === 4) { 
-                    const pts = d.split('-'); setElText('r-tgl', `${pts[2]}-${pts[1]}-${pts[0]}`);
-                } else { setElText('r-tgl', d.replace(/\//g, '-')); }
-            } else { updateTimeOnlyDate('r-tgl'); }
-
-            const timeMatch = combinedText.match(/(\d{2}:\d{2}(?::\d{2})?)/);
-            if (timeMatch) setElText('r-jam', timeMatch[1]);
-            else { updateTimeOnlyTime('r-jam'); }
-
-            // 2. NOMINAL, ADMIN, TOTAL
-            let moneyValues = [];
-            const moneyRegex = /(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/gi;
-            let m;
-            while ((m = moneyRegex.exec(combinedText)) !== null) {
-                if (m[1]) {
-                    let val = parseInt(m[1].replace(/\./g, ''));
-                    if (val > 0) moneyValues.push(val);
-                }
-            }
-            moneyValues = [...new Set(moneyValues)].sort((a,b) => b-a);
-            
-            let nominal = 0, admin = 0, total = 0;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                let lineMoneyMatch = lines[i].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i);
-                let nextLineMoneyMatch = lines[i+1] ? lines[i+1].match(/(?:Rp|IDR)[\.\s]*([\d]{1,3}(?:\.[\d]{3})*)/i) : null;
-                
-                let val = 0;
-                if (lineMoneyMatch && lineMoneyMatch[1]) val = parseInt(lineMoneyMatch[1].replace(/\./g, ''));
-                else if (nextLineMoneyMatch && nextLineMoneyMatch[1]) val = parseInt(nextLineMoneyMatch[1].replace(/\./g, ''));
-
-                if (up.match(/(BIAYA|ADMIN|FEE)/) && val > 0 && val < 50000) admin = val;
-                else if (up.match(/(TOTAL)/) && val > 0) total = val;
-                else if (up.match(/(NOMINAL|JUMLAH TRANSFER|JUMLAH)/) && val > 0 && !up.match(/TOTAL/)) nominal = val;
-            }
-
-            if (total === 0 && moneyValues.length > 0) total = moneyValues[0];
-            if (nominal === 0) {
-                if (moneyValues.length >= 2) nominal = moneyValues.find(x => x < total) || total;
-                else nominal = total;
-            }
-            if (admin === 0 && total > nominal) admin = total - nominal;
-            if (total !== nominal + admin) {
-                 if (moneyValues.length > 0) {
-                     total = moneyValues[0];
-                     nominal = moneyValues.length > 1 ? moneyValues[1] : total;
-                     admin = total > nominal ? total - nominal : 0;
-                 }
-            }
-
-            setElText('r-nom', formatRupiahStr(nominal));
-            setElText('r-adm', formatRupiahStr(admin));
-            setElText('r-tot', formatRupiahStr(total));
-
-            // 3. REFERENSI
-            let ref = "";
-            for(let i=0; i<lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/(REFERENSI|REF|ORDER|ID TRANSAKSI)/)) {
-                    let matchRef = up.match(/([A-Z0-9]{8,25})/);
-                    if (matchRef && matchRef[0]) ref = matchRef[0];
-                }
-            }
-            if (!ref) {
-                let refMatch = combinedText.match(/(?:REFERENSI|REF|ORDER|ID TRANSAKSI|NO REF)[\s\:\.]*([A-Z0-9]{8,25})/i);
-                if (refMatch && refMatch[1]) ref = refMatch[1].replace(/[^A-Z0-9]/gi, '');
-            }
-            setElText('r-ref', ref || "0000000000");
-
-            // 4. BANK, REKENING, NAMA
-            let bank = "", rek = "", nama = "";
-            let destIdx = -1;
-            
-            for (let i = 0; i < lines.length; i++) {
-                let up = lines[i].toUpperCase();
-                if (up.match(/^(TUJUAN|PENERIMA|KEPADA|REKENING TUJUAN|DATA PENERIMA)/)) {
-                    if (!up.match(/SUMBER|DARI/)) { destIdx = i; break; }
-                }
-            }
-
-            let nameCandidates = [];
-            let rekCandidates = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                let up = line.toUpperCase();
-                
-                if (up.match(/NOMINAL|BIAYA|ADMIN|TOTAL|SALDO|TRANSAKSI|WAKTU|TANGGAL|REF|ID|STRUK|CETAK|BAGIKAN|SELESAI|KEMBALI|BERHASIL|SUMBER DANA/)) continue;
-                
-                let rMatch = line.match(/(\d{3,6}[\s\-\*]+\d{2,6}[\s\-\*]+\d{2,6}[\s\-\*]*\d{0,6}|\d{8,20})/);
-                
-                if (rMatch && rMatch[0] && !up.includes('RP')) {
-                    let cleanMatch = rMatch[0].replace(/[^\d\*]/g, '');
-                    let cleanRef = (ref || '').replace(/[^0-9]/g, '');
-                    
-                    if (cleanMatch !== cleanRef || cleanMatch === '') {
-                        if (line.includes('-')) {
-                            let parts = line.split('-');
-                            let p1 = parts[0].trim();
-                            let p2 = parts.slice(1).join('-').trim();
-                            
-                            if (p1.replace(/[^\d\*]/g,'').length >= 8) {
-                                rekCandidates.push({val: p1, idx: i});
-                                if (p2.replace(/[^A-Za-z]/g, '').length > 3) nameCandidates.push({val: p2, idx: i, fromSplit: true});
-                                continue;
-                            }
-                        }
-                        rekCandidates.push({val: rMatch[0], idx: i});
-                    }
-                } else {
-                    if (up.replace(/[^A-Z]/g, '').length > 3) {
-                        nameCandidates.push({val: line, idx: i});
-                    }
-                }
-            }
-
-            if (rekCandidates.length > 0) {
-                let validReks = rekCandidates.filter(c => destIdx === -1 || c.idx >= destIdx);
-                rek = (validReks.length > 0 ? validReks[0].val : rekCandidates[rekCandidates.length-1].val);
-            }
-
-            if (nameCandidates.length > 0) {
-                const badNames = /BANK|MANDIRI|BRI|BCA|BNI|BSI|OVO|DANA|GOPAY|LINKAJA|SHOPEE|MEGA|CIMB|PERMATA|DANAMON|BJB|DKI|JAGO|NEO|SEABANK|REKENING|TUJUAN|PENERIMA|TRANSFER|PEMBAYARAN|JENIS|KETERANGAN|CATATAN|ALIAS|INFORMASI/i;
-                let validNames = nameCandidates.filter(c => !c.val.match(badNames) && c.val.replace(/[^A-Za-z]/g, '').length >= 3);
-                
-                if (destIdx !== -1) {
-                    let afterDest = validNames.filter(c => c.idx >= destIdx);
-                    if (afterDest.length > 0) {
-                        nama = afterDest[0].val;
-                        let splitName = validNames.find(c => c.fromSplit && c.idx === (rekCandidates.find(r=>r.val===rek) || {}).idx);
-                        if (splitName) nama = splitName.val;
-                    }
-                } else {
-                    if (rek) {
-                        let targetRekIdx = (rekCandidates.find(r => r.val === rek) || {}).idx || -1;
-                        if (targetRekIdx !== -1) {
-                            let closest = validNames.find(c => c.idx === targetRekIdx - 1 || c.idx === targetRekIdx + 1 || c.idx === targetRekIdx);
-                            if (closest) nama = closest.val;
-                            else nama = validNames[validNames.length-1].val;
-                        }
-                    } else {
-                        nama = validNames[0]?.val || "";
-                    }
-                }
-            }
-            
-            if (nama.toUpperCase().includes('DNID')) nama = nama.replace(/.*DNID[\s\:]*/i, '');
-            nama = (nama || '').replace(/^(TUJUAN|PENERIMA|KEPADA)[\s\:\=]+/i, '');
-            nama = (nama || '').replace(/^[^a-zA-Z0-9]+/, '');
-
-            for (let b of BANK_KEYWORDS) {
-                if (b.keys.some(k => combinedUpper.includes(k))) { bank = b.id; break; }
-            }
-
-            setElText('r-bank', bank || "BANK LAIN");
-            setElText('r-rek', rek ? rek.replace(/\*/g, ' * ') : "0000000000");
-            setElText('r-nama', (nama || "NAMA PELANGGAN").substring(0, 40).toUpperCase());
-        }
-
-        // ALGORITMA PARSER OFFLINE - TOKEN PLN
-        function parseTokenOCROffline(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const combinedText = text.replace(/\n/g, ' ');
-
-            updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam');
-
-            const meterMatch = combinedText.match(/(\d{11,12})/);
-            if (meterMatch) setElText('t-meter', meterMatch[1]);
-
-            let namaToken = "NAMA PELANGGAN";
-            for (let i = 0; i < lines.length; i++) {
-                let lineUpper = lines[i].toUpperCase();
-                if (lineUpper.includes('NAMA') && !lineUpper.includes('BANK')) {
-                    let cleanName = lineUpper.replace(/.*NAMA(?: PELANGGAN)?[\s\:\=]+/i, '').trim();
-                    if (cleanName && cleanName.length > 2 && !cleanName.match(/METER|TARIF|DAYA|KWH/i)) {
-                        namaToken = cleanName;
-                    } else if (lines[i+1] && !lines[i+1].match(/METER|TARIF|TRF|DAYA|R1|KWH|RP|TOTAL/i)) {
-                        namaToken = lines[i+1].trim();
-                    }
-                    break;
-                }
-            }
-            setElText('t-nama', namaToken.substring(0, 35)); 
-
-            const rpMatches = [...combinedText.matchAll(/Rp\.?\s*([\d\.,]+)/gi)];
-            if (rpMatches.length > 0 && rpMatches[0][1]) {
-                setElText('t-nom', formatRupiahStr(parseInt(rpMatches[0][1].replace(/[^0-9]/g, ''))));
-            }
-
-            const tokenMatch = combinedText.replace(/[\s\-]/g, '').match(/(\d{20})/);
-            if (tokenMatch) {
-                const tk = tokenMatch[1];
-                if(getEl('t-token')) getEl('t-token').innerHTML = `${tk.slice(0,4)} ${tk.slice(4,8)} ${tk.slice(8,12)}<br>${tk.slice(12,16)} ${tk.slice(16,20)}`;
-            }
-
-            const dayaMatch = combinedText.match(/([A-Z0-9]+\/\s*\d+[\.,]?\d*\s*VA)/i);
-            if (dayaMatch) setElText('t-daya', dayaMatch[1]);
-
-            const kwhMatch = combinedText.match(/([\d\.,]+)\s*kWh/i);
-            if (kwhMatch) setElText('t-kwh', kwhMatch[1] + " kWh");
-
-            const snMatch = combinedText.match(/(?:SN|Ref)[\s\:\-]*([A-Z0-9]{10,35})/i);
-            if (snMatch && snMatch[1]) setElText('t-sn', snMatch[1]);
-
-            calculateTotal();
-        }
-
-        // --- FUNGSI BANTUAN ---
-        function clearZeroOnFocus(e) { if (parseRupiahStr(e.target.innerText) === 0) e.target.innerText = ''; }
-        function parseRupiahStr(text) { let numStr = (text||'').toString().replace(/[^0-9]/g, ''); return numStr ? parseInt(numStr, 10) : 0; }
-        function formatRupiahStr(num) { return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-        function calculateTotal() {
-            let prefix = state.currentType === 'Token' ? 't' : 'r';
-            let nom = parseRupiahStr(getElText(`${prefix}-nom`)); 
-            let adm = parseRupiahStr(getElText(`${prefix}-adm`));
-            setElText(`${prefix}-tot`, formatRupiahStr(nom + adm));
-        }
-        function formatRupiahOnBlur(e) { e.target.innerText = formatRupiahStr(parseRupiahStr(e.target.innerText)); calculateTotal(); }
-        
-        function updateTime() {
-            if(state.currentType === 'Token') { updateTimeOnlyDate('t-tgl'); updateTimeOnlyTime('t-jam'); } 
-            else { updateTimeOnlyDate('r-tgl'); updateTimeOnlyTime('r-jam'); }
-        }
-        function updateTimeOnlyDate(id) { setElText(id, new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '-')); }
-        function updateTimeOnlyTime(id) { setElText(id, new Date().toLocaleTimeString('id-ID', {hour12: false})); }
-
-        // --- NAVIGASI ---
-        function switchPage(pageId) {
-            ['home', 'preview', 'printer', 'settings'].forEach(id => {
-                getEl(`page-${id}`).classList.toggle('hidden', id !== pageId);
-            });
-            getEl('bottom-nav').style.display = (pageId === 'preview') ? 'none' : 'block';
-
-            ['home', 'printer', 'settings'].forEach(id => {
-                const btn = getEl(`nav-${id}`);
-                if (!btn) return;
-                const iconBox = btn.querySelector('.nav-icon-box');
-                const isMatch = (id === pageId);
-                btn.className = `flex flex-col items-center gap-1 outline-none transition-all ${isMatch ? 'text-indigo-600' : 'text-gray-400'}`;
-                if (iconBox) iconBox.className = `nav-icon-box p-2 rounded-2xl transition-all ${isMatch ? 'bg-indigo-50' : ''}`;
-            });
-
-            if (pageId === 'preview') {
-                getEl('template-transfer').classList.toggle('hidden', state.currentType !== 'Transfer');
-                getEl('template-token').classList.toggle('hidden', state.currentType !== 'Token');
-                const btnCetak = getEl('btn-main-print');
-                if (state.currentType === 'Token') {
-                    btnCetak.className = "w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9900] text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95";
-                } else {
-                    btnCetak.className = "w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95";
-                }
-            }
-            window.scrollTo(0,0);
-        }
-
-        function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
-
-        /**
-         * BLUETOOTH SCAN & CONNECT 
-         */
-        async function startBluetoothScan() {
-            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
-
-            try {
-                state.btDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-                });
-
-                state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-                toggleLoader(true, "Menyambungkan...");
-                const server = await state.btDevice.gatt.connect();
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                const characteristics = await service.getCharacteristics();
-                
-                state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-
-                if (state.printerChar) {
-                    state.isConnected = true;
-                    updatePrinterUI(true, state.btDevice.name || "Printer Thermal");
-                    requestWakeLock();
-                    alert("Printer Berhasil Terhubung!");
-                } else { throw new Error("Layanan print tidak ditemukan."); }
-            } catch (e) { 
-                updatePrinterUI(false);
-                if(e.name !== 'NotFoundError') alert("Koneksi Gagal: " + e.message); 
-            } finally { toggleLoader(false); }
-        }
-
-        function onDisconnected() {
-            console.log("Bluetooth diputus oleh OS.");
-            state.isConnected = false;
-            state.printerChar = null;
-            updatePrinterUI(false);
-            releaseWakeLock(); 
-        }
-
-        function updatePrinterUI(connected, name = "Printer") {
-            const statusColor = connected ? 'green' : 'red';
-            const pulse = connected ? ' animate-pulse' : '';
-            const statusText = connected ? 'Tersambung' : 'Terputus';
-            const homeTextStr = connected ? 'Printer Ready' : 'Offline';
-
-            const dot = getEl('printer-dot');
-            if (dot) dot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
-            
-            const stat = getEl('printer-status');
-            if (stat) { stat.innerText = statusText; stat.className = `text-xs font-bold text-${statusColor}-500`; }
-            
-            setElText('printer-name-display', name);
-
-            const homeChip = getEl('home-bt-chip');
-            if (homeChip) homeChip.className = `flex items-center gap-2 bg-${statusColor}-50 px-3 py-1.5 rounded-full border border-${statusColor}-100`;
-
-            const homeDot = getEl('home-bt-dot');
-            if (homeDot) homeDot.className = `w-2 h-2 bg-${statusColor}-500 rounded-full${pulse}`;
-
-            const homeText = getEl('home-bt-text');
-            if (homeText) { homeText.innerText = homeTextStr; homeText.className = `text-[9px] font-bold text-${statusColor}-600 uppercase`; }
-        }
-
-        // FUNGSI BANTUAN: Membungkus text ESC/POS
-        function wrapText(label, value, maxChars = 32) {
-            let indent = label.length;
-            let maxV = maxChars - indent;
-            if(!value) return label + "\n";
-            
-            let words = value.toString().split(" ");
-            let res = "";
-            let curr = label;
-            let cLen = 0;
-            
-            for(let w of words) {
-                if(cLen + w.length + (cLen > 0 ? 1 : 0) > maxV) {
-                    res += curr + "\n";
-                    curr = " ".repeat(indent) + w;
-                    cLen = w.length;
-                } else {
-                    curr += (cLen > 0 ? " " : "") + w;
-                    cLen += w.length + (cLen > 0 ? 1 : 0);
-                }
-            }
-            res += curr + "\n";
-            return res;
-        }
-
-        // FUNGSI BANTUAN: Format rata kanan (Right Align) sesuai ukuran printer
-        function formatLineAlignRight(label, value, maxChars = 32) {
-            let leftStr = label.toString();
-            let rightStr = value.toString();
-            let spacesCount = maxChars - leftStr.length - rightStr.length;
-            if (spacesCount < 1) spacesCount = 1; 
-            return leftStr + " ".repeat(spacesCount) + rightStr;
-        }
-
-        /**
-         * CETAK ENGINE LANGSUNG KE BLUETOOTH PRINTER
-         */
-        async function executePrint() {
-            if (!state.isConnected || !state.printerChar) {
-                alert("Printer terputus! Silakan sambungkan ulang di menu Printer.");
-                switchPage('printer');
-                return;
-            }
-
-            toggleLoader(true, "Mencetak...");
-            
-            const ESC = "\x1b"; const GS = "\x1d";
-            const INIT = ESC + "@";
-            const ALIGN_CENTER = ESC + "a" + "\x01";
-            const ALIGN_LEFT = ESC + "a" + "\x00";
-            const BOLD_ON = ESC + "E" + "\x01"; 
-            const FONT_LARGE = GS + "!" + "\x11"; 
-            const FONT_NORMAL = GS + "!" + "\x00";
-
-            let raw = INIT + BOLD_ON; 
-
-            if (state.currentType === 'Token') {
-                raw += ALIGN_CENTER + FONT_LARGE + getElText('t-toko') + FONT_NORMAL + "\n\n";
-                raw += getElText('t-alamat') + "\n\n";
-                raw += "PEMBELIAN TOKEN PLN\n";
-                raw += getElText('t-tgl') + " " + getElText('t-jam') + "\n";
-                raw += "--------------------------------\n";
-                raw += ALIGN_LEFT;
-                raw += wrapText("METER : ", getElText('t-meter'));
-                raw += wrapText("NAMA  : ", getElText('t-nama'));
-                raw += wrapText("TRF/DY: ", getElText('t-daya'));
-                raw += wrapText("KWH   : ", getElText('t-kwh'));
-                raw += "--------------------------------\n";
-                raw += ALIGN_CENTER + FONT_LARGE;
-                raw += getElText('t-token').replace(/\n/g, ' ') + "\n";
-                raw += FONT_NORMAL;
-                raw += "--------------------------------\n";
-                raw += ALIGN_LEFT;
-                raw += formatLineAlignRight("NOMINAL", getElText('t-nom')) + "\n";
-                raw += formatLineAlignRight("ADMIN", getElText('t-adm')) + "\n";
-                raw += "--------------------------------\n";
-                raw += formatLineAlignRight("TOTAL", getElText('t-tot')) + "\n\n";
-                raw += wrapText("SN: ", getElText('t-sn'));
-                raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
-                raw += "TERIMA KASIH\n\n\n\n\n";
-            } else {
-                raw += ALIGN_CENTER + FONT_LARGE + getElText('r-toko') + FONT_NORMAL + "\n\n";
-                raw += getElText('r-alamat') + "\n\n";
-                raw += "================================\n";
-                raw += ALIGN_LEFT + "TGL: " + getElText('r-tgl') + "\n";
-                raw += "JAM: " + getElText('r-jam') + "\n";
-                raw += "================================\n";
-                raw += ALIGN_CENTER + "KODE REFERENSI:\n";
-                raw += getElText('r-ref') + "\n";
-                raw += "--------------------------------\n";
-                raw += ALIGN_LEFT + "DATA PENERIMA:\n";
-                raw += wrapText("BANK    : ", getElText('r-bank'));
-                raw += wrapText("REK     : ", getElText('r-rek'));
-                raw += wrapText("NAMA    : ", getElText('r-nama'));
-                raw += "--------------------------------\n";
-                raw += formatLineAlignRight("NOMINAL", getElText('r-nom')) + "\n";
-                raw += formatLineAlignRight("ADMIN", getElText('r-adm')) + "\n";
-                raw += formatLineAlignRight("TOTAL", getElText('r-tot')) + "\n";
-                raw += "================================\n";
-                raw += ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
-                raw += "TERIMA KASIH\n\n\n\n\n";
-            }
-
-            try {
-                const encoder = new TextEncoder();
-                const dataToPrint = encoder.encode(raw);
-                const CHUNK_SIZE = 100; 
-
-                for (let i = 0; i < dataToPrint.length; i += CHUNK_SIZE) {
-                    const chunk = dataToPrint.slice(i, i + CHUNK_SIZE);
-                    await state.printerChar.writeValue(chunk);
-                    await new Promise(resolve => setTimeout(resolve, 50)); 
-                }
-
-                saveLocalHistory();
-                
-                const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
-                if (typeof google !== 'undefined' || API_URL !== "") {
-                    fetch(API_URL, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ nama: namaUtama, tipe: state.currentType }) 
-                    }).catch(e => console.log(e));
-                }
-
-                toggleLoader(false);
-                fetchHistory();
-                switchPage('home');
-            } catch(e) {
-                toggleLoader(false);
-                alert("Gagal mencetak: " + e.message);
-                if(state.btDevice && state.btDevice.gatt.connected === false) {
-                    onDisconnected();
-                }
-            }
-        }
-
-        // --- SISTEM LOCAL DATABASE (HISTORY) ---
-        function saveLocalHistory() {
-            const item = {
-                id: Date.now().toString(),
-                tipe: state.currentType,
-                r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'),
-                r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'),
-                r_nom: getElText('r-nom'), r_adm: getElText('r-adm'), r_tot: getElText('r-tot'),
-                t_toko: getElText('t-toko'), t_alamat: getElText('t-alamat'), t_tgl: getElText('t-tgl'), t_jam: getElText('t-jam'),
-                t_meter: getElText('t-meter'), t_nama: getElText('t-nama'), t_daya: getElText('t-daya'), t_kwh: getElText('t-kwh'),
-                t_token: getEl('t-token') ? getEl('t-token').innerHTML : '',
-                t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
-            };
-
-            let history = db.get();
-            history.unshift(item);
-            if(history.length > 50) history.pop(); 
-            db.set(history);
-        }
-
-        function deleteHistory(id, event) {
-            event.stopPropagation();
-            if(confirm("Apakah Anda yakin ingin menghapus riwayat cetak ini?")) {
-                db.set(db.get().filter(h => h.id !== id));
-                fetchHistory(); 
-            }
-        }
-
-        function loadReceipt(id) {
-            const item = db.get().find(h => h.id === id);
-            if(item) {
-                state.currentType = item.tipe || 'Transfer';
+                // DAFTAR MODEL YANG AKAN DICOBA (Semuanya versi v1beta standar)
+                const modelsToTry = [
+                    "gemini-1.5-flash",
+                    "gemini-1.5-flash-latest",
+                    "gemini-1.5-pro"
+                ];
+
+                let promptText = "";
+
+                // PROMPT ENGINEERING SUPER KETAT MENGGANTIKAN RESPON-SCHEMA
                 if (state.currentType === 'Transfer') {
-                    setElText('r-toko', item.r_toko); setElText('r-alamat', item.r_alamat); setElText('r-tgl', item.r_tgl); setElText('r-jam', item.r_jam);
-                    setElText('r-ref', item.r_ref); setElText('r-bank', item.r_bank); setElText('r-rek', item.r_rek); setElText('r-nama', item.r_nama);
-                    setElText('r-nom', item.r_nom); setElText('r-adm', item.r_adm); setElText('r-tot', item.r_tot);
-                } else {
-                    setElText('t-toko', item.t_toko); setElText('t-alamat', item.t_alamat); setElText('t-tgl', item.t_tgl); setElText('t-jam', item.t_jam);
-                    setElText('t-meter', item.t_meter); setElText('t-nama', item.t_nama); setElText('t-daya', item.t_daya); setElText('t-kwh', item.t_kwh);
-                    if(getEl('t-token')) getEl('t-token').innerHTML = item.t_token;
-                    setElText('t-nom', item.t_nom); setElText('t-adm', item.t_adm); setElText('t-tot', item.t_tot); setElText('t-sn', item.t_sn);
-                }
-                switchPage('preview');
-            }
-        }
-
-        function fetchHistory() {
-            if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
-            try {
-                const history = db.get();
-                const list = getEl('history-list');
-                
-                if (history.length === 0) {
-                    list.innerHTML = '<p class="text-center text-gray-400 text-[10px] mt-10">Belum ada riwayat cetak di perangkat ini</p>';
-                    return;
-                }
-
-                list.innerHTML = history.map(item => {
-                    const nama = item.tipe === 'Token' ? item.t_nama : item.r_nama;
-                    const tgl = item.tipe === 'Token' ? item.t_tgl : item.r_tgl;
-                    const jam = item.tipe === 'Token' ? item.t_jam : item.r_jam;
-                    const tot = item.tipe === 'Token' ? item.t_tot : item.r_tot;
-                    const chipColor = item.tipe === 'Token' ? 'bg-orange-50 text-orange-500' : 'bg-indigo-50 text-indigo-500';
-
-                    return `
-                    <div class="bg-white rounded-3xl p-4 border border-gray-100 card-shadow flex justify-between items-center transition-all hover:bg-gray-50">
-                        <div onclick="loadReceipt('${item.id}')" class="flex-1 cursor-pointer pr-2">
-                            <h4 class="font-bold text-gray-800 text-sm uppercase truncate w-32">${nama || 'NAMA PELANGGAN'}</h4>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${tgl} - ${jam}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div onclick="loadReceipt('${item.id}')" class="flex flex-col items-end gap-1 cursor-pointer">
-                                <div class="px-2 py-0.5 ${chipColor} rounded-md text-[8px] font-black uppercase">${item.tipe}</div>
-                                <span class="text-[11px] font-bold text-gray-600">${tot || 'Rp 0'}</span>
-                            </div>
-                            <div class="h-8 w-px bg-gray-100"></div>
-                            <button onclick="deleteHistory('${item.id}', event)" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white active:scale-90 transition-all shadow-sm">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                        </div>
-                    </div>`
-                }).join('');
-            } catch(e) { console.log("Error:", e); }
-        }
-
-        function toggleLoader(s, t) {
-            getEl('loader-text').innerText = t;
-            getEl('loader').style.display = s ? 'flex' : 'none';
-        }
-    </script>
-</body>
-</html>
+                    promptText = "Ekstrak data dari gambar struk transfer bank ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown (tanpa
