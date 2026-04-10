@@ -232,7 +232,7 @@
             </button>
 
             <div class="pt-6 text-center">
-                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v19.0<br>Smart Model Auto-Detector</p>
+                <p class="text-[10px] text-gray-400 italic uppercase tracking-widest opacity-60 font-bold">ZettBOT Core v19.1<br>High Demand Rescue & Date Fix</p>
             </div>
         </div>
     </div>
@@ -365,6 +365,29 @@
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
 
+        // --- KOREKSI TANGGAL & WAKTU (JIKA AI GAGAL / KOSONG) ---
+        function getValidDate(val) {
+            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-') {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                return `${dd}-${mm}-${yyyy}`;
+            }
+            return val.trim();
+        }
+
+        function getValidTime(val) {
+            if (!val || typeof val !== 'string' || val.trim() === '' || val.toLowerCase().includes('tidak') || val.includes('null') || val === '-') {
+                const today = new Date();
+                const hh = String(today.getHours()).padStart(2, '0');
+                const mn = String(today.getMinutes()).padStart(2, '0');
+                const ss = String(today.getSeconds()).padStart(2, '0');
+                return `${hh}:${mn}:${ss}`;
+            }
+            return val.trim();
+        }
+
         // --- GOOGLE GEMINI VISION PURE API ENGINE ---
         async function processImageOCR(file) {
             const savedSettings = localStorage.getItem('app_settings') ? JSON.parse(localStorage.getItem('app_settings')) : {};
@@ -417,10 +440,9 @@
                     }]
                 };
 
-                // --- FITUR BARU: AUTO-DETECT MODELS (V19.0) ---
-                // Mencegah Error 404 dengan bertanya langsung ke Google model apa yang aktif di API Key ini
+                // --- AUTO-DETECT MODELS (Mencegah 404) ---
                 getEl('loader-subtext').innerText = "Mendeteksi model AI Google yang tersedia...";
-                let modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]; // Default aman
+                let modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]; 
                 
                 try {
                     const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
@@ -434,7 +456,6 @@
                             
                             if (validModels.length > 0) {
                                 modelsToTry = [];
-                                // Prioritaskan model flash karena cepat
                                 const priority = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
                                 for(let p of priority) { if(validModels.includes(p)) modelsToTry.push(p); }
                                 for(let m of validModels) { if(!modelsToTry.includes(m)) modelsToTry.push(m); }
@@ -442,51 +463,87 @@
                         }
                     } else if (listRes.status === 403) {
                         const errText = await listRes.text();
-                        throw new Error(`API Key Ditolak (403).\nPastikan API Key benar dan memiliki izin Generative Language API.\n\nDetail: ${errText}`);
+                        throw new Error(`API Key Ditolak (403).\nPastikan API Key benar dan memiliki izin.\n\nDetail: ${errText}`);
                     } else if (listRes.status === 400) {
                         throw new Error(`API Key Tidak Valid (400).\nPastikan tidak ada salah ketik/spasi.`);
                     }
                 } catch(e) {
                     if(e.message.includes("Ditolak") || e.message.includes("Tidak Valid")) throw e;
-                    console.log("Auto-detect model gagal, menggunakan default.", e);
+                    console.log("Auto-detect gagal, menggunakan default.", e);
                 }
 
                 getEl('loader-subtext').innerText = "Gemini AI sedang mengekstrak data struk...";
                 let result = null;
+                let success = false;
                 let lastErrorMsg = "";
 
-                // Eksekusi model yang dijamin tersedia
+                // Eksekusi model dengan sistem antre/backoff (Anti Error 503)
                 for (let model of modelsToTry) {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) {
-                        let errText = "";
-                        try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
-                        lastErrorMsg = errText || response.statusText;
-                        
-                        if (response.status === 404 || response.status === 400) {
-                            continue; // Lanjut coba model berikutnya jika ini bermasalah
+                    let retries = 3;
+                    let delays = [1500, 3000, 5000]; // Waktu antre (1.5 detik, 3 detik, 5 detik)
+
+                    for(let i = 0; i <= retries; i++) {
+                        try {
+                            if (i > 0) {
+                                getEl('loader-subtext').innerText = `Server sibuk. Mengantre ulang (${i}/${retries})...`;
+                            }
+
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            if (!response.ok) {
+                                let errText = "";
+                                try { const e = await response.json(); errText = e.error?.message || JSON.stringify(e); } catch(e){}
+                                lastErrorMsg = errText || response.statusText;
+                                
+                                // Jika Error Validasi API Key (Fatal)
+                                if (response.status === 400 && lastErrorMsg.toLowerCase().includes("not valid")) {
+                                    throw new Error("FATAL_KEY");
+                                }
+                                if (response.status === 403) {
+                                    throw new Error("FATAL_FORBIDDEN");
+                                }
+                                // Jika Error Model Tidak Ditemukan (Ganti Model)
+                                if (response.status === 404 || response.status === 400) {
+                                    break; // Berhenti retry, paksa pindah ke iterasi model berikutnya
+                                }
+                                
+                                // JIKA ERROR 503 (SERVER OVERLOAD) ATAU 429 (RATE LIMIT), ANTRE & ULANGI!
+                                throw new Error(`RETRY_NETWORK: ${response.status} - ${lastErrorMsg}`);
+                            }
+                            
+                            result = await response.json();
+                            success = true;
+                            break; // Berhasil! Keluar dari loop retry
+                            
+                        } catch(error) {
+                            if (error.message === "FATAL_KEY") throw new Error(`API Key Tidak Valid (Error 400).\nPastikan tidak ada salah ketik/spasi.`);
+                            if (error.message === "FATAL_FORBIDDEN") throw new Error(`Akses API Ditolak (Error 403).\nAPI Key Anda mungkin dibatasi.`);
+                            
+                            // Jika ini error jaringan/503 dan masih ada sisa nyawa, maka tunggu lalu ulangi
+                            if (error.message.startsWith("RETRY_NETWORK")) {
+                                if (i < retries) {
+                                    await new Promise(r => setTimeout(r, delays[i]));
+                                    continue;
+                                }
+                            }
+                            
+                            // Jika mentok retries, catat error terakhir dan pindah ke model lain
+                            lastErrorMsg = error.message;
+                            break; 
                         }
-                        
-                        if (response.status === 403) {
-                            throw new Error(`Akses API Ditolak (Error 403).\nAPI Key salah, belum diaktifkan, atau tidak memiliki izin.\n\nDetail: ${lastErrorMsg}`);
-                        }
-                        
-                        throw new Error(`Google API Error (${response.status}):\n${lastErrorMsg}`);
                     }
                     
-                    result = await response.json();
-                    break; // Berhasil! Keluar dari loop.
+                    if (success) break; // Berhasil! Keluar dari loop model
                 }
 
-                if (!result) {
-                    throw new Error(`Semua model AI gagal diakses.\n\nHal ini biasanya karena akun Google Anda belum menyetujui persyaratan layanan Google AI Studio, atau API Key belum aktif sepenuhnya.\n\nSaran:\n1. Buka aistudio.google.com\n2. Setujui Syarat & Ketentuan\n3. Buat API Key baru dari akun Google yang fresh.\n\nError Terakhir: ${lastErrorMsg}`);
+                if (!success) {
+                    throw new Error(`Semua sistem AI sibuk atau gagal (Error 503/404).\n\nPesan Terakhir:\n${lastErrorMsg}\n\nSilakan coba lagi dalam beberapa menit.`);
                 }
 
                 let textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -499,7 +556,7 @@
                 try {
                     jsonData = JSON.parse(textResponse);
                 } catch(e) {
-                    throw new Error("AI merespons dengan format yang salah. \nTeks AI: " + textResponse);
+                    throw new Error("AI merespons dengan format yang tidak bisa dibaca sistem. \nCoba foto ulang struknya.");
                 }
 
                 if (state.currentType === 'Token') populateTokenFromJSON(jsonData);
@@ -515,10 +572,10 @@
             }
         }
 
-        // --- MAP DATA GEMINI KE UI ---
+        // --- MAP DATA GEMINI KE UI (DENGAN DATE FIX) ---
         function populateTransferFromJSON(data) {
-            setElText('r-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
-            setElText('r-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
+            setElText('r-tgl', getValidDate(data.tanggal));
+            setElText('r-jam', getValidTime(data.waktu));
             setElText('r-ref', data.referensi || "0000000000");
             setElText('r-bank', (data.bank_tujuan || "BANK LAIN").toUpperCase());
             
@@ -532,8 +589,8 @@
         }
 
         function populateTokenFromJSON(data) {
-            setElText('t-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
-            setElText('t-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
+            setElText('t-tgl', getValidDate(data.tanggal));
+            setElText('t-jam', getValidTime(data.waktu));
             setElText('t-meter', data.no_meter || "00000000000");
             setElText('t-nama', (data.nama || "NAMA PELANGGAN").toUpperCase());
             setElText('t-daya', (data.tarif_daya || "R1M/900 VA").toUpperCase());
