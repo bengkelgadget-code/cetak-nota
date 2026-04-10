@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - AI Scanner v27</title>
+    <title>Cetak Nota - AI Scanner v28</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -19,7 +19,7 @@
         .page-container { width: 100%; min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         button:active { transform: scale(0.96); transition: 0.1s; }
-        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; }
+        [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; }
         [contenteditable="true"]:focus { background-color: rgba(79, 70, 229, 0.05); border-bottom: 1px dashed #4F46E5; }
         .neon-red { color: #FF0055 !important; filter: drop-shadow(0 0 5px rgba(255,0,85,0.8)); }
         .neon-blue { color: #00FFFF !important; filter: drop-shadow(0 0 5px rgba(0,255,255,0.8)); }
@@ -27,15 +27,15 @@
 </head>
 <body class="pb-24">
 
-    <!-- MASUKKAN URL WEB APP GAS ANDA DI SINI -->
+    <!-- KONFIGURASI API BACKEND -->
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw1Xli6IPfb4HMfkynJtfV8mCjXjJl_1yrQRkUUdyRtTULh16VbvvpfuVNLOQ-hgAZK/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbywRJNzNKGFP6GPPKdPvexYwG9-Gufc2ftqI32MwjrVA0cMOOEDwsyHwYPxDJbRt1P3/exec";
     </script>
 
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-6"></div>
-        <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Memproses Gambar...</span>
-        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">AI Sedang Menganalisa Struk</div>
+        <span id="loader-text" class="text-xs font-black text-indigo-600 uppercase tracking-widest text-center px-6">Processing...</span>
+        <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menunggu Respons Google AI</div>
     </div>
 
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
@@ -44,8 +44,8 @@
     <div id="page-home" class="page-container max-w-md mx-auto px-5 pt-6">
         <div class="flex justify-between items-center mb-8">
             <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
-                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Cetak Nota</h1>
+                <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
+                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
             </div>
             <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 neon-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -58,21 +58,21 @@
             <button onclick="handleMenuClick('Transfer')" class="w-full relative overflow-hidden gradient-bg rounded-[32px] p-8 text-left shadow-xl shadow-indigo-100">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-1 uppercase tracking-tight">Bukti Transfer</h2>
-                    <p class="text-indigo-100 text-[10px] opacity-80 uppercase font-black tracking-widest">Kirim Uang / Perbankan</p>
+                    <p class="text-indigo-100 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk scan struk bank</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
             </button>
             <button onclick="handleMenuClick('Token')" class="w-full relative overflow-hidden bg-gradient-to-r from-[#FF6B00] to-[#FF9900] rounded-[32px] p-8 text-left shadow-xl shadow-orange-200">
                 <div class="z-10 relative text-white">
                     <h2 class="text-xl font-bold mb-1 uppercase tracking-tight">Token Listrik</h2>
-                    <p class="text-orange-50 text-[10px] opacity-80 uppercase font-black tracking-widest">PLN Prabayar</p>
+                    <p class="text-orange-50 text-[10px] opacity-80 uppercase font-black tracking-widest">Klik untuk scan struk PLN</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white opacity-20 rounded-full"></div>
             </button>
         </div>
 
         <div class="flex justify-between items-center mb-4 px-1">
-            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Terakhir</h3>
+            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Cetak</h3>
             <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase">Refresh</button>
         </div>
         <div id="history-list" class="space-y-3 pb-2 max-h-[300px] overflow-y-auto no-scrollbar"></div>
@@ -84,23 +84,22 @@
             <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <h2 class="text-xl font-black text-gray-800 tracking-tight uppercase">Edit Data Nota</h2>
+            <h2 class="text-xl font-black text-gray-800 tracking-tight uppercase">Pratinjau</h2>
         </div>
-        <div class="flex-1 overflow-y-auto px-8 py-5 bg-slate-100/50">
+        <div class="flex-1 overflow-y-auto px-10 py-5 bg-slate-100/50">
             <div class="receipt-paper p-8 text-center text-[11px] receipt-font leading-relaxed max-w-xs mx-auto" id="printable-receipt">
-                <!-- Data akan diisi otomatis -->
                 <div id="template-transfer" class="hidden">
                     <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA TOKO</div>
                     <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT LENGKAP</div>
-                    <div class="py-1 text-gray-300">------------------------------</div>
+                    <div class="py-1 text-gray-300">==============================</div>
                     <div class="flex justify-between text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
                     <div class="flex justify-between text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>BANK</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
                     <div class="flex justify-between text-left mb-3"><span>NAMA</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
-                    <div class="flex justify-between mb-2"><span>BIAYA ADM</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
+                    <div class="flex justify-between mb-1 font-bold"><span>NOMINAL</span><span contenteditable="true" id="r-nom">Rp 0</span></div>
+                    <div class="flex justify-between mb-2"><span>ADMIN</span><span contenteditable="true" id="r-adm">Rp 0</span></div>
                     <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span contenteditable="true" id="r-tot">Rp 0</span></div>
                     <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berhasil **</div>
                 </div>
@@ -112,11 +111,11 @@
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div class="flex justify-between text-left mb-1"><span>ID PEL</span><span>: <span contenteditable="true" id="t-meter">---</span></span></div>
                     <div class="flex justify-between text-left mb-1"><span>NAMA</span><span>: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
-                    <div class="flex justify-between text-left mb-2"><span>JML KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
+                    <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
                     <div contenteditable="true" id="t-token" class="text-[15px] my-4 tracking-[0.12em] font-black uppercase leading-tight">XXXX XXXX XXXX XXXX</div>
                     <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between text-[12px] font-black uppercase"><span>Total Bayar</span><span contenteditable="true" id="t-tot">Rp 0</span></div>
+                    <div class="flex justify-between text-[12px] font-black uppercase"><span>TOTAL</span><span contenteditable="true" id="t-tot">Rp 0</span></div>
                     <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN: <span contenteditable="true" id="t-sn">---</span></div>
                     <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berhasil **</div>
                 </div>
@@ -132,7 +131,7 @@
         <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Pengaturan</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4">
             <div class="space-y-1">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">Informasi Toko</label>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">Data Toko</label>
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px]" contenteditable="true" id="setting-toko" data-placeholder="Nama Toko"></div>
                 <div class="bg-gray-50 p-4 rounded-2xl text-sm font-bold text-gray-700 text-center min-h-[52px] mt-2" contenteditable="true" id="setting-alamat" data-placeholder="Alamat Toko"></div>
             </div>
@@ -142,19 +141,19 @@
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center px-1">
                     <span>Ganti API Key Gemini</span>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 font-bold">Buat Baru</a>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 font-bold">Dapatkan Kunci</a>
                 </label>
-                <!-- KOLOM INPUT API KEY -->
-                <input type="password" id="setting-apikey" placeholder="Tempel API Key baru di sini" class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
-                <p class="text-[8px] text-gray-400 px-2 italic text-center">Kunci manual akan diutamakan. Kosongkan jika ingin memakai kunci Cloud.</p>
+                <input type="text" id="setting-apikey" placeholder="Masukkan Kunci API Baru" class="w-full bg-gray-50 p-4 rounded-2xl text-xs font-mono font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-200 border-none text-center">
+                <p class="text-[8px] text-gray-400 px-2 italic text-center text-red-400">Jika notif 'Expired/Quota Exceeded' muncul, tempel kunci baru di sini.</p>
             </div>
             
-            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan & Sync</button>
+            <button onclick="saveSettings(this)" class="w-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-xl mt-6 active:scale-95 transition-all">Simpan & Sinkronkan</button>
+            
             <div class="pt-4 text-center">
                 <button onclick="syncCloudForce()" class="text-indigo-600 text-[10px] font-black px-4 py-2 bg-indigo-50 rounded-lg uppercase tracking-widest border border-indigo-100">Force Sync Cloud</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40">ZettBOT Core v27.0 - Stealth Mode</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v28.0 - Pure Backend Drive</p>
     </div>
 
     <!-- BOTTOM NAV -->
@@ -165,13 +164,13 @@
                     <div class="nav-icon-box p-3 rounded-2xl transition-all bg-indigo-50 group-active:scale-90">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     </div>
-                    <span class="text-[9px] font-black uppercase tracking-tighter">Beranda</span>
+                    <span class="text-[9px] font-black uppercase">Home</span>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </div>
-                    <span class="text-[9px] font-black uppercase tracking-tighter">Setelan</span>
+                    <span class="text-[9px] font-black uppercase">Setelan</span>
                 </button>
             </div>
         </div>
@@ -182,7 +181,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('_usr_key_v27') || ""
+            manualKey: localStorage.getItem('_stable_man_key') || ""
         };
 
         const getEl = id => document.getElementById(id);
@@ -190,8 +189,9 @@
         const setElText = (id, v) => { if(getEl(id)) getEl(id).innerText = v; };
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Bersihkan sisa kunci lama yang hancur di memori HP
-            ['_man_key_v25', '_man_key_v26', 'manual_api_key_v26', 'man_key_v26_1', '_kx1'].forEach(k => localStorage.removeItem(k));
+            // FORCE CLEAN: Hapus sampah kunci lama yang rusak dari memori HP
+            const trash = ['_usr_key_v27','_man_key_v25','_man_key_v26','manual_api_key','man_key_v26_1','_kx1','_RA1','_P1','_S1'];
+            trash.forEach(k => localStorage.removeItem(k));
             
             loadSettings(); 
             syncCloud(); 
@@ -207,23 +207,22 @@
 
         // AMBIL KUNCI DARI GOOGLE APPS SCRIPT (GAS)
         async function syncCloud() {
-            if (!API_URL || API_URL.includes("exec") === false) return;
+            if (!API_URL || !API_URL.includes("exec")) return;
             try {
                 const res = await fetch(API_URL + "?action=getKey");
                 const data = await res.json();
                 if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
-                    console.log("Cloud key sync success.");
                 }
-            } catch(e) { console.log("Cloud offline."); }
+            } catch(e) { console.log("Cloud sync delayed."); }
         }
 
         async function syncCloudForce() {
             toggleLoader(true, "Synchronizing...");
             await syncCloud();
             toggleLoader(false);
-            if(state.cloudKey) alert("Berhasil! Kunci Cloud aktif."); 
-            else alert("Gagal. Periksa URL GAS Anda.");
+            if(state.cloudKey) alert("Selesai! Kunci Cloud Berhasil Dimuat."); 
+            else alert("Gagal mengambil kunci Cloud. Cek URL GAS Anda.");
         }
 
         function saveSettings(btn) {
@@ -231,26 +230,26 @@
             const alamat = getElText('setting-alamat');
             const mKey = getEl('setting-apikey').value.trim();
             
-            localStorage.setItem('app_set_v27', JSON.stringify({ toko, alamat })); 
+            localStorage.setItem('app_stable_set_v28', JSON.stringify({ toko, alamat })); 
             
             if (mKey) {
                 state.manualKey = mKey;
-                localStorage.setItem('_usr_key_v27', mKey);
-                // Sinkronkan ke GAS server agar HP lain ikut update (Optional)
+                localStorage.setItem('_stable_man_key', mKey);
+                // Push ke server agar HP lain ikut update
                 if (API_URL) fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateKey', key: mKey }) }).catch(e=>console.log(e));
             } else {
                 state.manualKey = "";
-                localStorage.removeItem('_usr_key_v27');
+                localStorage.removeItem('_stable_man_key');
             }
 
             const ori = btn.innerText;
-            btn.innerText = "TERSAMPAN!";
+            btn.innerText = "DONE!";
             btn.classList.replace('bg-indigo-600', 'bg-green-500');
             setTimeout(() => { btn.innerText = ori; btn.classList.replace('bg-green-500', 'bg-indigo-600'); }, 1500);
         }
 
         function loadSettings() {
-            const saved = localStorage.getItem('app_set_v27');
+            const saved = localStorage.getItem('app_stable_set_v28');
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
@@ -261,17 +260,17 @@
             if (state.manualKey) getEl('setting-apikey').value = state.manualKey;
         }
 
-        // --- FUNGSI UTAMA SCANNER (GEMINI 2.0 STABLE) ---
+        // --- FUNGSI SCANNER (GEMINI 2.0 STABLE) ---
         async function processImageOCR(file) {
-            // Prioritas: Manual Key HP > Cloud Key GAS
+            // Prioritas Utama: Manual Key > Cloud Key GAS
             const key = state.manualKey || state.cloudKey;
 
             if (!key || key.length < 20) {
-                alert("API KEY TIDAK DITEMUKAN!\nSilakan masukkan kunci di menu Setelan atau tekan Force Sync Cloud.");
+                alert("API KEY TIDAK DITEMUKAN!\nIsi kunci di menu Setelan atau tekan Force Sync.");
                 switchPage('settings'); return;
             }
 
-            toggleLoader(true, "Membaca Gambar...");
+            toggleLoader(true, "MEMPROSES GAMBAR...");
             try {
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -285,17 +284,17 @@
                             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                             resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
                         };
-                        img.onerror = () => reject(new Error("File gambar rusak."));
+                        img.onerror = () => reject(new Error("File rusak"));
                         img.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
                 });
 
                 const prompt = state.currentType === 'Transfer' ? 
-                    "Extract data from bank receipt. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), bank, name, nominal(int), admin(int), total(int)." :
-                    "Extract data from PLN token receipt. JSON ONLY: date(DD-MM-YYYY), time(HH:mm), meter_no, name, kwh, token, total(int), sn.";
+                    "Extract receipt: date(DD-MM-YYYY), time(HH:mm), bank, name, nominal(int), admin(int), total(int). Respond JSON ONLY." :
+                    "Extract PLN receipt: date(DD-MM-YYYY), time(HH:mm), meter_no, name, kwh, token, total(int), sn. Respond JSON ONLY.";
 
-                // MENGGUNAKAN MODEL GENERASI TERBARU (ANTI 404)
+                // MENGGUNAKAN JALUR STABIL v1 TERBARU
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`;
                 const response = await fetch(url, {
                     method: 'POST',
@@ -305,9 +304,9 @@
 
                 const resJson = await response.json();
                 if (!response.ok) {
-                    let msg = resJson.error?.message || "Server Google Sibuk.";
+                    let msg = resJson.error?.message || "Google Busy.";
                     if (msg.toLowerCase().includes("quota") || msg.toLowerCase().includes("expired")) {
-                        throw new Error("Kunci API Habis Kuota atau Mati. Ganti kunci di menu Setelan.");
+                        throw new Error("Kunci API Habis Kuota/Mati. Ganti kunci di menu Setelan.");
                     }
                     throw new Error(msg);
                 }
@@ -322,7 +321,7 @@
                 updateTime();
             } catch(err) {
                 toggleLoader(false);
-                alert("KESALAHAN: " + err.message);
+                alert("GAGAL: " + err.message);
             }
         }
 
@@ -362,12 +361,13 @@
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristics = await service.getCharacteristics();
                 state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-                if (state.printerChar) { state.isConnected = true; updatePrinterUI(true); alert("Printer Terhubung!"); }
+                if (state.printerChar) { state.isConnected = true; updatePrinterUI(true); alert("Printer OK!"); }
             } catch (e) { updatePrinterUI(false); }
         }
         function updatePrinterUI(c) {
             state.isConnected = c;
-            getEl('printer-icon-svg').className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
+            const icon = getEl('printer-icon-svg');
+            if(icon) icon.className = c ? "h-6 w-6 neon-blue" : "h-6 w-6 neon-red";
         }
 
         function switchPage(p) {
@@ -391,29 +391,29 @@
         }
 
         function fetchHistory() {
-            const h = JSON.parse(localStorage.getItem('h_v27') || '[]');
+            const h = JSON.parse(localStorage.getItem('h_v28') || '[]');
             const list = getEl('history-list');
-            if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 font-bold uppercase tracking-widest opacity-30">Belum Ada Transaksi</p>'; return; }
+            if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 font-bold uppercase tracking-widest opacity-30 italic">Belum ada transaksi</p>'; return; }
             list.innerHTML = h.map((item, idx) => `
-                <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-1">
+                <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-2 transition-all active:scale-[0.98]">
                     <div class="flex-1">
                         <h4 class="font-black text-gray-800 text-[10px] uppercase truncate">${item.nama || '---'}</h4>
-                        <p class="text-[8px] text-gray-400 font-bold uppercase">${item.tgl || '---'}</p>
+                        <p class="text-[8px] text-gray-400 font-bold uppercase tracking-tighter">${item.tgl || '---'}</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3">
                         <div class="text-right">
                            <div class="px-2 py-0.5 ${item.tipe==='Token'?'bg-orange-50 text-orange-500':'bg-indigo-50 text-indigo-500'} rounded-md text-[7px] font-black uppercase mb-1">${item.tipe}</div>
-                           <span class="text-[9px] font-black text-gray-600">${item.tot || 'Rp 0'}</span>
+                           <span class="text-[10px] font-black text-gray-600">${item.tot || 'Rp 0'}</span>
                         </div>
-                        <button onclick="delH(${idx})" class="p-2 text-red-300 active:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                        <button onclick="delH(${idx})" class="p-2 bg-red-50 text-red-300 rounded-xl active:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
                 </div>
             `).join('');
         }
 
         function delH(i) {
-            let h = JSON.parse(localStorage.getItem('h_v27') || '[]');
-            h.splice(i, 1); localStorage.setItem('h_v27', JSON.stringify(h));
+            let h = JSON.parse(localStorage.getItem('h_v28') || '[]');
+            h.splice(i, 1); localStorage.setItem('h_v28', JSON.stringify(h));
             fetchHistory();
         }
 
@@ -425,14 +425,14 @@
             if (API_URL) fetch(API_URL, { method: 'POST', body: JSON.stringify({ nama: name, tipe: state.currentType }) }).catch(e=>console.log(e));
 
             setTimeout(() => {
-                let h = JSON.parse(localStorage.getItem('h_v27') || '[]');
+                let h = JSON.parse(localStorage.getItem('h_v28') || '[]');
                 const tgl = state.currentType === 'Token' ? getElText('t-tgl') : getElText('r-tgl');
                 const tot = state.currentType === 'Token' ? getElText('t-tot') : getElText('r-tot');
                 h.unshift({ nama: name, tgl: tgl, tot: tot, tipe: state.currentType });
-                if(h.length > 20) h.pop();
-                localStorage.setItem('h_v27', JSON.stringify(h));
+                if(h.length > 25) h.pop();
+                localStorage.setItem('h_v28', JSON.stringify(h));
                 toggleLoader(false); switchPage('home'); fetchHistory();
-            }, 1000);
+            }, 800);
         }
 
         function updateTime() {
