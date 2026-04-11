@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V52 Auto Reconnect & UI Fix</title>
+    <title>Cetak Nota - V53 Pro Experience</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 52
-        if (!localStorage.getItem('ZETTBOT_V52_UPDATE')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 53
+        if (!localStorage.getItem('ZETTBOT_V53_PRO')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V52_UPDATE', 'true');
+            localStorage.setItem('ZETTBOT_V53_PRO', 'true');
         }
         
         // URL GAS ANDA
@@ -44,14 +44,13 @@
         <div id="loader-subtext" class="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-tight">Menghidupkan Radar Google AI...</div>
     </div>
 
-    <!-- MODAL POPUP UNTUK EDIT NOMINAL / ADMIN -->
-    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[10005] hidden items-center justify-center backdrop-blur-sm transition-opacity">
+    <!-- MODAL POPUP UNTUK EDIT NOMINAL / ADMIN (Dinaikkan agar aman dari keyboard) -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[10005] hidden items-start justify-center pt-[15vh] backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-[32px] p-8 w-11/12 max-w-sm card-shadow transform transition-all scale-100">
             <h3 id="modal-title" class="text-sm font-black text-[#FF6B00] mb-6 text-center uppercase tracking-widest">EDIT: ADMIN</h3>
             <input type="number" id="modal-input" class="w-full bg-gray-50 border-2 border-transparent focus:border-[#FF6B00] rounded-2xl p-4 text-center text-2xl font-black text-gray-800 outline-none transition-all mb-6" placeholder="0">
             
-            <button onclick="saveEditModal()" class="w-full bg-[#FF6B00] text-white font-black text-xs uppercase tracking-widest py-3 rounded-2xl shadow-[0_0_15px_rgba(255,107,0,0.5)] active:scale-95 transition-all">Selesai</button>
-            <!-- Tombol Batal telah dihilangkan sesuai permintaan -->
+            <button onclick="saveEditModal()" class="w-full bg-[#FF6B00] text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-[0_0_15px_rgba(255,107,0,0.5)] active:scale-95 transition-all">Selesai</button>
         </div>
     </div>
 
@@ -64,12 +63,16 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
             </div>
-            <!-- TOMBOL PRINTER -->
-            <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90">
-                <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-            </button>
+            <!-- TOMBOL PRINTER & INDIKATOR API -->
+            <div class="flex items-center gap-3">
+                <!-- INDIKATOR API KEY (Merah / Hijau Stabilo) DI SAMPING PRINTER -->
+                <div id="api-status-indicator" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-all duration-500"></div>
+                <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="space-y-4 mb-8">
@@ -93,7 +96,7 @@
             <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Lokal</h3>
             <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase transition-all active:scale-95">Segarkan</button>
         </div>
-        <div id="history-list" class="space-y-3 pb-4 max-h-[350px] overflow-y-auto pointer-events-auto"></div>
+        <div id="history-list" class="space-y-3 pb-4 max-h-[160px] overflow-y-auto no-scrollbar pointer-events-auto"></div>
     </div>
 
     <!-- PAGE 2: PRATINJAU -->
@@ -178,7 +181,7 @@
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
-                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENGECEK CLOUD...</p>
+                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK CLOUD...</p>
                 </div>
             </div>
             
@@ -188,21 +191,21 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v52.0 - Auto Reconnect & Priority Update</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v53.0 - Pro Experience</p>
     </div>
 
-    <!-- NAVIGATION -->
+    <!-- NAVIGATION (IKON ELEGAN BARU) -->
     <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[9999]">
         <div class="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-gray-100 rounded-t-[35px] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-            <div class="flex justify-around items-center px-12 py-4">
+            <div class="flex justify-around items-center px-12 py-3">
                 <button onclick="switchPage('home')" id="nav-home" class="flex flex-col items-center gap-1 outline-none text-indigo-600 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all bg-indigo-50 group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                     </div>
                 </button>
             </div>
@@ -214,7 +217,7 @@
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
-            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V50') || "",
+            manualKey: localStorage.getItem('ZETTBOT_API_KEY_V50') || "", // Tetap V50 untuk kompabilitas memori sisa
             editingField: "",
             currentReceiptId: null
         };
@@ -225,14 +228,27 @@
 
         // --- MANAJEMEN NAVIGASI HARDWARE (TOMBOL KEMBALI HP) ---
         window.addEventListener('hashchange', () => {
-            const pageId = location.hash.replace('#', '') || 'home';
-            renderPage(pageId);
+            const hash = location.hash.replace('#', '');
+            
+            // JIKA MENEKAN BACK SAAT MODAL TERBUKA, TUTUP MODAL SAJA (Jangan pindah halaman)
+            if (hash !== 'edit' && !getEl('edit-modal').classList.contains('hidden')) {
+                closeEditModalUI();
+            }
+            
+            if (hash !== 'edit') {
+                const pageId = hash || 'home';
+                renderPage(pageId);
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Set halaman awal berdasarkan URL hash, cegah halaman blank saat reload
-            const initialPage = location.hash.replace('#', '') || 'home';
-            renderPage(initialPage);
+            // Set halaman awal berdasarkan URL hash
+            const initialPage = location.hash.replace('#', '');
+            if (initialPage !== 'edit') {
+                renderPage(initialPage || 'home');
+            } else {
+                renderPage('home');
+            }
 
             loadSettings(); 
             syncCloud(false);
@@ -244,7 +260,7 @@
                 e.target.value = '';
             };
             
-            // Auto Reconnect Printer (Terpicu saat pengguna melakukan interaksi pertama di layar)
+            // Auto Reconnect Printer (Terpicu saat pengguna melakukan sentuhan PERTAMA di layar manapun)
             let hasAttemptedReconnect = false;
             document.body.addEventListener('click', () => {
                 if (!hasAttemptedReconnect && !state.isConnected) {
@@ -254,7 +270,7 @@
             }, { once: true });
         });
 
-        // FUNGSI NAVIGASI BARU: Memanfaatkan Hash agar tombol kembali HP bekerja
+        // FUNGSI NAVIGASI: Memanfaatkan Hash agar tombol kembali HP bekerja
         function switchPage(pageId) {
             location.hash = pageId;
         }
@@ -298,7 +314,7 @@
             window.scrollTo(0,0);
         }
 
-        // --- SISTEM MODAL (POPUP) UNTUK EDIT ANGKA ---
+        // --- SISTEM MODAL (POPUP) UNTUK EDIT ANGKA (ANTI KEYBOARD & BACK BUTTON) ---
         function openEditModal(fieldId, title) {
             state.editingField = fieldId;
             getEl('modal-title').innerText = `EDIT: ${title.toUpperCase()}`;
@@ -306,6 +322,9 @@
             const currentVal = parseRupiahStr(getElText(fieldId));
             const inputEl = getEl('modal-input');
             inputEl.value = currentVal || '';
+            
+            // PUSH HASH UNTUK MENUJU STATE 'EDIT' (Agar Back Button HP terdeteksi)
+            location.hash = 'edit';
             
             const modal = getEl('edit-modal');
             modal.classList.remove('hidden');
@@ -317,7 +336,7 @@
             }, 100);
         }
 
-        function closeEditModal() {
+        function closeEditModalUI() {
             const modal = getEl('edit-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
@@ -331,7 +350,13 @@
             setElText(state.editingField, formatRupiahStr(val));
             calculateTotal();
             saveLocalHistory(); // Auto-save saat selesai mengedit
-            closeEditModal();
+            
+            // Memanfaatkan history.back agar kembali ke URL nota dengan aman dan menghilangkan UI Modal
+            if(location.hash === '#edit') {
+                history.back(); 
+            } else {
+                closeEditModalUI();
+            }
         }
 
         function calculateTotal() {
@@ -350,7 +375,7 @@
             return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
+        // --- SISTEM AUTO SINKRONISASI KE CLOUD (DITAMBAH INDIKATOR TITIK) ---
         async function syncCloud(isManual = false) {
             if (!API_URL || API_URL.includes("exec") === false) {
                 updateStatusUI("URL SERVER KOSONG", "red");
@@ -396,6 +421,28 @@
             }
         }
 
+        function updateStatusUI(text, color, isPulse = false) {
+            const debugEl = getEl('key-debug-text');
+            if(debugEl) {
+                debugEl.innerText = text;
+                let colorClass = "text-red-600";
+                if (color === "green") colorClass = "text-[#00E676] drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
+                else if (color === "blue") colorClass = "text-blue-600";
+                else if (color === "orange") colorClass = "text-orange-500";
+                debugEl.className = `text-[10px] ${colorClass} font-mono font-black text-center tracking-widest ${isPulse ? 'animate-pulse' : ''}`;
+            }
+
+            // Update Titik Indikator di Beranda Atas
+            const apiDot = getEl('api-status-indicator');
+            if (apiDot) {
+                if (color === "green") {
+                    apiDot.className = "w-3.5 h-3.5 rounded-full bg-[#00E676] shadow-[0_0_8px_rgba(0,230,118,0.8)] transition-all duration-500";
+                } else {
+                    apiDot.className = "w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-all duration-500";
+                }
+            }
+        }
+
         async function resetCloudKey() {
             if (!API_URL || API_URL.includes("exec") === false) return;
             if(!confirm("Ini akan menghapus API Key yang 'nyangkut' di memori server Google. Lanjutkan?")) return;
@@ -417,19 +464,6 @@
                 toggleLoader(false);
                 alert("Gagal mereset server.");
             }
-        }
-
-        function updateStatusUI(text, color, isPulse = false) {
-            const debugEl = getEl('key-debug-text');
-            if(!debugEl) return;
-            debugEl.innerText = text;
-            
-            let colorClass = "text-red-600";
-            if (color === "green") colorClass = "text-[#00E676] drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
-            else if (color === "blue") colorClass = "text-blue-600";
-            else if (color === "orange") colorClass = "text-orange-500";
-
-            debugEl.className = `text-[10px] ${colorClass} font-mono font-black text-center tracking-widest ${isPulse ? 'animate-pulse' : ''}`;
         }
 
         function forceDeepClean() {
@@ -500,8 +534,8 @@
             const key = state.manualKey || state.cloudKey;
             
             if (!key || key.length < 20) {
-                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap masukkan API Key Gemini Anda di menu 'Pengaturan'.");
-                switchPage('settings'); return;
+                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap pastikan Kunci API berwana HIJAU.");
+                return;
             }
 
             toggleLoader(true, "Mendeteksi Radar Model Google...");
@@ -533,9 +567,9 @@
 
                 // PRIORITAS: Menaruh Gamma / Gemma / 1.5 Flash 8B di urutan paling atas!
                 const priorities = [
-                    "models/gemini-1.5-flash-8b", // Paling ringan & cepat, sangat sering tersedia gratis
-                    "models/gemma-2-2b-it", // Keluarga Gamma/Gemma ringan
-                    "models/gemma-2-9b-it", // Keluarga Gamma/Gemma menengah
+                    "models/gemini-1.5-flash-8b", 
+                    "models/gemma-2-2b-it", 
+                    "models/gemma-2-9b-it", 
                     "models/gemini-1.5-flash",
                     "models/gemini-2.0-flash-lite-preview-02-05", 
                     "models/gemini-2.0-flash-lite", 
@@ -713,30 +747,35 @@
         }
 
         // ============================================================================
-        // SISTEM BLUETOOTH AUTO-RECONNECT
+        // SISTEM BLUETOOTH AUTO-RECONNECT (MEMBUTUHKAN INTERAKSI PERTAMA USER)
         // ============================================================================
         async function autoConnectPrinter() {
             if (navigator.bluetooth && navigator.bluetooth.getDevices) {
                 try {
                     const devices = await navigator.bluetooth.getDevices();
                     if (devices.length > 0) {
-                        state.btDevice = devices[0];
-                        state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                        
-                        const server = await state.btDevice.gatt.connect();
-                        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                        const characteristics = await service.getCharacteristics();
-                        
-                        state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                        for (let device of devices) {
+                            if (device.name) { 
+                                state.btDevice = device;
+                                state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                                
+                                const server = await state.btDevice.gatt.connect();
+                                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                                const characteristics = await service.getCharacteristics();
+                                
+                                state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
-                        if (state.printerChar) {
-                            state.isConnected = true;
-                            updatePrinterUI(true);
-                            console.log("Printer berhasil Auto-Reconnect!");
+                                if (state.printerChar) {
+                                    state.isConnected = true;
+                                    updatePrinterUI(true);
+                                    console.log("Printer berhasil Auto-Reconnect!");
+                                    break; 
+                                }
+                            }
                         }
                     }
                 } catch (e) {
-                    console.log("Auto-connect background ditolak (Biasanya butuh di-klik manual pertama kali):", e);
+                    console.log("Auto-connect gagal (Browser butuh diizinkan manual):", e);
                 }
             }
         }
@@ -825,7 +864,6 @@
 
         // --- MENYIMPAN RIWAYAT KE MEMORI HP (OTOMATIS & PINTAR) ---
         function saveLocalHistory() {
-            // Jika tidak ada ID aktif, buat ID baru (fallback keamanan)
             if (!state.currentReceiptId) {
                 state.currentReceiptId = Date.now().toString();
             }
@@ -844,17 +882,16 @@
 
             let history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
             
-            // Cek apakah ID ini sudah ada (Mode Edit) atau Baru
             const existingIdx = history.findIndex(h => h.id === state.currentReceiptId);
             if (existingIdx !== -1) {
-                history[existingIdx] = item; // Update data lama
+                history[existingIdx] = item; 
             } else {
-                history.unshift(item); // Masukkan sebagai nota baru
+                history.unshift(item); 
             }
             
-            if(history.length > 50) history.pop(); 
+            while(history.length > 30) history.pop(); 
             localStorage.setItem('ZETTBOT_HISTORY_V50', JSON.stringify(history));
-            fetchHistory(); // Segarkan tampilan daftar riwayat
+            fetchHistory(); 
         }
 
         // --- MEMUAT ULANG RIWAYAT KE PRATINJAU ---
@@ -863,7 +900,7 @@
             const item = history.find(h => h.id === id);
             
             if(item) {
-                state.currentReceiptId = id; // Set ID yang sedang aktif agar saveLocalHistory tahu
+                state.currentReceiptId = id; 
                 state.currentType = item.tipe || 'Transfer';
                 
                 if (state.currentType === 'Transfer') {
@@ -876,7 +913,7 @@
                     if(getEl('t-token')) getEl('t-token').innerHTML = item.t_token;
                     setElText('t-nom', item.t_nom); setElText('t-adm', item.t_adm); setElText('t-tot', item.t_tot); setElText('t-sn', item.t_sn);
                 }
-                switchPage('preview'); // Akan mentrigger navigasi dengan hash
+                switchPage('preview'); 
             }
         }
 
@@ -957,7 +994,6 @@
                     await new Promise(resolve => setTimeout(resolve, 50)); 
                 }
 
-                // Update simpanan riwayat terakhir kali
                 saveLocalHistory();
 
                 const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
