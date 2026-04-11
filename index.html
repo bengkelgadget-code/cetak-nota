@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V55 Dynamic Logo</title>
+    <title>Cetak Nota - V55.1 Print Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 55
-        if (!localStorage.getItem('ZETTBOT_V55_DYNAMIC_LOGO')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 55.1
+        if (!localStorage.getItem('ZETTBOT_V551_FIX')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V55_DYNAMIC_LOGO', 'true');
+            localStorage.setItem('ZETTBOT_V551_FIX', 'true');
         }
         
         // URL GAS ANDA
@@ -66,7 +66,7 @@
                 </div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner  Nota</h1>
             </div>
-            <!-- TOMBOL PRINTER (Titik indikator API dihilangkan dari sini) -->
+            <!-- TOMBOL PRINTER -->
             <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -770,9 +770,25 @@
 
         function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
 
+        // --- UPDATE PADA FUNGSI LOADING INI ---
         function toggleLoader(s, t) {
             const txt = getEl('loader-text');
             if(txt) txt.innerText = t;
+            
+            // Perbaikan agar sisa tulisan loading AI hilang saat mencetak
+            const sub = getEl('loader-subtext');
+            if(sub) {
+                if (t === "Mencetak...") {
+                    sub.innerText = "Mengirim data ke printer bluetooth...";
+                } else if (t === "Menyambungkan...") {
+                    sub.innerText = "Mencari perangkat bluetooth...";
+                } else if (t === "Mendeteksi Radar Model Google...") {
+                    sub.innerText = "Menghidupkan Radar Google AI...";
+                } else {
+                    sub.innerText = "";
+                }
+            }
+
             const ldr = getEl('loader');
             if(ldr) ldr.style.display = s ? 'flex' : 'none';
         }
