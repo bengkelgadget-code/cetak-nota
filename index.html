@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V55.1 Print Fix</title>
+    <title>Cetak Nota - V55.2 Realtime Print</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 55.1
-        if (!localStorage.getItem('ZETTBOT_V551_FIX')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 55.2
+        if (!localStorage.getItem('ZETTBOT_V552_FIX')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V551_FIX', 'true');
+            localStorage.setItem('ZETTBOT_V552_FIX', 'true');
         }
         
         // URL GAS ANDA
@@ -916,7 +916,7 @@
                 return;
             }
 
-            toggleLoader(true, "Mencetak...");
+            // HAPUS TAMPILAN LOADING DI SINI AGAR PRINTING REALTIME TANPA JEDA
             
             const ESC = "\x1b"; const GS = "\x1d";
             const INIT = ESC + "@";
@@ -958,10 +958,10 @@
                 
                 raw += "--------------------------------\n";
                 raw += ALIGN_LEFT;
-                raw += formatFinancialLine("NOMINAL", getElText('t-nom')) + "\n";
-                raw += formatFinancialLine("ADMIN", getElText('t-adm')) + "\n";
+                raw += formatLineAlignRight("NOMINAL", getElText('t-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getElText('t-adm')) + "\n";
                 raw += "--------------------------------\n";
-                raw += formatFinancialLine("TOTAL", getElText('t-tot')) + "\n\n";
+                raw += formatLineAlignRight("TOTAL", getElText('t-tot')) + "\n\n";
                 
                 raw += "SN:\n" + getElText('t-sn') + "\n";
                 
@@ -982,9 +982,9 @@
                 raw += wrapText("REK     : ", getElText('r-rek'));
                 raw += wrapText("NAMA    : ", getElText('r-nama'));
                 raw += "--------------------------------\n";
-                raw += formatFinancialLine("NOMINAL", getElText('r-nom')) + "\n";
-                raw += formatFinancialLine("ADMIN", getElText('r-adm')) + "\n";
-                raw += formatFinancialLine("TOTAL", getElText('r-tot')) + "\n";
+                raw += formatLineAlignRight("NOMINAL", getElText('r-nom')) + "\n";
+                raw += formatLineAlignRight("ADMIN", getElText('r-adm')) + "\n";
+                raw += formatLineAlignRight("TOTAL", getElText('r-tot')) + "\n";
                 raw += "================================\n";
                 raw += ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
@@ -998,24 +998,24 @@
                 for (let i = 0; i < dataToPrint.length; i += CHUNK_SIZE) {
                     const chunk = dataToPrint.slice(i, i + CHUNK_SIZE);
                     await state.printerChar.writeValue(chunk);
-                    await new Promise(resolve => setTimeout(resolve, 50)); 
+                    await new Promise(resolve => setTimeout(resolve, 30)); 
                 }
 
                 saveLocalHistory();
 
                 const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
                 if (typeof google !== 'undefined' || API_URL !== "") {
+                    // MODE NO-CORS UNTUK MENGHINDARI CRASH SAAT PROSES CETAK
                     fetch(API_URL, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify({ nama: namaUtama, tipe: state.currentType }) 
                     }).catch(e => console.log(e));
                 }
 
-                toggleLoader(false);
                 switchPage('home');
             } catch(e) {
-                toggleLoader(false);
                 alert("Gagal mencetak: " + e.message);
                 if(state.btDevice && state.btDevice.gatt.connected === false) {
                     onDisconnected();
