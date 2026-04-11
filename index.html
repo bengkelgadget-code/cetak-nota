@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V54 Format Print Fix</title>
+    <title>Cetak Nota - V55 Dynamic Logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +28,10 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 54
-        if (!localStorage.getItem('ZETTBOT_V54_PRINTFIX')) {
+        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 55
+        if (!localStorage.getItem('ZETTBOT_V55_DYNAMIC_LOGO')) {
             localStorage.clear();
-            localStorage.setItem('ZETTBOT_V54_PRINTFIX', 'true');
+            localStorage.setItem('ZETTBOT_V55_DYNAMIC_LOGO', 'true');
         }
         
         // URL GAS ANDA
@@ -59,19 +59,19 @@
     <!-- PAGE 1: UTAMA -->
     <div id="page-home" class="page-container max-w-md mx-auto px-5 pt-6">
         <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg"><span class="text-white font-black text-xl">T</span></div>
+            <div class="flex items-center gap-3">
+                <!-- LOGO DINAMIS (Menjadi Indikator API Key) -->
+                <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg">
+                    <span id="store-logo-text" class="font-black text-xl text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.8)] transition-all duration-500">SN</span>
+                </div>
                 <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
             </div>
-            <!-- TOMBOL PRINTER & INDIKATOR API -->
-            <div class="flex items-center gap-3">
-                <div id="api-status-indicator" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-all duration-500"></div>
-                <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                </button>
-            </div>
+            <!-- TOMBOL PRINTER (Titik indikator API dihilangkan dari sini) -->
+            <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" id="printer-icon-svg" class="h-6 w-6 text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.9)] transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+            </button>
         </div>
 
         <div class="space-y-4 mb-8">
@@ -192,7 +192,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v54.0 - Format Print Fix</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v55.0 - Dynamic Logo Indicator</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -206,7 +206,8 @@
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <!-- IKON PENGATURAN FUTURISTIK BARU (Hexagon Core) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="3.5"/></svg>
                     </div>
                 </button>
             </div>
@@ -368,7 +369,23 @@
             return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // --- SISTEM AUTO SINKRONISASI KE CLOUD ---
+        // --- SISTEM AUTO SINKRONISASI & DYNAMIC LOGO ---
+        function updateStoreLogo(tokoStr) {
+            if (!tokoStr) tokoStr = "Scanner Nota";
+            const words = tokoStr.trim().split(/\s+/).filter(w => w.length > 0);
+            let initials = "SN";
+            if (words.length >= 2) {
+                initials = (words[0][0] + words[1][0]).toUpperCase();
+            } else if (words.length === 1) {
+                initials = words[0].substring(0, 2).toUpperCase();
+            }
+            
+            const logoText = getEl('store-logo-text');
+            if (logoText) {
+                logoText.innerText = initials.substring(0, 2);
+            }
+        }
+
         async function syncCloud(isManual = false) {
             if (!API_URL || API_URL.includes("exec") === false) {
                 updateStatusUI("URL SERVER KOSONG", "red");
@@ -402,7 +419,7 @@
                     updateStatusUI(`...${data.key.slice(-4)} (TERHUBUNG KE SERVER)`, "green");
                     if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs dan siap digunakan.");
                 } else {
-                    updateStatusUI("KUNCI SERVER KOSONG/LAMA!", "orange");
+                    updateStatusUI("KUNCI SERVER KOSONG/LAMA!", "red");
                     if (isManual) alert("⚠️ Server terhubung, tetapi kunci yang dikirim masih kosong atau menggunakan template lama.\n\nSOLUSI WAJIB (Di PC Anda):\n1. Buka code.gs\n2. Pastikan API Key diisi di baris 7\n3. Klik Terapkan (Deploy)\n4. Pilih Kelola deployment\n5. Klik Ikon Pensil (Edit)\n6. Ubah 'Versi' menjadi 'Versi Baru'\n7. Klik Terapkan.");
                 }
             } catch(e) { 
@@ -425,12 +442,13 @@
                 debugEl.className = `text-[10px] ${colorClass} font-mono font-black text-center tracking-widest ${isPulse ? 'animate-pulse' : ''}`;
             }
 
-            const apiDot = getEl('api-status-indicator');
-            if (apiDot) {
+            // Fungsi baru: Indikator API Key digabung ke warna teks Logo Utama
+            const logoText = getEl('store-logo-text');
+            if (logoText) {
                 if (color === "green") {
-                    apiDot.className = "w-3.5 h-3.5 rounded-full bg-[#00E676] shadow-[0_0_8px_rgba(0,230,118,0.8)] transition-all duration-500";
+                    logoText.className = "font-black text-xl text-[#00E676] drop-shadow-[0_0_8px_rgba(0,230,118,0.8)] transition-all duration-500";
                 } else {
-                    apiDot.className = "w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-all duration-500";
+                    logoText.className = "font-black text-xl text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.8)] transition-all duration-500";
                 }
             }
         }
@@ -476,6 +494,8 @@
             
             localStorage.setItem('ZETTBOT_PROFILE_V50', JSON.stringify({ toko, alamat })); 
             
+            updateStoreLogo(toko); // Perbarui Logo setelah edit nama
+
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
             
@@ -512,9 +532,18 @@
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
-                    if (s.toko) { getEl('setting-toko').value = s.toko; setElText('r-toko', s.toko); setElText('t-toko', s.toko); }
+                    if (s.toko) { 
+                        getEl('setting-toko').value = s.toko; 
+                        setElText('r-toko', s.toko); 
+                        setElText('t-toko', s.toko); 
+                        updateStoreLogo(s.toko);
+                    } else {
+                        updateStoreLogo("");
+                    }
                     if (s.alamat) { getEl('setting-alamat').value = s.alamat; setElText('r-alamat', s.alamat); setElText('t-alamat', s.alamat); }
                 } catch(e) {}
+            } else {
+                updateStoreLogo("");
             }
             if (state.manualKey) getEl('setting-apikey').value = state.manualKey;
         }
@@ -526,7 +555,7 @@
             const key = state.manualKey || state.cloudKey;
             
             if (!key || key.length < 20) {
-                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap pastikan Kunci API berwana HIJAU.");
+                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap pastikan logo SN/Nama Konter di pojok kiri atas berwarna HIJAU.");
                 return;
             }
 
@@ -557,6 +586,7 @@
                     throw new Error("API Key Anda valid, tetapi akun ini tidak memiliki akses ke model AI pemroses teks apa pun.");
                 }
 
+                // PRIORITAS: Menaruh Gamma / Gemma / 1.5 Flash 8B di urutan paling atas!
                 const priorities = [
                     "models/gemini-1.5-flash-8b", 
                     "models/gemma-2-2b-it", 
@@ -820,23 +850,6 @@
             }
         }
 
-        // FUNGSI PELURUS ANGKA UNTUK PRINTER
-        function formatFinancialLine(label, valueStr) {
-            let numPart = valueStr.replace(/Rp\s*/g, '').trim();
-            // Menyeragamkan padding ke 10 karakter agar Rp dan Right-Edge lurus
-            let paddedNum = numPart.padStart(10, ' '); 
-            let formattedValue = "Rp " + paddedNum;
-            return formatLineAlignRight(label, formattedValue, 32);
-        }
-
-        function formatLineAlignRight(label, value, maxChars = 32) {
-            let leftStr = label.toString();
-            let rightStr = value.toString();
-            let spacesCount = maxChars - leftStr.length - rightStr.length;
-            if (spacesCount < 1) spacesCount = 1; 
-            return leftStr + " ".repeat(spacesCount) + rightStr;
-        }
-
         function wrapText(label, value, maxChars = 32) {
             let indent = label.length;
             let maxV = maxChars - indent;
@@ -859,6 +872,14 @@
             }
             res += curr + "\n";
             return res;
+        }
+
+        function formatLineAlignRight(label, value, maxChars = 32) {
+            let leftStr = label.toString();
+            let rightStr = value.toString();
+            let spacesCount = maxChars - leftStr.length - rightStr.length;
+            if (spacesCount < 1) spacesCount = 1; 
+            return leftStr + " ".repeat(spacesCount) + rightStr;
         }
 
         async function executePrint() {
@@ -893,7 +914,6 @@
                 raw += wrapText("KWH   : ", getElText('t-kwh'));
                 raw += "--------------------------------\n";
                 
-                // LOGIKA PRINT TOKEN 4 ANGKA
                 let rawTk = getElText('t-token').replace(/[^0-9]/g, '');
                 let tkLine1 = "";
                 let tkLine2 = "";
@@ -916,7 +936,6 @@
                 raw += "--------------------------------\n";
                 raw += formatFinancialLine("TOTAL", getElText('t-tot')) + "\n\n";
                 
-                // LOGIKA PRINT SN SATU BARIS PENUH
                 raw += "SN:\n" + getElText('t-sn') + "\n";
                 
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
