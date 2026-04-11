@@ -64,7 +64,7 @@
                 <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center shadow-lg">
                     <span id="store-logo-text" class="font-black text-xl text-[#FF0055] drop-shadow-[0_0_8px_rgba(255,0,85,0.8)] transition-all duration-500">SN</span>
                 </div>
-                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner Nota</h1>
+                <h1 class="text-2xl font-black text-gray-800 tracking-tighter uppercase">Scanner  Nota</h1>
             </div>
             <!-- TOMBOL PRINTER (Titik indikator API dihilangkan dari sini) -->
             <button onclick="togglePrinter()" id="bt-printer-btn" class="p-2.5 bg-gray-900 rounded-xl transition-all active:scale-90 flex items-center justify-center">
@@ -92,73 +92,84 @@
         </div>
 
         <div class="flex justify-between items-center mb-4 px-1">
-            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat Lokal</h3>
-            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase transition-all active:scale-95">Segarkan</button>
+            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Riwayat</h3>
+            <button onclick="fetchHistory()" class="text-indigo-600 text-[10px] font-black px-3 py-1.5 bg-indigo-50 rounded-lg uppercase transition-all active:scale-95">Refresh</button>
         </div>
         <div id="history-list" class="space-y-3 pb-4 max-h-[160px] overflow-y-auto no-scrollbar pointer-events-auto"></div>
     </div>
 
     <!-- PAGE 2: PRATINJAU -->
-    <div id="page-preview" class="page-container hidden max-w-md mx-auto pt-4 flex flex-col h-screen overflow-hidden">
-        <div class="px-5 flex items-center gap-4 mb-6">
-            <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <h2 class="text-xl font-black text-gray-800 tracking-tight uppercase">Pratinjau Nota</h2>
-        </div>
-        <div class="flex-1 overflow-y-auto px-10 py-5 bg-slate-100/50">
-            <div class="receipt-paper p-8 text-center text-[11px] receipt-font leading-relaxed max-w-xs mx-auto" id="printable-receipt">
-                
-                <!-- TEMPLATE BUKTI TRANSFER -->
-                <div id="template-transfer" class="hidden">
-                    <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
-                    <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KONTER</div>
-                    <div class="py-1 text-gray-300">------------------------------</div>
-                    <div class="flex justify-between text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
-                    <div class="flex justify-between text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--</span></div>
-                    <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between text-left mb-1"><span>BANK</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
-                    <div class="flex justify-between text-left mb-1"><span>NO. REK</span><span contenteditable="true" id="r-rek" class="text-right">---</span></div>
-                    <div class="flex justify-between text-left mb-3"><span>NAMA</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
-                    <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('r-nom', 'Nominal')" id="r-nom" class="editable-click">Rp 0</span></div>
-                    <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('r-adm', 'Admin')" id="r-adm" class="editable-click">Rp 0</span></div>
-                    <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="r-tot">Rp 0</span></div>
-                    <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berhasil **</div>
-                </div>
-
-                <!-- TEMPLATE TOKEN PLN -->
-                <div id="template-token" class="hidden">
-                    <div contenteditable="true" id="t-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
-                    <div contenteditable="true" id="t-alamat" class="uppercase text-[9px]">ALAMAT KONTER</div>
-                    <div class="mt-4 mb-2 text-[10px] font-black uppercase tracking-tight">STRUK PEMBELIAN TOKEN</div>
-                    <div class="mb-3 text-[9px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--</span></div>
-                    <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between text-left mb-1"><span>ID PEL</span><span>: <span contenteditable="true" id="t-meter">---</span></span></div>
-                    <div class="flex justify-between text-left mb-1"><span>NAMA</span><span>: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
-                    <div class="flex justify-between text-left mb-1"><span>TARIF</span><span>: <span contenteditable="true" id="t-daya" class="uppercase">---</span></span></div>
-                    <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
-                    <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <!-- PERBAIKAN UKURAN FONT TOKEN -->
-                    <div contenteditable="true" id="t-token" class="text-[17px] my-4 tracking-[0.15em] font-black uppercase leading-tight">XXXX XXXX XXXX<br>XXXX XXXX</div>
-                    <div class="border-t border-dashed border-gray-300 py-1"></div>
-                    <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('t-nom', 'Nominal')" id="t-nom" class="editable-click">Rp 0</span></div>
-                    <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('t-adm', 'Admin')" id="t-adm" class="editable-click">Rp 0</span></div>
-                    <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="t-tot">Rp 0</span></div>
-                    <!-- PERBAIKAN TATA LETAK SN -->
-                    <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN:<br><span contenteditable="true" id="t-sn" class="break-all inline-block mt-1">---</span></div>
-                    <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berhasil **</div>
-                </div>
-
+    <div id="page-preview" class="hidden fixed inset-0 z-[9998] bg-slate-50 flex flex-col w-full h-[100dvh]">
+        <div class="max-w-md mx-auto w-full h-full flex flex-col relative bg-white shadow-2xl">
+            
+            <!-- HEADER (Tetap di atas) -->
+            <div class="px-5 pt-6 pb-4 flex items-center gap-4 bg-white z-10 border-b border-gray-50 shrink-0">
+                <button onclick="switchPage('home')" class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <h2 class="text-xl font-black text-gray-800 tracking-tight uppercase">Pratinjau Nota</h2>
             </div>
-        </div>
-        <div class="p-6 bg-white border-t border-gray-100 rounded-t-[35px] shadow-2xl">
-            <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl active:scale-95 transition-all">Sahkan & Cetak</button>
+
+            <!-- AREA SCROLL NOTA -->
+            <div class="flex-1 overflow-y-auto px-5 pt-8 pb-40 bg-slate-50/80 no-scrollbar">
+                <div class="receipt-paper p-8 text-center text-[11px] receipt-font leading-relaxed max-w-xs mx-auto shadow-sm" id="printable-receipt">
+                    
+                    <!-- TEMPLATE BUKTI TRANSFER -->
+                    <div id="template-transfer" class="hidden">
+                        <div contenteditable="true" id="r-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
+                        <div contenteditable="true" id="r-alamat" class="mb-2 uppercase text-[9px]">ALAMAT KONTER</div>
+                        <div class="py-1 text-gray-300">------------------------------</div>
+                        <div class="flex justify-between text-left"><span>TANGGAL</span><span contenteditable="true" id="r-tgl">--/--/----</span></div>
+                        <div class="flex justify-between text-left mb-2"><span>WAKTU</span><span contenteditable="true" id="r-jam">--:--</span></div>
+                        <div class="border-t border-dashed border-gray-300 py-1"></div>
+                        <div class="flex justify-between text-left mb-1"><span>BANK</span><span contenteditable="true" id="r-bank" class="text-right uppercase">---</span></div>
+                        <div class="flex justify-between text-left mb-1"><span>NO. REK</span><span contenteditable="true" id="r-rek" class="text-right">---</span></div>
+                        <div class="flex justify-between text-left mb-3"><span>NAMA</span><span contenteditable="true" id="r-nama" class="text-right uppercase">---</span></div>
+                        <div class="border-t border-dashed border-gray-300 py-1"></div>
+                        <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('r-nom', 'Nominal')" id="r-nom" class="editable-click">Rp 0</span></div>
+                        <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('r-adm', 'Admin')" id="r-adm" class="editable-click">Rp 0</span></div>
+                        <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="r-tot">Rp 0</span></div>
+                        <div class="mt-8 text-[9px] uppercase font-bold tracking-widest">** Transaksi Berhasil **</div>
+                    </div>
+
+                    <!-- TEMPLATE TOKEN PLN -->
+                    <div id="template-token" class="hidden">
+                        <div contenteditable="true" id="t-toko" class="text-[13px] mb-1 uppercase font-black">NAMA KONTER</div>
+                        <div contenteditable="true" id="t-alamat" class="uppercase text-[9px]">ALAMAT KONTER</div>
+                        <div class="mt-4 mb-2 text-[10px] font-black uppercase tracking-tight">STRUK PEMBELIAN TOKEN</div>
+                        <div class="mb-3 text-[9px]"><span contenteditable="true" id="t-tgl">--/--/----</span> <span contenteditable="true" id="t-jam">--:--</span></div>
+                        <div class="border-t border-dashed border-gray-300 py-1"></div>
+                        <div class="flex justify-between text-left mb-1"><span>ID PEL</span><span>: <span contenteditable="true" id="t-meter">---</span></span></div>
+                        <div class="flex justify-between text-left mb-1"><span>NAMA</span><span>: <span contenteditable="true" id="t-nama" class="uppercase">---</span></span></div>
+                        <div class="flex justify-between text-left mb-1"><span>TARIF</span><span>: <span contenteditable="true" id="t-daya" class="uppercase">---</span></span></div>
+                        <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
+                        <div class="border-t border-dashed border-gray-300 py-1"></div>
+                        <!-- PERBAIKAN UKURAN FONT TOKEN -->
+                        <div contenteditable="true" id="t-token" class="text-[17px] my-4 tracking-[0.15em] font-black uppercase leading-tight">XXXX XXXX XXXX<br>XXXX XXXX</div>
+                        <div class="border-t border-dashed border-gray-300 py-1"></div>
+                        <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('t-nom', 'Nominal')" id="t-nom" class="editable-click">Rp 0</span></div>
+                        <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('t-adm', 'Admin')" id="t-adm" class="editable-click">Rp 0</span></div>
+                        <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="t-tot">Rp 0</span></div>
+                        <!-- PERBAIKAN TATA LETAK SN -->
+                        <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN:<br><span contenteditable="true" id="t-sn" class="break-all inline-block mt-1">---</span></div>
+                        <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berhasil **</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TOMBOL CETAK (Proporsional & Mengambang di Bawah) -->
+            <div class="absolute bottom-0 left-0 right-0 w-full z-20 pointer-events-none">
+                <div class="p-6 bg-white border-t border-gray-100 rounded-t-[35px] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-8 pointer-events-auto">
+                    <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl active:scale-95 transition-all">Sahkan & Cetak</button>
+                </div>
+            </div>
+            
         </div>
     </div>
 
     <!-- PAGE 3: TETAPAN -->
-    <div id="page-settings" class="page-container hidden max-w-md mx-auto pt-6 px-5 flex flex-col h-screen overflow-hidden">
+    <div id="page-settings" class="page-container hidden max-w-md mx-auto pt-6 px-5 pb-32">
         <h2 class="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tighter">Pengaturan</h2>
         <div class="bg-white rounded-[32px] p-8 card-shadow border border-gray-100 space-y-4">
             
@@ -192,7 +203,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core v55.0 - Dynamic Logo Indicator</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">BengkelGadget - V.1</p>
     </div>
 
     <!-- NAVIGATION -->
