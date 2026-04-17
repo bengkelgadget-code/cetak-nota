@@ -54,6 +54,24 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP UNTUK PRINTER DISCONNECT -->
+    <div id="bt-warning-modal" class="fixed inset-0 bg-black/60 z-[10005] hidden items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-[32px] p-8 w-11/12 max-w-sm card-shadow text-center transform transition-all scale-100">
+            <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h3 class="text-lg font-black text-slate-800 mb-1 uppercase tracking-tight">Printer Terputus</h3>
+            <p class="text-xs text-slate-500 mb-8">Sambungkan printer thermal untuk melanjutkan pencetakan nota.</p>
+            
+            <button onclick="connectAndPrint()" class="w-24 h-24 bg-indigo-50 rounded-[28px] flex flex-col items-center justify-center mx-auto mb-4 text-indigo-500 active:scale-95 transition-all shadow-xl shadow-indigo-100 group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1 group-active:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            </button>
+            <p id="bt-connect-text" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-8 animate-pulse">Ketuk Untuk Menyambung</p>
+
+            <button onclick="closeBtWarningModal()" class="w-full bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest py-4 rounded-2xl active:scale-95 transition-all hover:bg-slate-200">Batal</button>
+        </div>
+    </div>
+
     <input type="file" id="gallery-input" accept="image/*" class="hidden">
 
     <!-- PAGE 1: UTAMA -->
@@ -247,7 +265,11 @@
                 closeEditModalUI();
             }
             
-            if (hash !== 'edit') {
+            if (hash !== 'bt-warning' && !getEl('bt-warning-modal').classList.contains('hidden')) {
+                closeBtWarningModal();
+            }
+            
+            if (hash !== 'edit' && hash !== 'bt-warning') {
                 const pageId = hash || 'home';
                 renderPage(pageId);
             }
@@ -255,7 +277,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const initialPage = location.hash.replace('#', '');
-            if (initialPage !== 'edit') {
+            if (initialPage !== 'edit' && initialPage !== 'bt-warning') {
                 renderPage(initialPage || 'home');
             } else {
                 renderPage('home');
@@ -347,6 +369,45 @@
             const modal = getEl('edit-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+
+        // --- SISTEM MODAL PRINTER DISCONNECT ---
+        function openBtWarningModal() {
+            location.hash = 'bt-warning';
+            const modal = getEl('bt-warning-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBtWarningModal() {
+            const modal = getEl('bt-warning-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if(location.hash === '#bt-warning') history.back();
+        }
+
+        async function connectAndPrint() {
+            const btnText = getEl('bt-connect-text');
+            btnText.innerText = "MENGHUBUNGKAN...";
+            btnText.classList.remove('animate-pulse');
+
+            const success = await startBluetoothScan(true); 
+            
+            if (success) {
+                const modal = getEl('bt-warning-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                if(location.hash === '#bt-warning') history.back();
+                
+                btnText.innerText = "Ketuk Untuk Menyambung";
+                btnText.classList.add('animate-pulse');
+                
+                // Langsung hajar cetak!
+                await executePrint();
+            } else {
+                btnText.innerText = "Ketuk Untuk Menyambung";
+                btnText.classList.add('animate-pulse');
+            }
         }
 
         function saveEditModal() {
@@ -827,8 +888,8 @@
             }
         }
 
-        async function startBluetoothScan() {
-            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return; }
+        async function startBluetoothScan(silent = false) {
+            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return false; }
 
             try {
                 state.btDevice = await navigator.bluetooth.requestDevice({
@@ -838,7 +899,7 @@
 
                 state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-                toggleLoader(true, "Menyambungkan...");
+                if (!silent) toggleLoader(true, "Menyambungkan...");
                 const server = await state.btDevice.gatt.connect();
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristics = await service.getCharacteristics();
@@ -848,12 +909,14 @@
                 if (state.printerChar) {
                     state.isConnected = true;
                     updatePrinterUI(true);
-                    alert("Printer Berhasil Terhubung!");
+                    if (!silent) alert("Printer Berhasil Terhubung!");
+                    return true;
                 } else { throw new Error("Layanan print tidak ditemukan."); }
             } catch (e) { 
                 updatePrinterUI(false);
                 if(e.name !== 'NotFoundError') alert("Koneksi Gagal: " + e.message); 
-            } finally { toggleLoader(false); }
+                return false;
+            } finally { if (!silent) toggleLoader(false); }
         }
 
         async function togglePrinter() {
@@ -911,8 +974,7 @@
 
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
-                alert("Printer terputus! Silakan klik icon printer di Beranda untuk menyambung kembali.");
-                switchPage('home');
+                openBtWarningModal();
                 return;
             }
 
