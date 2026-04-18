@@ -1,11 +1,17 @@
 {
   "name": "Scanner Nota",
   "short_name": "Scanner",
-  "start_url": ".",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#F8F9FE",
   "theme_color": "#4F46E5",
   "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/9402/9402325.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/9402/9402325.png",
       "sizes": "512x512",
@@ -14,14 +20,17 @@
     }
   ],
   "share_target": {
-    "action": "./",
+    "action": "index.html",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
       "files": [
         {
           "name": "image",
-          "accept": ["image/jpeg", "image/png"]
+          "accept": ["image/*", "image/jpeg", "image/png", "image/webp"]
         }
       ]
     }
