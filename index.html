@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cetak Nota - V56 Web Share</title>
+    <title>Cetak Nota - V56.2 Final Perfect</title>
     <!-- LINK MANIFEST UNTUK SHARE TARGET ANDROID -->
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,10 +30,11 @@
 <body class="pb-24">
 
     <script>
-        // PEMBERSIHAN MEMORI CACHE UNTUK VERSI 56
-        if (!localStorage.getItem('ZETTBOT_V56_SHARE')) {
-            localStorage.clear();
-            localStorage.setItem('ZETTBOT_V56_SHARE', 'true');
+        // DAFTARKAN SERVICE WORKER DENGAN BENAR UNTUK FITUR SHARE
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log('Service Worker Aktif');
+            });
         }
         
         // URL GAS ANDA
@@ -181,13 +182,11 @@
                         <div class="flex justify-between text-left mb-1"><span>TARIF</span><span>: <span contenteditable="true" id="t-daya" class="uppercase">---</span></span></div>
                         <div class="flex justify-between text-left mb-2"><span>KWH</span><span>: <span contenteditable="true" id="t-kwh">0.0</span></span></div>
                         <div class="border-t border-dashed border-gray-300 py-1"></div>
-                        <!-- PERBAIKAN UKURAN FONT TOKEN -->
                         <div contenteditable="true" id="t-token" class="text-[17px] my-4 tracking-[0.15em] font-black uppercase leading-tight">XXXX XXXX XXXX<br>XXXX XXXX</div>
                         <div class="border-t border-dashed border-gray-300 py-1"></div>
                         <div class="flex justify-between mb-1"><span>NOMINAL</span><span onclick="openEditModal('t-nom', 'Nominal')" id="t-nom" class="editable-click">Rp 0</span></div>
                         <div class="flex justify-between mb-2"><span>ADMIN</span><span onclick="openEditModal('t-adm', 'Admin')" id="t-adm" class="editable-click">Rp 0</span></div>
                         <div class="border-t border-double border-gray-900 border-b-2 py-1 flex justify-between text-[12px] font-black"><span>TOTAL</span><span id="t-tot">Rp 0</span></div>
-                        <!-- PERBAIKAN TATA LETAK SN -->
                         <div class="mt-4 text-[8px] opacity-60 font-bold text-left uppercase">SN:<br><span contenteditable="true" id="t-sn" class="break-all inline-block mt-1">---</span></div>
                         <div class="mt-4 text-[9px] font-black uppercase tracking-widest">** Berhasil **</div>
                     </div>
@@ -195,7 +194,7 @@
                 </div>
             </div>
 
-            <!-- TOMBOL CETAK (Proporsional & Mengambang di Bawah) -->
+            <!-- TOMBOL CETAK -->
             <div class="absolute bottom-0 left-0 right-0 w-full z-20 pointer-events-none">
                 <div class="p-6 bg-white border-t border-gray-100 rounded-t-[35px] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-8 pointer-events-auto">
                     <button id="btn-main-print" onclick="executePrint()" class="w-full bg-indigo-600 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-xl active:scale-95 transition-all">Sahkan & Cetak</button>
@@ -230,7 +229,7 @@
                 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
                     <p class="text-[9px] text-blue-800 font-bold text-center uppercase mb-1">Status Kunci:</p>
-                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENYEMAK CLOUD...</p>
+                    <p id="key-debug-text" class="text-[10px] text-blue-600 font-mono font-black text-center tracking-widest">MENGECEK CLOUD...</p>
                 </div>
             </div>
             
@@ -240,7 +239,7 @@
                 <button onclick="resetCloudKey()" class="w-1/2 text-red-500 text-[10px] font-black px-4 py-3 bg-red-50 rounded-xl uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Reset Server</button>
             </div>
         </div>
-        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">BengkelGadget - V.1</p>
+        <p class="text-[8px] text-gray-300 text-center mt-10 uppercase font-black tracking-widest opacity-40 italic">ZettBOT Core - V56.2 Final</p>
     </div>
 
     <!-- NAVIGATION -->
@@ -254,7 +253,6 @@
                 </button>
                 <button onclick="switchPage('settings')" id="nav-settings" class="flex flex-col items-center gap-1 outline-none text-gray-400 transition-all group">
                     <div class="nav-icon-box p-3 rounded-2xl transition-all group-active:scale-90">
-                        <!-- IKON PENGATURAN FUTURISTIK BARU (Hexagon Core) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="3.5"/></svg>
                     </div>
                 </button>
@@ -262,17 +260,8 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
+    <!-- JAVASCRIPT UTAMA -->
     <script>
-        // REGISTRASI SERVICE WORKER UNTUK PWA SHARE TARGET
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker Terdaftar'))
-                    .catch(err => console.log('Service Worker Gagal:', err));
-            });
-        }
-
         const state = { 
             currentType: 'Transfer', printerChar: null, isConnected: false, btDevice: null, 
             cloudKey: "", 
@@ -287,23 +276,24 @@
 
         let pendingSharedFile = null;
 
-        // FUNGSI MENGECEK GAMBAR DARI SHARE TARGET
-        async function checkSharedImage() {
-            if (!('caches' in window)) return;
-            try {
-                const cache = await caches.open('shared-image-cache');
-                const response = await cache.match('shared-image');
-                if (response) {
-                    const blob = await response.blob();
-                    pendingSharedFile = new File([blob], "shared-image.jpg", { type: blob.type });
-                    await cache.delete('shared-image');
-                    
-                    location.hash = 'share-modal';
-                    const modal = getEl('share-modal');
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                }
-            } catch (e) { console.error("Error reading shared image:", e); }
+        // TANGKAP GAMBAR DARI GALERI HP
+        async function checkIncomingShare() {
+            if ('caches' in window) {
+                try {
+                    const cache = await caches.open('shared-image-cache');
+                    const response = await cache.match('shared-image');
+                    if (response) {
+                        const blob = await response.blob();
+                        pendingSharedFile = new File([blob], "shared.jpg", { type: blob.type });
+                        await cache.delete('shared-image');
+                        
+                        location.hash = 'share-modal';
+                        const modal = getEl('share-modal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                } catch(e) { console.error("Cache share error:", e); }
+            }
         }
 
         function closeShareModal() {
@@ -328,25 +318,16 @@
             processImageOCR(file);
         }
 
-        // --- MANAJEMEN NAVIGASI HARDWARE (TOMBOL KEMBALI HP) ---
+        // NAVIGASI TOMBOL KEMBALI
         window.addEventListener('hashchange', () => {
             const hash = location.hash.replace('#', '');
             
-            if (hash !== 'edit' && !getEl('edit-modal').classList.contains('hidden')) {
-                closeEditModalUI();
-            }
-            
-            if (hash !== 'bt-warning' && !getEl('bt-warning-modal').classList.contains('hidden')) {
-                closeBtWarningModal();
-            }
-
-            if (hash !== 'share-modal' && !getEl('share-modal').classList.contains('hidden')) {
-                closeShareModal();
-            }
+            if (hash !== 'edit' && !getEl('edit-modal').classList.contains('hidden')) closeEditModalUI();
+            if (hash !== 'bt-warning' && !getEl('bt-warning-modal').classList.contains('hidden')) closeBtWarningModal();
+            if (hash !== 'share-modal' && !getEl('share-modal').classList.contains('hidden')) closeShareModal();
             
             if (hash !== 'edit' && hash !== 'bt-warning' && hash !== 'share-modal') {
-                const pageId = hash || 'home';
-                renderPage(pageId);
+                renderPage(hash || 'home');
             }
         });
 
@@ -361,7 +342,7 @@
             loadSettings(); 
             syncCloud(false);
             fetchHistory();
-            checkSharedImage(); // Cek jika ada gambar masuk dari Share
+            setTimeout(checkIncomingShare, 1000); 
             
             getEl('gallery-input').onchange = (e) => { 
                 const file = e.target.files[0];
@@ -416,28 +397,24 @@
                     }
                 }
             }
-
             window.scrollTo(0,0);
         }
 
-        // --- SISTEM MODAL (POPUP) UNTUK EDIT ANGKA ---
+        // MODAL EDIT ANGKA
         function openEditModal(fieldId, title) {
             state.editingField = fieldId;
             getEl('modal-title').innerText = `EDIT: ${title.toUpperCase()}`;
-            
             const currentVal = parseRupiahStr(getElText(fieldId));
-            const inputEl = getEl('modal-input');
-            inputEl.value = currentVal || '';
+            getEl('modal-input').value = currentVal || '';
             
             location.hash = 'edit';
-            
             const modal = getEl('edit-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
             setTimeout(() => {
-                inputEl.focus();
-                inputEl.select();
+                getEl('modal-input').focus();
+                getEl('modal-input').select();
             }, 100);
         }
 
@@ -447,7 +424,17 @@
             modal.classList.remove('flex');
         }
 
-        // --- SISTEM MODAL PRINTER DISCONNECT ---
+        function saveEditModal() {
+            const inputVal = getEl('modal-input').value.trim();
+            const val = inputVal === '' ? 0 : (parseInt(inputVal, 10) || 0);
+            setElText(state.editingField, formatRupiahStr(val));
+            calculateTotal();
+            saveLocalHistory(); 
+            if(location.hash === '#edit') history.back(); 
+            else closeEditModalUI();
+        }
+
+        // MODAL PRINTER TERPUTUS
         function openBtWarningModal() {
             location.hash = 'bt-warning';
             const modal = getEl('bt-warning-modal');
@@ -468,36 +455,14 @@
             btnText.classList.remove('animate-pulse');
 
             const success = await startBluetoothScan(true); 
-            
             if (success) {
-                const modal = getEl('bt-warning-modal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                if(location.hash === '#bt-warning') history.back();
-                
+                closeBtWarningModal();
                 btnText.innerText = "Ketuk Untuk Menyambung";
                 btnText.classList.add('animate-pulse');
-                
-                // Langsung hajar cetak!
-                await executePrint();
+                await executePrint(); // Langsung Cetak
             } else {
                 btnText.innerText = "Ketuk Untuk Menyambung";
                 btnText.classList.add('animate-pulse');
-            }
-        }
-
-        function saveEditModal() {
-            const inputVal = getEl('modal-input').value.trim();
-            const val = inputVal === '' ? 0 : (parseInt(inputVal, 10) || 0);
-            
-            setElText(state.editingField, formatRupiahStr(val));
-            calculateTotal();
-            saveLocalHistory(); 
-            
-            if(location.hash === '#edit') {
-                history.back(); 
-            } else {
-                closeEditModalUI();
             }
         }
 
@@ -517,21 +482,16 @@
             return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // --- SISTEM AUTO SINKRONISASI & DYNAMIC LOGO ---
+        // AUTO SYNC & LOGO DINAMIS
         function updateStoreLogo(tokoStr) {
             if (!tokoStr) tokoStr = "Scanner Nota";
             const words = tokoStr.trim().split(/\s+/).filter(w => w.length > 0);
             let initials = "SN";
-            if (words.length >= 2) {
-                initials = (words[0][0] + words[1][0]).toUpperCase();
-            } else if (words.length === 1) {
-                initials = words[0].substring(0, 2).toUpperCase();
-            }
+            if (words.length >= 2) initials = (words[0][0] + words[1][0]).toUpperCase();
+            else if (words.length === 1) initials = words[0].substring(0, 2).toUpperCase();
             
             const logoText = getEl('store-logo-text');
-            if (logoText) {
-                logoText.innerText = initials.substring(0, 2);
-            }
+            if (logoText) logoText.innerText = initials.substring(0, 2);
         }
 
         async function syncCloud(isManual = false) {
@@ -539,7 +499,6 @@
                 updateStatusUI("URL SERVER KOSONG", "red");
                 return;
             }
-
             if (isManual) toggleLoader(true, "Menarik Data Server...");
             updateStatusUI("SINKRONISASI CLOUD...", "blue", true);
 
@@ -547,33 +506,29 @@
                 const res = await fetch(API_URL + "?action=getKey&t=" + Date.now(), { redirect: "follow" });
                 const textRes = await res.text();
                 
-                if (textRes.includes("<html") || textRes.includes("<!DOCTYPE") || textRes.includes("Aktif dan Aman")) {
+                if (textRes.includes("<html")) {
                     updateStatusUI("ERROR: WAJIB DEPLOY NEW VERSION CODE.GS!", "red");
-                    if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.\n\nSOLUSI WAJIB (Lakukan di PC):\n1. Buka code.gs\n2. Klik 'Terapkan' (Deploy)\n3. Pilih 'Kelola deployment'\n4. Klik Ikon Pensil (Edit)\n5. Ubah 'Versi' menjadi 'Versi Baru'\n6. Klik 'Terapkan'.");
+                    if (isManual) alert("❌ Gagal! Server Google Anda belum ter-update.");
                     return;
                 }
 
                 const data = JSON.parse(textRes);
-                if (data.key && data.key.length > 20 && !data.key.includes("Masukkan Key Anda")) {
+                if (data.key && data.key.length > 20) {
                     state.cloudKey = data.key;
-                    
                     if (!state.manualKey || state.manualKey !== data.key) {
                         state.manualKey = data.key;
                         localStorage.setItem('ZETTBOT_API_KEY_V50', data.key);
-                        const inputKey = getEl('setting-apikey');
-                        if (inputKey) inputKey.value = data.key;
+                        getEl('setting-apikey').value = data.key;
                     }
-                    
                     updateStatusUI(`...${data.key.slice(-4)} (TERHUBUNG KE SERVER)`, "green");
-                    if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs dan siap digunakan.");
+                    if (isManual) alert("✅ Berhasil! Kunci API telah ditarik dari server code.gs");
                 } else {
-                    updateStatusUI("KUNCI SERVER KOSONG/LAMA!", "red");
-                    if (isManual) alert("⚠️ Server terhubung, tetapi kunci yang dikirim masih kosong atau menggunakan template lama.\n\nSOLUSI WAJIB (Di PC Anda):\n1. Buka code.gs\n2. Pastikan API Key diisi di baris 7\n3. Klik Terapkan (Deploy)\n4. Pilih Kelola deployment\n5. Klik Ikon Pensil (Edit)\n6. Ubah 'Versi' menjadi 'Versi Baru'\n7. Klik Terapkan.");
+                    updateStatusUI("KUNCI SERVER KOSONG!", "red");
+                    if (isManual) alert("⚠️ Server terhubung, tetapi kunci yang dikirim masih kosong.");
                 }
             } catch(e) { 
-                console.log("Cloud sync error:", e); 
                 updateStatusUI("GAGAL TERHUBUNG KE SERVER", "red");
-                if (isManual) alert("❌ Gagal menghubungi server. Pastikan HP terkoneksi internet dan URL code.gs sudah benar.");
+                if (isManual) alert("❌ Gagal menghubungi server. Pastikan URL code.gs benar.");
             } finally {
                 if (isManual) toggleLoader(false);
             }
@@ -586,11 +541,9 @@
                 let colorClass = "text-red-600";
                 if (color === "green") colorClass = "text-[#00E676] drop-shadow-[0_0_5px_rgba(0,230,118,0.5)]";
                 else if (color === "blue") colorClass = "text-blue-600";
-                else if (color === "orange") colorClass = "text-orange-500";
                 debugEl.className = `text-[10px] ${colorClass} font-mono font-black text-center tracking-widest ${isPulse ? 'animate-pulse' : ''}`;
             }
 
-            // Fungsi baru: Indikator API Key digabung ke warna teks Logo Utama
             const logoText = getEl('store-logo-text');
             if (logoText) {
                 if (color === "green") {
@@ -603,35 +556,20 @@
 
         async function resetCloudKey() {
             if (!API_URL || API_URL.includes("exec") === false) return;
-            if(!confirm("Ini akan menghapus API Key yang 'nyangkut' di memori server Google. Lanjutkan?")) return;
-            
+            if(!confirm("Hapus API Key di memori server Google?")) return;
             try {
                 toggleLoader(true, "Mereset Server...");
                 await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action: 'updateKey', key: '' })
                 });
-                setTimeout(() => {
-                    toggleLoader(false);
-                    alert("Berhasil mereset server. Silakan tarik ulang dari server untuk memuat kunci asli.");
-                    syncCloud(true);
-                }, 2000);
-            } catch(e) {
-                toggleLoader(false);
-                alert("Gagal mereset server.");
-            }
+                setTimeout(() => { toggleLoader(false); alert("Berhasil direset."); syncCloud(true); }, 2000);
+            } catch(e) { toggleLoader(false); alert("Gagal mereset server."); }
         }
 
         function forceDeepClean() {
             if(!confirm("Hapus semua pengaturan dan riwayat lokal di HP ini?")) return;
             localStorage.clear();
-            state.manualKey = "";
-            getEl('setting-apikey').value = "";
-            getEl('setting-toko').value = "";
-            getEl('setting-alamat').value = "";
-            alert("Memori dibersihkan. Silakan mulai ulang aplikasi.");
             location.reload();
         }
 
@@ -641,8 +579,7 @@
             const mKey = getEl('setting-apikey').value.trim();
             
             localStorage.setItem('ZETTBOT_PROFILE_V50', JSON.stringify({ toko, alamat })); 
-            
-            updateStoreLogo(toko); // Perbarui Logo setelah edit nama
+            updateStoreLogo(toko);
 
             if (toko) { setElText('r-toko', toko); setElText('t-toko', toko); }
             if (alamat) { setElText('r-alamat', alamat); setElText('t-alamat', alamat); }
@@ -650,14 +587,8 @@
             if (mKey && mKey.length > 20) {
                 state.manualKey = mKey;
                 localStorage.setItem('ZETTBOT_API_KEY_V50', mKey);
-                
                 if (API_URL && API_URL.includes("exec")) {
-                    fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify({ action: 'updateKey', key: mKey })
-                    }).catch(e => console.log("Gagal sync ke cloud:", e));
+                    fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'updateKey', key: mKey }) }).catch(e=>e);
                 }
             } else {
                 state.manualKey = "";
@@ -680,30 +611,19 @@
             if (saved) {
                 try {
                     const s = JSON.parse(saved);
-                    if (s.toko) { 
-                        getEl('setting-toko').value = s.toko; 
-                        setElText('r-toko', s.toko); 
-                        setElText('t-toko', s.toko); 
-                        updateStoreLogo(s.toko);
-                    } else {
-                        updateStoreLogo("");
-                    }
+                    if (s.toko) { getEl('setting-toko').value = s.toko; setElText('r-toko', s.toko); setElText('t-toko', s.toko); updateStoreLogo(s.toko); } 
+                    else updateStoreLogo("");
                     if (s.alamat) { getEl('setting-alamat').value = s.alamat; setElText('r-alamat', s.alamat); setElText('t-alamat', s.alamat); }
                 } catch(e) {}
-            } else {
-                updateStoreLogo("");
-            }
+            } else updateStoreLogo("");
             if (state.manualKey) getEl('setting-apikey').value = state.manualKey;
         }
 
-        // ============================================================================
-        // SISTEM UNIVERSAL RADAR LOOP
-        // ============================================================================
+        // AI RADAR LOOP (PROSES GAMBAR KE TEKS)
         async function processImageOCR(file) {
             const key = state.manualKey || state.cloudKey;
-            
             if (!key || key.length < 20) {
-                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nHarap pastikan logo SN/Nama Konter di pojok kiri atas berwarna HIJAU.");
+                alert("API KEY KOSONG ATAU TIDAK VALID!\n\nPastikan logo SN di pojok kiri atas berwarna HIJAU.");
                 return;
             }
 
@@ -716,44 +636,18 @@
                 const radarData = await radarRes.json();
                 
                 if (!radarRes.ok) {
-                    let errMsg = radarData.error?.message || "Gagal menghubungi server.";
-                    if (radarRes.status === 400 || radarRes.status === 403) {
-                        throw new Error(`[KUNCI API TIDAK VALID / MATI]\n${errMsg}\n\nPastikan Kunci API Anda benar.`);
-                    }
-                    throw new Error(`[Gagal Melacak Model]\n${errMsg}`);
+                    if (radarRes.status === 400 || radarRes.status === 403) throw new Error(`[KUNCI API TIDAK VALID / MATI]`);
+                    throw new Error(`[Gagal Melacak Model]`);
                 }
                 
-                validModels = radarData.models.filter(m => 
-                    m.supportedGenerationMethods && 
-                    m.supportedGenerationMethods.includes("generateContent") &&
-                    !m.name.includes("embedding") &&
-                    !m.name.includes("aqa")
-                );
-                
-                if (validModels.length === 0) {
-                    throw new Error("API Key Anda valid, tetapi akun ini tidak memiliki akses ke model AI pemroses teks apa pun.");
-                }
+                validModels = radarData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent") && !m.name.includes("embedding") && !m.name.includes("aqa"));
+                if (validModels.length === 0) throw new Error("API Key valid, tapi akses model AI ditolak.");
 
-                // PRIORITAS: Menaruh Gamma / Gemma / 1.5 Flash 8B di urutan paling atas!
-                const priorities = [
-                    "models/gemini-1.5-flash-8b", 
-                    "models/gemma-2-2b-it", 
-                    "models/gemma-2-9b-it", 
-                    "models/gemini-1.5-flash",
-                    "models/gemini-2.0-flash-lite-preview-02-05", 
-                    "models/gemini-2.0-flash-lite", 
-                    "models/gemini-1.5-flash-latest",
-                    "models/gemini-1.5-pro",
-                    "models/gemini-2.0-flash",
-                    "models/gemini-pro"
-                ];
-
+                const priorities = ["models/gemini-1.5-flash-8b", "models/gemma-2-2b-it", "models/gemma-2-9b-it", "models/gemini-1.5-flash", "models/gemini-2.0-flash-lite", "models/gemini-pro"];
                 validModels.sort((a, b) => {
-                    let indexA = priorities.indexOf(a.name);
-                    let indexB = priorities.indexOf(b.name);
-                    if (indexA === -1) indexA = 999;
-                    if (indexB === -1) indexB = 999;
-                    return indexA - indexB;
+                    let iA = priorities.indexOf(a.name); let iB = priorities.indexOf(b.name);
+                    if (iA === -1) iA = 999; if (iB === -1) iB = 999;
+                    return iA - iB;
                 });
 
                 const base64Data = await new Promise((resolve, reject) => {
@@ -774,73 +668,30 @@
                     reader.readAsDataURL(file);
                 });
 
-                let promptText = "";
-                if (state.currentType === 'Transfer') {
-                    promptText = "Ekstrak data dari gambar struk transfer bank ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"referensi\": \"string\",\n  \"bank_tujuan\": \"string\",\n  \"rekening_tujuan\": \"string\",\n  \"nama_penerima\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\":angka (integer)\n";
-                } else {
-                    promptText = "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
-                }
+                let promptText = state.currentType === 'Transfer' 
+                    ? "Ekstrak data dari gambar struk transfer bank ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"referensi\": \"string\",\n  \"bank_tujuan\": \"string\",\n  \"rekening_tujuan\": \"string\",\n  \"nama_penerima\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\":angka (integer)\n"
+                    : "Ekstrak data dari gambar struk pembelian token listrik PLN ini.\n\nWAJIB berikan respons HANYA dalam format JSON murni tanpa awalan/akhiran markdown.\n\nGunakan struktur key JSON persis seperti ini:\n\n  \"tanggal\": \"DD-MM-YYYY\",\n  \"waktu\": \"HH:mm\",\n  \"no_meter\": \"string\",\n  \"nama\": \"string\",\n  \"tarif_daya\": \"string\",\n  \"kwh\": \"string\",\n  \"token\": \"string\",\n  \"nominal\": angka (integer),\n  \"admin\": angka (integer),\n  \"total\": angka (integer),\n  \"sn\":\"string\"\n";
 
                 let finalRes = null;
                 let lastError = "Gagal memproses gambar.";
-                let quotaErrors = 0;
 
                 for (let model of validModels) {
-                    let modelName = model.name;
-                    getEl('loader-subtext').innerText = `Mencoba Model: ${modelName.split('/')[1]}...`;
-                    
+                    getEl('loader-subtext').innerText = `Mencoba Model: ${model.name.split('/')[1]}...`;
                     try {
-                        const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key.trim()}`;
-                        
+                        const url = `https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${key.trim()}`;
                         const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                                generationConfig: { temperature: 0.1 }
-                            })
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }], generationConfig: { temperature: 0.1 } })
                         });
-
                         const rawText = await response.text();
-                        
-                        if (response.ok) {
-                            finalRes = JSON.parse(rawText);
-                            break; 
-                        } else {
-                            let errObj = {};
-                            try { errObj = JSON.parse(rawText); } catch(e) {}
-                            let errMsg = errObj.error?.message || response.statusText;
-                            
-                            if (response.status === 400 && errMsg.toLowerCase().includes("key")) {
-                                throw new Error(`[KUNCI API SALAH]\n${errMsg}`);
-                            }
-                            
-                            if (response.status === 429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("exhausted")) {
-                                quotaErrors++;
-                                lastError = `[KUOTA HABIS di ${modelName.split('/')[1]}]\n${errMsg}`;
-                                continue; 
-                            }
-
-                            lastError = `[ERROR di ${modelName.split('/')[1]}]: ${errMsg}`;
-                        }
-                    } catch (e) {
-                        if (e.message.includes("[KUNCI API SALAH]")) throw e;
-                        lastError = e.message;
-                    }
+                        if (response.ok) { finalRes = JSON.parse(rawText); break; }
+                    } catch (e) {}
                 }
 
-                if (!finalRes) {
-                    if (quotaErrors > 0 && quotaErrors >= validModels.length - 3) {
-                        throw new Error(`[SEMUA MODEL HABIS KUOTA]\n\nAkun Anda telah kehabisan limit gratis di SEMUA model yang tersedia.\nSolusi: Gunakan Kunci API dari akun Gmail yang baru.\n\nInfo Terakhir:\n${lastError}`);
-                    }
-                    throw new Error(`[GAGAL DI SEMUA MODEL]\n\nDetail Terakhir:\n${lastError}`);
-                }
+                if (!finalRes) throw new Error(`[GAGAL DI SEMUA MODEL]\n\nServer AI Google kehabisan kuota gratis atau menolak akses.`);
 
                 let textResponse = finalRes.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (!textResponse) {
-                    throw new Error("Gambar berhasil dibaca, tetapi AI merespons dengan hasil kosong. Coba gunakan foto yang lebih jelas.");
-                }
+                if (!textResponse) throw new Error("Gambar berhasil dibaca, tetapi AI merespons dengan hasil kosong.");
                 
                 textResponse = textResponse.replace(/```json/gi, '').replace(/```/gi, '').trim();
                 const jsonData = JSON.parse(textResponse);
@@ -863,16 +714,14 @@
             }
         }
 
-        // --- MAP DATA GEMINI KE UI ---
+        // TAMPILKAN DATA AI KE UI
         function populateTransferFromJSON(data) {
             setElText('r-tgl', data.tanggal || new Date().toLocaleDateString('id-ID').replace(/\//g, '-'));
             setElText('r-jam', data.waktu || new Date().toLocaleTimeString('id-ID', {hour12: false}));
             setElText('r-bank', (data.bank_tujuan || "BANK LAIN").toUpperCase());
-            
             let rek = data.rekening_tujuan || "0000000000";
             setElText('r-rek', rek.replace(/\*/g, ' * '));
             setElText('r-nama', (data.nama_penerima || "NAMA PELANGGAN").toUpperCase());
-            
             setElText('r-nom', formatRupiahStr(data.nominal || 0));
             setElText('r-adm', formatRupiahStr(data.admin || 0));
         }
@@ -907,32 +756,14 @@
 
         function handleMenuClick(type) { state.currentType = type; getEl('gallery-input').click(); }
 
-        // --- UPDATE PADA FUNGSI LOADING INI ---
         function toggleLoader(s, t) {
             const txt = getEl('loader-text');
             if(txt) txt.innerText = t;
-            
-            // Perbaikan agar sisa tulisan loading AI hilang saat mencetak
-            const sub = getEl('loader-subtext');
-            if(sub) {
-                if (t === "Mencetak...") {
-                    sub.innerText = "Mengirim data ke printer bluetooth...";
-                } else if (t === "Menyambungkan...") {
-                    sub.innerText = "Mencari perangkat bluetooth...";
-                } else if (t === "Mendeteksi Radar Model Google...") {
-                    sub.innerText = "Menghidupkan Radar Google AI...";
-                } else {
-                    sub.innerText = "";
-                }
-            }
-
             const ldr = getEl('loader');
             if(ldr) ldr.style.display = s ? 'flex' : 'none';
         }
 
-        // ============================================================================
-        // SISTEM BLUETOOTH AUTO-RECONNECT
-        // ============================================================================
+        // KONEKSI PRINTER BLUETOOTH
         async function autoConnectPrinter() {
             if (navigator.bluetooth && navigator.bluetooth.getDevices) {
                 try {
@@ -942,44 +773,36 @@
                             if (device.name) { 
                                 state.btDevice = device;
                                 state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                                
                                 const server = await state.btDevice.gatt.connect();
                                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                                 const characteristics = await service.getCharacteristics();
-                                
                                 state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
                                 if (state.printerChar) {
                                     state.isConnected = true;
                                     updatePrinterUI(true);
-                                    console.log("Printer berhasil Auto-Reconnect!");
                                     break; 
                                 }
                             }
                         }
                     }
-                } catch (e) {
-                    console.log("Auto-connect gagal:", e);
-                }
+                } catch (e) { console.log("Auto-connect gagal:", e); }
             }
         }
 
         async function startBluetoothScan(silent = false) {
-            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Mohon gunakan Google Chrome."); return false; }
-
+            if (!navigator.bluetooth) { alert("Browser ini tidak mendukung Web Bluetooth. Gunakan Chrome."); return false; }
             try {
                 state.btDevice = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 });
-
                 state.btDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
+                
                 if (!silent) toggleLoader(true, "Menyambungkan...");
                 const server = await state.btDevice.gatt.connect();
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristics = await service.getCharacteristics();
-                
                 state.printerChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
                 if (state.printerChar) {
@@ -987,7 +810,7 @@
                     updatePrinterUI(true);
                     if (!silent) alert("Printer Berhasil Terhubung!");
                     return true;
-                } else { throw new Error("Layanan print tidak ditemukan."); }
+                } else throw new Error("Layanan print tidak ditemukan.");
             } catch (e) { 
                 updatePrinterUI(false);
                 if(e.name !== 'NotFoundError') alert("Koneksi Gagal: " + e.message); 
@@ -997,7 +820,7 @@
 
         async function togglePrinter() {
             if (state.isConnected) { if(confirm("Putus sambungan printer?")) state.btDevice.gatt.disconnect(); } 
-            else { startBluetoothScan(); }
+            else startBluetoothScan();
         }
 
         function onDisconnected() {
@@ -1016,24 +839,18 @@
             }
         }
 
+        // FUNGSI RATA KANAN & WRAP TEXT UNTUK KERTAS 58MM
         function wrapText(label, value, maxChars = 32) {
             let indent = label.length;
             let maxV = maxChars - indent;
             if(!value) return label + "\n";
-            
             let words = value.toString().split(" ");
-            let res = "";
-            let curr = label;
-            let cLen = 0;
-            
+            let res = ""; let curr = label; let cLen = 0;
             for(let w of words) {
                 if(cLen + w.length + (cLen > 0 ? 1 : 0) > maxV) {
-                    res += curr + "\n";
-                    curr = " ".repeat(indent) + w;
-                    cLen = w.length;
+                    res += curr + "\n"; curr = " ".repeat(indent) + w; cLen = w.length;
                 } else {
-                    curr += (cLen > 0 ? " " : "") + w;
-                    cLen += w.length + (cLen > 0 ? 1 : 0);
+                    curr += (cLen > 0 ? " " : "") + w; cLen += w.length + (cLen > 0 ? 1 : 0);
                 }
             }
             res += curr + "\n";
@@ -1048,14 +865,13 @@
             return leftStr + " ".repeat(spacesCount) + rightStr;
         }
 
+        // CETAK REALTIME TANPA LOADING OVERLAY
         async function executePrint() {
             if (!state.isConnected || !state.printerChar) {
                 openBtWarningModal();
                 return;
             }
 
-            // HAPUS TAMPILAN LOADING DI SINI AGAR PRINTING REALTIME TANPA JEDA
-            
             const ESC = "\x1b"; const GS = "\x1d";
             const INIT = ESC + "@";
             const ALIGN_CENTER = ESC + "a" + "\x01";
@@ -1080,14 +896,11 @@
                 raw += "--------------------------------\n";
                 
                 let rawTk = getElText('t-token').replace(/[^0-9]/g, '');
-                let tkLine1 = "";
-                let tkLine2 = "";
+                let tkLine1 = ""; let tkLine2 = "";
                 if (rawTk.length >= 16) {
                     tkLine1 = `${rawTk.slice(0,4)} ${rawTk.slice(4,8)} ${rawTk.slice(8,12)}`;
                     tkLine2 = rawTk.slice(12).match(/.{1,4}/g)?.join(' ') || "";
-                } else {
-                    tkLine1 = rawTk.match(/.{1,4}/g)?.join(' ') || rawTk;
-                }
+                } else { tkLine1 = rawTk.match(/.{1,4}/g)?.join(' ') || rawTk; }
 
                 raw += ALIGN_CENTER + FONT_LARGE;
                 raw += tkLine1 + "\n";
@@ -1100,9 +913,7 @@
                 raw += formatLineAlignRight("ADMIN", getElText('t-adm')) + "\n";
                 raw += "--------------------------------\n";
                 raw += formatLineAlignRight("TOTAL", getElText('t-tot')) + "\n\n";
-                
                 raw += "SN:\n" + getElText('t-sn') + "\n";
-                
                 raw += "\n" + ALIGN_CENTER + "** TRANSAKSI BERHASIL **\n";
                 raw += "TERIMA KASIH\n\n\n\n\n";
             } else {
@@ -1143,57 +954,40 @@
 
                 const namaUtama = state.currentType === 'Token' ? getElText('t-nama') : getElText('r-nama');
                 if (typeof google !== 'undefined' || API_URL !== "") {
-                    // MODE NO-CORS UNTUK MENGHINDARI CRASH SAAT PROSES CETAK
+                    // MENGGUNAKAN NO-CORS AGAR PROSES CETAK TIDAK TERTUNDA OLEH GOOGLE SHEET
                     fetch(API_URL, { 
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
+                        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify({ nama: namaUtama, tipe: state.currentType }) 
-                    }).catch(e => console.log(e));
+                    }).catch(e => e);
                 }
 
                 switchPage('home');
             } catch(e) {
                 alert("Gagal mencetak: " + e.message);
-                if(state.btDevice && state.btDevice.gatt.connected === false) {
-                    onDisconnected();
-                }
+                if(state.btDevice && state.btDevice.gatt.connected === false) onDisconnected();
             }
         }
 
-        // --- MENYIMPAN RIWAYAT KE MEMORI HP ---
+        // SISTEM LOCAL HISTORY
         function saveLocalHistory() {
-            if (!state.currentReceiptId) {
-                state.currentReceiptId = Date.now().toString();
-            }
+            if (!state.currentReceiptId) state.currentReceiptId = Date.now().toString();
 
             const item = {
-                id: state.currentReceiptId,
-                tipe: state.currentType,
-                r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'),
-                r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'),
-                r_nom: getElText('r-nom'), r_adm: getElText('r-adm'), r_tot: getElText('r-tot'),
-                t_toko: getElText('t-toko'), t_alamat: getElText('t-alamat'), t_tgl: getElText('t-tgl'), t_jam: getElText('t-jam'),
-                t_meter: getElText('t-meter'), t_nama: getElText('t-nama'), t_daya: getElText('t-daya'), t_kwh: getElText('t-kwh'),
-                t_token: getEl('t-token') ? getEl('t-token').innerHTML : '',
-                t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
+                id: state.currentReceiptId, tipe: state.currentType,
+                r_toko: getElText('r-toko'), r_alamat: getElText('r-alamat'), r_tgl: getElText('r-tgl'), r_jam: getElText('r-jam'), r_ref: getElText('r-ref'), r_bank: getElText('r-bank'), r_rek: getElText('r-rek'), r_nama: getElText('r-nama'), r_nom: getElText('r-nom'), r_adm: getElText('r-adm'), r_tot: getElText('r-tot'),
+                t_toko: getElText('t-toko'), t_alamat: getElText('t-alamat'), t_tgl: getElText('t-tgl'), t_jam: getElText('t-jam'), t_meter: getElText('t-meter'), t_nama: getElText('t-nama'), t_daya: getElText('t-daya'), t_kwh: getElText('t-kwh'), t_token: getEl('t-token') ? getEl('t-token').innerHTML : '', t_nom: getElText('t-nom'), t_adm: getElText('t-adm'), t_tot: getElText('t-tot'), t_sn: getElText('t-sn')
             };
 
             let history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
-            
             const existingIdx = history.findIndex(h => h.id === state.currentReceiptId);
-            if (existingIdx !== -1) {
-                history[existingIdx] = item; 
-            } else {
-                history.unshift(item); 
-            }
+            if (existingIdx !== -1) history[existingIdx] = item; 
+            else history.unshift(item); 
             
             while(history.length > 30) history.pop(); 
             localStorage.setItem('ZETTBOT_HISTORY_V50', JSON.stringify(history));
             fetchHistory(); 
         }
 
-        // --- MEMUAT ULANG RIWAYAT KE PRATINJAU ---
         function loadReceipt(id) {
             const history = JSON.parse(localStorage.getItem('ZETTBOT_HISTORY_V50') || '[]');
             const item = history.find(h => h.id === id);
@@ -1222,7 +1016,7 @@
             if (!h.length) { list.innerHTML = '<p class="text-center text-gray-300 text-[10px] mt-10 uppercase font-black tracking-widest opacity-30 italic">Riwayat Kosong</p>'; return; }
             list.innerHTML = h.map((item) => `
                 <div class="bg-white rounded-[22px] p-4 border border-gray-100 card-shadow flex justify-between items-center mb-2 transition-all hover:bg-gray-50 cursor-pointer">
-                    <div onclick="loadReceipt('${item.id}')" class="flex-1">
+                    <div onclick="loadReceipt('${item.id}')" class="flex-1 pr-2">
                         <h4 class="font-black text-gray-800 text-[10px] uppercase truncate">${(item.tipe === 'Token' ? item.t_nama : item.r_nama) || '---'}</h4>
                         <p class="text-[8px] text-gray-400 font-bold uppercase mt-1">${(item.tipe === 'Token' ? item.t_tgl : item.r_tgl) || '---'} - ${(item.tipe === 'Token' ? item.t_jam : item.r_jam) || '--:--'}</p>
                     </div>
