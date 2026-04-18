@@ -8,8 +8,11 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    // Tangkap request POST dari fitur "Bagikan" (Share Target Android)
-    if (event.request.method === 'POST') {
+    const url = new URL(event.request.url);
+
+    // Tangkap request POST HANYA jika menuju ke URL aplikasi kita (Share Target Android).
+    // JANGAN tangkap POST ke API luar seperti Gemini AI atau Google Apps Script.
+    if (event.request.method === 'POST' && url.origin === location.origin) {
         event.respondWith((async () => {
             try {
                 const formData = await event.request.formData();
@@ -28,7 +31,7 @@ self.addEventListener('fetch', event => {
             return Response.redirect('index.html', 303);
         })());
     } else {
-        // Biarkan request biasa (CSS, gambar, dll) lewat dengan normal
+        // Biarkan request API Gemini, Google Script, CSS, dan gambar lewat dengan normal
         event.respondWith(fetch(event.request));
     }
 });
